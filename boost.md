@@ -1,6 +1,11 @@
 # boost library
 ## geometry
 ### model
+
+***
+[boost::geometry::model website](https://www.boost.org/doc/libs/1_79_0/libs/geometry/doc/html/geometry/reference/models.html)
+***
+
 - point
   ```C++
   <typename CoordinateType, std::size_t DimensionCount, typename CoordinateSystem>
