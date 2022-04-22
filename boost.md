@@ -115,7 +115,13 @@
 ***
 [boost::geometry::algorithms website](https://www.boost.org/doc/libs/1_79_0/libs/geometry/doc/html/geometry/reference/algorithms.html)
 ***
-- closest_points (with strategy)
+- area
+  ```C++
+  <typename Geometry>
+  ```
+        Geometry : the geometry object
+
+- closest_points
   ```C++
   <typename Geometry1, typename Geometry2, typename Segment, typename Strategy>
   ```
@@ -123,14 +129,40 @@
         Geometry1 : first geometry object
         Geometry2 : second geometry object
         Segment : segment type ex: model::segment
-        Strategy : strategy to calculate closest points
+- distance
+  ```C++
+  <typename Geometry1, typename Geometry2, typename Strategy>
+  ```
+        Geometry1 : first geometry object
+        Geometry2 : second geometry object
+- envelope
+  ```C++
+  <typename Geometry, typename Box, typename Strategy>
+  ```
+        Geometry : the geometry object
+        Box : the bounding box of the geometry
+- buffer (with strategies)
+  ```C++
+  <typename GeometryIn, typename MultiPolygon, typename DistanceStrategy, typename SideStrategy, typename JoinStrategy, typename EndStrategy, typename PointStrategy>
+  ```
+  GeometryIn : input geometry object 
+  MultiPolygon : output geometry object
+  DistanceStrategy : distance_strategy
+  SideStrategy : side_strategy
+  JoinStrategy : join_strategy
+  EndStrategy : end_strategy
+  PointStrategy : point_strategy
 
+  strategy::buffer::join_round
+  strategy::buffer::join_miter
+  strategy::buffer::end_round
+  strategy::buffer::end_flat
+  strategy::buffer::distance_symmetric
+  strategy::buffer::distance_asymmetric
+  strategy::buffer::point_circle
+  strategy::buffer::point_square
+  strategy::buffer::geographic_point_circle
 ### strategies
 ***
 [boost::geometry::strategies website](https://www.boost.org/doc/libs/1_79_0/libs/geometry/doc/html/geometry/reference/strategies.html)
 ***
-- area
-  ```C++
-  <typename CalculationType>
-  ```
-        CalculationType : output numeric type (default: void -> output float)
