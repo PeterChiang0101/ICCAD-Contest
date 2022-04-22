@@ -111,3 +111,26 @@
     ```
 
         ConstOrNotConstPoint : point, point_xy, point_xyz, ...
+### algorithms
+***
+[boost::geometry::algorithms website](https://www.boost.org/doc/libs/1_79_0/libs/geometry/doc/html/geometry/reference/algorithms.html)
+***
+- closest_points (with strategy)
+  ```C++
+  <typename Geometry1, typename Geometry2, typename Segment, typename Strategy>
+  ```
+  
+        Geometry1 : first geometry object
+        Geometry2 : second geometry object
+        Segment : segment type ex: model::segment
+        Strategy : strategy to calculate closest points
+
+### strategies
+***
+[boost::geometry::strategies website](https://www.boost.org/doc/libs/1_79_0/libs/geometry/doc/html/geometry/reference/strategies.html)
+***
+- area
+  ```C++
+  <typename CalculationType>
+  ```
+        CalculationType : output numeric type (default: void -> output float)
