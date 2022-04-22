@@ -145,23 +145,24 @@
   ```C++
   <typename GeometryIn, typename MultiPolygon, typename DistanceStrategy, typename SideStrategy, typename JoinStrategy, typename EndStrategy, typename PointStrategy>
   ```
-  GeometryIn : input geometry object 
-  MultiPolygon : output geometry object
-  DistanceStrategy : distance_strategy
-  SideStrategy : side_strategy
-  JoinStrategy : join_strategy
-  EndStrategy : end_strategy
-  PointStrategy : point_strategy
+        GeometryIn : input geometry object 
+        MultiPolygon : output geometry object
+        DistanceStrategy : distance_strategy
+        SideStrategy : side_strategy
+        JoinStrategy : join_strategy
+        EndStrategy : end_strategy
+        PointStrategy : point_strategy
 
-  strategy::buffer::join_round
-  strategy::buffer::join_miter
-  strategy::buffer::end_round
-  strategy::buffer::end_flat
-  strategy::buffer::distance_symmetric
-  strategy::buffer::distance_asymmetric
-  strategy::buffer::point_circle
-  strategy::buffer::point_square
-  strategy::buffer::geographic_point_circle
+
+        strategy::buffer::join_round
+        strategy::buffer::join_miter
+        strategy::buffer::end_round
+        strategy::buffer::end_flat
+        strategy::buffer::distance_symmetric
+        strategy::buffer::distance_asymmetric
+        strategy::buffer::point_circle
+        strategy::buffer::point_square
+        strategy::buffer::geographic_point_circle
 ### strategies
 ***
 [boost::geometry::strategies website](https://www.boost.org/doc/libs/1_79_0/libs/geometry/doc/html/geometry/reference/strategies.html)
