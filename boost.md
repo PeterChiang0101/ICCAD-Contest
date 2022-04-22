@@ -123,21 +123,20 @@
 
 - closest_points
   ```C++
-  <typename Geometry1, typename Geometry2, typename Segment, typename Strategy>
+  <typename Geometry1, typename Geometry2, typename Segment>
   ```
-  
         Geometry1 : first geometry object
         Geometry2 : second geometry object
         Segment : segment type ex: model::segment
 - distance
   ```C++
-  <typename Geometry1, typename Geometry2, typename Strategy>
+  <typename Geometry1, typename Geometry2>
   ```
         Geometry1 : first geometry object
         Geometry2 : second geometry object
 - envelope
   ```C++
-  <typename Geometry, typename Box, typename Strategy>
+  <typename Geometry, typename Box>
   ```
         Geometry : the geometry object
         Box : the bounding box of the geometry
@@ -163,6 +162,11 @@
         strategy::buffer::point_circle
         strategy::buffer::point_square
         strategy::buffer::geographic_point_circle
+- perimeter
+  ```C++
+  <typename Geometry>
+  ```
+      Geometry : the geometry object
 ### strategies
 ***
 [boost::geometry::strategies website](https://www.boost.org/doc/libs/1_79_0/libs/geometry/doc/html/geometry/reference/strategies.html)
