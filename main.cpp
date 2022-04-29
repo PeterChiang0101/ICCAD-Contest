@@ -6,6 +6,9 @@ using namespace std;
 int main()
 {
     // transform into data structure
+    // the main IC uses polygon
+    // arc uses linestring
+    // pin uses polygon
 
     // calculate the silkscreen
     // ignore the arc first
