@@ -1,4 +1,5 @@
 #include <iostream>
+#include <stdio.h>
 // use boost library
 
 using namespace std;
