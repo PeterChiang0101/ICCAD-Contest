@@ -2,6 +2,12 @@
 
 ## File Processing
 
+2022/5/10
+finished reading assembly.
+    new function:
+    const vector<string> split(const string& str, const char& delimiter)
+Macoto
+
 2022/5/9
 
 Start processing of the file, finished three specs of silkscreen, working on reading assembly.

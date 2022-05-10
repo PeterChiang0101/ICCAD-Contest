@@ -1,6 +1,8 @@
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <string>
+#include <cstring> // strtok
 #include <vector>
 // use boost library
 
@@ -19,11 +21,14 @@ struct segment
     bool direction; // 0 = ClockWise(CW), 1 = ConterClockwise(CCW)
 };
 
+const vector<string> split(const string& str, const char& delimiter);
+
 int main()
 {
     fstream file;
     string assemblygap_str, coppergap_str, silkscreenlen_str;
     float assemblygap, coppergap, silkscreenlen;
+    
 
     file.open("input.txt", ios::in);
 
@@ -43,20 +48,109 @@ int main()
     silkscreenlen = stof(silkscreenlen_str);
 
     vector<segment> assembly;
+    vector<string> ret; 
+    int tmp=0;
 
     string assembly_line;
     file >> assembly_line >> assembly_line; // first one is ignored
+    
+    
+    
 
     while (assembly_line != "copper")
     {
+        struct segment master;
         if (assembly_line[0] == 'l') // reading line
         {
+            
+            ret = split(assembly_line, ',');
+            for (auto& s : ret) 
+            {
+                if(s=="line") 
+                {
+                    master.is_line=1;
+                    tmp=0;
+                }
+                else
+                {
+                    tmp++;
+                    switch(tmp)
+                    {
+                        case 1:
+                            master.x1=stof(s);
+                            break;
+                        case 2:
+                            master.y1=stof(s);
+                            break;
+                        case 3:
+                            master.x2=stof(s);
+                            break;
+                        case 4:
+                            master.y2=stof(s);
+                            break;
+                    }
+                }
+                
+            }
+            master.center_x=0;
+            master.center_y=0;
+            master.direction=0;
+            assembly.push_back(master);
         }
         else // reading arc
         {
+            ret = split(assembly_line, ',');
+            for (auto& s : ret) 
+            {
+                if(s=="arc") 
+                {
+                    master.is_line=0;
+                    tmp=0;
+                }
+                else
+                {
+                    tmp++;
+                    switch(tmp)
+                    {   
+                        case 1:
+                            master.x1=stof(s);
+                            break;
+                        case 2:
+                            master.y1=stof(s);
+                            break;
+                        case 3:
+                            master.x2=stof(s);
+                            break;
+                        case 4:
+                            master.y2=stof(s);
+                            break;
+                        case 5:
+                            master.center_x=stof(s);
+                            break;
+                        case 6:
+                            master.center_y=stof(s);
+                            break;
+                        case 7:
+                            if(s=="CW")
+                                master.direction=0;
+                            else
+                                master.direction=1;
+                            break;
+                        
+                    }
+                } 
+            }
+            assembly.push_back(master);
         }
         file >> assembly_line;
     }
+
+    /* for(int i=0;i<10;i++){
+        cout<<assembly[i].is_line<<" "<<assembly[i].x1<<" "<<assembly[i].y1<<" "<<assembly[i].x2<<" "<<assembly[i].y2<<" "
+        <<assembly[i].center_x<<" "<<assembly[i].center_y<<" "<<assembly[i].direction<<endl;
+    }*/
+
+
     // transform into data structure
     // the main IC uses polygon
     // arc uses linestring
@@ -70,4 +164,15 @@ int main()
     // arc needed to be treated manually
 
     // output
+}
+
+const vector<string> split(const string& str, const char& delimiter) {
+    vector<string> result;
+    stringstream ss(str);
+    string tok;
+
+    while (getline(ss, tok, delimiter)) {
+        result.push_back(tok);
+    }
+    return result;
 }
