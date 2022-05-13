@@ -2,7 +2,14 @@
 
 ## File Processing
 
+2022/5/14
+
+finished reading copper with 2 dimention vector.
+    merge read data  of assembly with copper.
+Macoto
+
 2022/5/10
+
 finished reading assembly.
     new function:
     const vector<string> split(const string& str, const char& delimiter)
