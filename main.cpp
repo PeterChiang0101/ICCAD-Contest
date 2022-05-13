@@ -48,107 +48,103 @@ int main()
     silkscreenlen = stof(silkscreenlen_str);
 
     vector<segment> assembly;
-    vector<string> ret; 
-    int tmp=0;
+    vector<vector<segment>> copper;
+    vector<segment> copper_master;
+    vector<string> ret;
+    struct segment master;
+    bool type; // 0 = assembly, 1 = copper
+    int element = 0; // which element of a segment
+    int num = 0; // which copper
 
-    string assembly_line;
-    file >> assembly_line >> assembly_line; // first one is ignored
+    string line;
+    getline(file, line); //stange string???????
     
-    
-    
-
-    while (assembly_line != "copper")
+    while (getline(file, line))
     {
-        struct segment master;
-        if (assembly_line[0] == 'l') // reading line
+        cout<<line<<endl;
+        if(line=="assembly")
         {
-            
-            ret = split(assembly_line, ',');
+            type = 0;
+            continue;
+        }
+        else if(line=="copper")
+        {
+            type = 1;
+            num ++;
+            if(num!=1)
+            {
+                cout<<"size0="<<copper_master.size()<<endl;
+                copper.push_back(copper_master);
+                copper_master.clear();
+            }
+            continue;
+        }
+        else
+        {
+            ret = split(line, ',');
             for (auto& s : ret) 
             {
-                if(s=="line") 
+                if(s=="line") // reading line
                 {
                     master.is_line=1;
-                    tmp=0;
+                    master.center_x=0;
+                    master.center_y=0;
+                    master.direction=0;
+                    element=0;
+                }
+                else if(s=="arc") // reading arc
+                {
+                    master.is_line=0;
+                    element=0;
                 }
                 else
                 {
-                    tmp++;
-                    switch(tmp)
+                    element++;
+                    switch(element)
                     {
                         case 1:
                             master.x1=stof(s);
-                            break;
+                        break;
                         case 2:
                             master.y1=stof(s);
-                            break;
+                        break;
                         case 3:
                             master.x2=stof(s);
-                            break;
+                        break;
                         case 4:
                             master.y2=stof(s);
-                            break;
-                    }
-                }
-                
-            }
-            master.center_x=0;
-            master.center_y=0;
-            master.direction=0;
-            assembly.push_back(master);
-        }
-        else // reading arc
-        {
-            ret = split(assembly_line, ',');
-            for (auto& s : ret) 
-            {
-                if(s=="arc") 
-                {
-                    master.is_line=0;
-                    tmp=0;
-                }
-                else
-                {
-                    tmp++;
-                    switch(tmp)
-                    {   
-                        case 1:
-                            master.x1=stof(s);
-                            break;
-                        case 2:
-                            master.y1=stof(s);
-                            break;
-                        case 3:
-                            master.x2=stof(s);
-                            break;
-                        case 4:
-                            master.y2=stof(s);
-                            break;
+                        break;
                         case 5:
                             master.center_x=stof(s);
-                            break;
+                        break;
                         case 6:
                             master.center_y=stof(s);
-                            break;
+                        break;
                         case 7:
                             if(s=="CW")
                                 master.direction=0;
                             else
                                 master.direction=1;
-                            break;
-                        
+                        break;
                     }
-                } 
+                }
+                
             }
-            assembly.push_back(master);
+            if(type==0)
+            {
+                assembly.push_back(master);
+            }
+            else
+            {
+                //cout<<"num="<<num<<endl;
+                copper_master.push_back(master);    
+            }
         }
-        file >> assembly_line;
-    }
+        
 
-    /* for(int i=0;i<10;i++){
-        cout<<assembly[i].is_line<<" "<<assembly[i].x1<<" "<<assembly[i].y1<<" "<<assembly[i].x2<<" "<<assembly[i].y2<<" "
-        <<assembly[i].center_x<<" "<<assembly[i].center_y<<" "<<assembly[i].direction<<endl;
-    }*/
+    }
+    copper.push_back(copper_master);
+    copper_master.clear();
 
 
     // transform into data structure
