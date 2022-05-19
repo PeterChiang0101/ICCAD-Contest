@@ -21,14 +21,15 @@ struct segment
     bool direction; // 0 = ClockWise(CW), 1 = ConterClockwise(CCW)
 };
 
-const vector<string> split(const string& str, const char& delimiter);
+const vector<string> split(const string &str, const char &delimiter);
+
+float File_to_String(string str);
 
 int main()
 {
     fstream file;
     string assemblygap_str, coppergap_str, silkscreenlen_str;
     float assemblygap, coppergap, silkscreenlen;
-    
 
     file.open("input.txt", ios::in);
 
@@ -36,44 +37,40 @@ int main()
     file >> assemblygap_str >> coppergap_str >> silkscreenlen_str;
 
     // assemblygap : the minimum distance between assembly and silkscreen
-    assemblygap_str = assemblygap_str.substr(assemblygap_str.find(',') + 1);
-    assemblygap = stof(assemblygap_str);
-
     // coppergap : the minimum distance between copper and silkscreen
-    coppergap_str = coppergap_str.substr(coppergap_str.find(',') + 1);
-    coppergap = stof(coppergap_str);
-
     // silkscreenlen : the minimum length of silkscreen
-    silkscreenlen_str = silkscreenlen_str.substr(silkscreenlen_str.find(',') + 1);
-    silkscreenlen = stof(silkscreenlen_str);
+    assemblygap = File_to_String(assemblygap_str);
+    coppergap = File_to_String(coppergap_str);
+    silkscreenlen = File_to_String(silkscreenlen_str);
 
     vector<segment> assembly;
     vector<vector<segment>> copper;
     vector<segment> copper_master;
     vector<string> ret;
+
     struct segment master;
-    bool type; // 0 = assembly, 1 = copper
+    bool type;       // 0 = assembly, 1 = copper
     int element = 0; // which element of a segment
-    int num = 0; // which copper
+    int num = 0;     // which copper
 
     string line;
-    getline(file, line); //stange string???????
-    
+    getline(file, line); // stange string???????
+
     while (getline(file, line))
     {
-        cout<<line<<endl;
-        if(line=="assembly")
+        cout << line << endl;
+        if (line == "assembly")
         {
             type = 0;
             continue;
         }
-        else if(line=="copper")
+        else if (line == "copper")
         {
             type = 1;
-            num ++;
-            if(num!=1)
+            num++;
+            if (num != 1)
             {
-                cout<<"size0="<<copper_master.size()<<endl;
+                cout << "size0=" << copper_master.size() << endl;
                 copper.push_back(copper_master);
                 copper_master.clear();
             }
@@ -82,70 +79,66 @@ int main()
         else
         {
             ret = split(line, ',');
-            for (auto& s : ret) 
+            for (auto &s : ret)
             {
-                if(s=="line") // reading line
+                if (s == "line") // reading line
                 {
-                    master.is_line=1;
-                    master.center_x=0;
-                    master.center_y=0;
-                    master.direction=0;
-                    element=0;
+                    master.is_line = 1;
+                    master.center_x = 0;
+                    master.center_y = 0;
+                    master.direction = 0;
+                    element = 0;
                 }
-                else if(s=="arc") // reading arc
+                else if (s == "arc") // reading arc
                 {
-                    master.is_line=0;
-                    element=0;
+                    master.is_line = 0;
+                    element = 0;
                 }
                 else
                 {
                     element++;
-                    switch(element)
+                    switch (element)
                     {
-                        case 1:
-                            master.x1=stof(s);
+                    case 1:
+                        master.x1 = stof(s);
                         break;
-                        case 2:
-                            master.y1=stof(s);
+                    case 2:
+                        master.y1 = stof(s);
                         break;
-                        case 3:
-                            master.x2=stof(s);
+                    case 3:
+                        master.x2 = stof(s);
                         break;
-                        case 4:
-                            master.y2=stof(s);
+                    case 4:
+                        master.y2 = stof(s);
                         break;
-                        case 5:
-                            master.center_x=stof(s);
+                    case 5:
+                        master.center_x = stof(s);
                         break;
-                        case 6:
-                            master.center_y=stof(s);
+                    case 6:
+                        master.center_y = stof(s);
                         break;
-                        case 7:
-                            if(s=="CW")
-                                master.direction=0;
-                            else
-                                master.direction=1;
+                    case 7:
+                        if (s == "CW")
+                            master.direction = 0;
+                        else
+                            master.direction = 1;
                         break;
                     }
                 }
-                
             }
-            if(type==0)
+            if (type == 0)
             {
                 assembly.push_back(master);
             }
             else
             {
-                //cout<<"num="<<num<<endl;
-                copper_master.push_back(master);    
+                // cout<<"num="<<num<<endl;
+                copper_master.push_back(master);
             }
         }
-        
-
     }
     copper.push_back(copper_master);
     copper_master.clear();
-
 
     // transform into data structure
     // the main IC uses polygon
@@ -162,13 +155,22 @@ int main()
     // output
 }
 
-const vector<string> split(const string& str, const char& delimiter) {
+const vector<string> split(const string &str, const char &delimiter)
+{
     vector<string> result;
     stringstream ss(str);
     string tok;
 
-    while (getline(ss, tok, delimiter)) {
+    while (getline(ss, tok, delimiter))
+    {
         result.push_back(tok);
     }
     return result;
+}
+
+float File_to_String(string str)
+{
+    string str_truncate;
+    str_truncate = str.substr(str.find(',') + 1);
+    return stof(str_truncate);
 }
