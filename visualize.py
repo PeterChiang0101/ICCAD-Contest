@@ -60,7 +60,7 @@ for i in range(len(x1)):
     if type[i] == 'line':
         x = [x1[i], x2[i]]
         y = [y1[i], y2[i]]
-        plt.plot(x, y, lw=1.5, c=color)
+        plt.plot(x, y, lw=0.5, c=color)
     else:  # arc
         rad = sqrt((x2[i] - cirx[i])**2 + (y2[i] - ciry[i])**2)
         theta1 = degrees(atan2(y1[i]-ciry[i], x1[i]-cirx[i]))
@@ -69,11 +69,11 @@ for i in range(len(x1)):
             theta1, theta2 = theta2, theta1
 
         pac = Arc([cirx[i], ciry[i]], 2*rad, 2*rad, 0,
-                  theta1, theta2, lw=1.5, color=color)
+                  theta1, theta2, lw=0.5, color=color)
         ax.add_patch(pac)
 
 
 fg.canvas.draw()
-fg.savefig(img_out)
+fg.savefig(img_out, dpi=300)
 plt.show()
 # plt.savefig(img_out)
