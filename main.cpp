@@ -4,6 +4,7 @@
 #include <string>
 #include <cstring> // strtok
 #include <vector>
+#include <math.h>
 // use boost library
 
 using namespace std;
@@ -173,4 +174,24 @@ float File_to_String(string str)
     string str_truncate;
     str_truncate = str.substr(str.find(',') + 1);
     return stof(str_truncate);
+}
+
+segment line_offset(segment original_line, float assemblygap)
+{
+    float line_length;
+    float x_offset, y_offset;
+    segment silkscreen;
+    x_offset = abs(original_line.y1 - original_line.y2);
+    y_offset = abs(original_line.x1 - original_line.x2);
+
+    line_length = hypot(x_offset, y_offset);
+
+    silkscreen.is_line = 1;
+    silkscreen.center_x = silkscreen.center_y = silkscreen.direction = 0;
+    silkscreen.x1 = original_line.x1 + x_offset / line_length;
+    silkscreen.x2 = original_line.x2 + x_offset / line_length;
+    silkscreen.y1 = original_line.y1 + y_offset / line_length;
+    silkscreen.y2 = original_line.y2 + y_offset / line_length;
+
+    return silkscreen;
 }
