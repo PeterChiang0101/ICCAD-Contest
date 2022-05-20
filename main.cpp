@@ -4,7 +4,8 @@
 #include <string>
 #include <cstring> // strtok
 #include <vector>
-#include <math.h>
+#include <cmath>
+#include "Segment.h"
 // use boost library
 
 using namespace std;

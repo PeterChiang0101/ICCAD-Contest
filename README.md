@@ -2,6 +2,18 @@
 
 ## File Processing
 
+2022/5/21
+
+create new class
+
+    Segment 
+
+    replace the struct segment
+
+Peter
+
+---
+
 2022/5/20
 
 create new function
