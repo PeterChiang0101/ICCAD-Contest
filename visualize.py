@@ -65,6 +65,8 @@ for i in range(len(x1)):
         rad = sqrt((x2[i] - cirx[i])**2 + (y2[i] - ciry[i])**2)
         theta1 = degrees(atan2(y1[i]-ciry[i], x1[i]-cirx[i]))
         theta2 = degrees(atan2(y2[i]-ciry[i], x2[i]-cirx[i]))
+        if theta1 == theta2:
+            theta2 = 360 - theta1
         if cir_dir[i] == "CW\n":
             theta1, theta2 = theta2, theta1
 
