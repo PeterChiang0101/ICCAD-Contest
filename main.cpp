@@ -45,12 +45,12 @@ int main()
     coppergap = File_to_String(coppergap_str);
     silkscreenlen = File_to_String(silkscreenlen_str);
 
-    vector<segment> assembly;
-    vector<vector<segment>> copper;
-    vector<segment> copper_master;
-    vector<string> ret;
+    vector<Segment> assembly;
+    vector<vector<Segment>> copper;
+    vector<Segment> copper_master;
+    vector<string> split_strings;
 
-    struct segment master;
+    Segment Line_Processing;
     bool type;       // 0 = assembly, 1 = copper
     int element = 0; // which element of a segment
     int num = 0;     // which copper
@@ -80,20 +80,30 @@ int main()
         }
         else
         {
-            ret = split(line, ',');
-            for (auto &s : ret)
+            split_strings = split(line, ',');
+            if (split_strings[0] == "line")
+            {
+                Line_Processing.Input(1, stof(split_strings[1]), stof(split_strings[2]), stof(split_strings[3]), stof(split_strings[4]));
+            }
+            else if (split_strings[0] == "arc")
+            {
+                Line_Processing.Input(0, stof(split_strings[1]), stof(split_strings[2], split_strings[3], split_strings[4]), stof(split_strings[5]), stof(split_strings[6]), (split_strings[7] == "CCW") ? 1 : 0);
+            }
+            /*
+            for (auto &s : split_strings)
             {
                 if (s == "line") // reading line
                 {
-                    master.is_line = 1;
-                    master.center_x = 0;
-                    master.center_y = 0;
-                    master.direction = 0;
+
+                    Line_Processing.is_line = 1;
+                    Line_Processing.center_x = 0;
+                    Line_Processing.center_y = 0;
+                    Line_Processing.direction = 0;
                     element = 0;
                 }
                 else if (s == "arc") // reading arc
                 {
-                    master.is_line = 0;
+                    Line_Processing.is_line = 0;
                     element = 0;
                 }
                 else
@@ -102,40 +112,41 @@ int main()
                     switch (element)
                     {
                     case 1:
-                        master.x1 = stof(s);
+                        Line_Processing.x1 = stof(s);
                         break;
                     case 2:
-                        master.y1 = stof(s);
+                        Line_Processing.y1 = stof(s);
                         break;
                     case 3:
-                        master.x2 = stof(s);
+                        Line_Processing.x2 = stof(s);
                         break;
                     case 4:
-                        master.y2 = stof(s);
+                        Line_Processing.y2 = stof(s);
                         break;
                     case 5:
-                        master.center_x = stof(s);
+                        Line_Processing.center_x = stof(s);
                         break;
                     case 6:
-                        master.center_y = stof(s);
+                        Line_Processing.center_y = stof(s);
                         break;
                     case 7:
                         if (s == "CW")
-                            master.direction = 0;
+                            Line_Processing.direction = 0;
                         else
-                            master.direction = 1;
+                            Line_Processing.direction = 1;
                         break;
                     }
                 }
             }
+            */
             if (type == 0)
             {
-                assembly.push_back(master);
+                assembly.push_back(Line_Processing);
             }
             else
             {
                 // cout<<"num="<<num<<endl;
-                copper_master.push_back(master);
+                copper_master.push_back(Line_Processing);
             }
         }
     }

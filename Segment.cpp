@@ -15,7 +15,7 @@ Segment::Segment()
     center_x = center_y = direction = 0;
 }
 
-void Segment::Input(bool line, float spot1_x, float spot1_y, float spot2_x, float spot2_y, float circle_x, float circle_y, bool dir)
+void Segment::Input(bool line, float spot1_x, float spot1_y, float spot2_x, float spot2_y, float circle_x = 0, float circle_y = 0, bool dir = 0)
 {
     is_line = line;
     x1 = spot1_x;
