@@ -228,13 +228,13 @@ vector<segment> Print_Silkscreen(vector<segment> Assembly)
             Point_Overlap.x = first_line.x2;
             Point_Overlap.y = first_line.y2;
         }
-        double Angle_Divided = (first_angle + second_angle) / 2;               //角平分線的角度
-        float Bisector_Slope = tan(Angle_Divided);                             //角平分線
-        double Point_Extend_Range = assemblygap / cos(M_PI_2 - Angle_Divided); //點外擴距離
-        Point Extend_1, Extend_2;                                              //交點向外延伸的兩個點
-        Extend_1.x = Point_Overlap.x + sin(Point_Extend_Range);
-        Extend_1.y = Point_Overlap.y + cos(Point_Extend_Range);
-        Extend_2.x = Point_Overlap.x - sin(Point_Extend_Range);
-        Extend_2.y = Point_Overlap.y - cos(Point_Extend_Range);
+        double Angle_Divided = (first_angle + second_angle) / 2;                    //角平分線的角度
+        float Bisector_Slope = tan(Angle_Divided);                                  //角平分線
+        double Point_Extend_Range = assemblygap / sin(Angle_Divided - first_angle); //點外擴距離
+        Point Extend_1, Extend_2;                                                   //交點向外延伸的兩個點
+        Extend_1.x = Point_Overlap.x + Point_Extend_Range * sin(Angle_Divided);
+        Extend_1.y = Point_Overlap.y + Point_Extend_Range * cos(Angle_Divided);
+        Extend_2.x = Point_Overlap.x - Point_Extend_Range * sin(Angle_Divided);
+        Extend_2.y = Point_Overlap.y - Point_Extend_Range * cos(Angle_Divided);
     }
 }
