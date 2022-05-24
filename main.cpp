@@ -36,9 +36,11 @@ struct Point
 const vector<string>
 split(const string &str, const char &delimiter);
 
-float File_to_String(string str);
+float File_to_String(const string str);
 
-vector<segment> Print_Silkscreen(vector<segment> Assembly);
+vector<segment> Print_Silkscreen(const vector<segment> Assembly);
+
+Point Outside_of_Assembly(const Point a, const Point b, const vector<segment> Assembly);
 
 int main()
 {
@@ -182,14 +184,14 @@ const vector<string> split(const string &str, const char &delimiter)
     return result;
 }
 
-float File_to_String(string str)
+float File_to_String(const string str)
 {
     string str_truncate;
     str_truncate = str.substr(str.find(',') + 1);
     return stof(str_truncate);
 }
 
-segment line_offset(segment original_line, float assemblygap)
+segment line_offset(const segment original_line, const float assemblygap)
 {
     float line_length;
     float x_offset, y_offset;
@@ -209,12 +211,20 @@ segment line_offset(segment original_line, float assemblygap)
     return silkscreen;
 }
 
-vector<segment> Print_Silkscreen(vector<segment> Assembly)
+vector<segment> Print_Silkscreen(const vector<segment> Assembly)
 {
     const int size = Assembly.size();
-    for (size_t i = 0; i < size - 1; i++)
+    vector<Point> Extended_Points;
+    segment A_Line;
+    vector<segment> Silkscreen;
+    for (size_t i = 0; i < size; i++)
     {
-        segment first_line = Assembly[i], second_line = Assembly[i + 1];
+        segment first_line, second_line;
+        first_line = Assembly[i];
+        if (i != size - 1)
+            second_line = Assembly[i + 1];
+        else
+            second_line = Assembly[0];
         double first_angle = atan2(first_line.slope, 1);
         double second_angle = atan2(second_line.slope, 1);
         Point Point_Overlap; //兩線段交點
@@ -232,9 +242,36 @@ vector<segment> Print_Silkscreen(vector<segment> Assembly)
         float Bisector_Slope = tan(Angle_Divided);                                  //角平分線
         double Point_Extend_Range = assemblygap / sin(Angle_Divided - first_angle); //點外擴距離
         Point Extend_1, Extend_2;                                                   //交點向外延伸的兩個點
-        Extend_1.x = Point_Overlap.x + Point_Extend_Range * sin(Angle_Divided);
-        Extend_1.y = Point_Overlap.y + Point_Extend_Range * cos(Angle_Divided);
-        Extend_2.x = Point_Overlap.x - Point_Extend_Range * sin(Angle_Divided);
-        Extend_2.y = Point_Overlap.y - Point_Extend_Range * cos(Angle_Divided);
+        Extend_1.x = Point_Overlap.x + Point_Extend_Range * cos(Angle_Divided);
+        Extend_1.y = Point_Overlap.y + Point_Extend_Range * sin(Angle_Divided);
+        Extend_2.x = Point_Overlap.x - Point_Extend_Range * cos(Angle_Divided);
+        Extend_2.y = Point_Overlap.y - Point_Extend_Range * sin(Angle_Divided);
+        Extended_Points.push_back(Outside_of_Assembly(Extend_1, Extend_2, Assembly));
     }
+    for (size_t i = 0; i < size; i++) // for line
+    {
+        A_Line.is_line = true;
+        A_Line.x1 = Extended_Points[i].x;
+        A_Line.y1 = Extended_Points[i].y;
+        if (i != size)
+        {
+            A_Line.x2 = Extended_Points[i + 1].x;
+            A_Line.y2 = Extended_Points[i + 1].y;
+        }
+        else
+        {
+            A_Line.x2 = Extended_Points[0].x;
+            A_Line.y2 = Extended_Points[0].y;
+        }
+        A_Line.slope = (A_Line.y2 - A_Line.y1) / (A_Line.x2 - A_Line.x1);
+        A_Line.y_intercept = A_Line.y1 - A_Line.slope * A_Line.x1;
+        A_Line.center_x = A_Line.center_y = A_Line.direction = 0;
+        Silkscreen.push_back(A_Line);
+    }
+    return Silkscreen;
+}
+Point Outside_of_Assembly(const Point a, const Point b, const vector<segment> Assembly)
+{
+    Point Outside;
+    return Outside;
 }

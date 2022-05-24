@@ -1,5 +1,15 @@
 # ICCAD Contest 2022 Problem E
 
+## Algorithms
+
+2022/5/24
+
+new function
+
+    Print_Silkscreen(), Outside_of_Assembly()
+
+Peter
+
 ## File Processing
 
 2022/5/21
@@ -61,7 +71,5 @@ Start processing of the file, finished three specs of silkscreen, working on rea
 
     assembly : vector<segment>, store the assembly details
 Peter
-
-## Algorithms
 
 ## Optimization
