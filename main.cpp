@@ -5,13 +5,15 @@
 #include <cstring> // strtok
 #include <vector>
 #include <cmath>
-// use boost library
+#include <iomanip> //setprecision
 
 using namespace std;
-float assemblygap, coppergap, silkscreenlen;
+
 // assemblygap : the minimum distance between assembly and silkscreen
 // coppergap : the minimum distance between copper and silkscreen
 // silkscreenlen : the minimum length of silkscreen
+float assemblygap, coppergap, silkscreenlen;
+
 struct segment
 {
     bool is_line; // 0 = arc, 1 = line
@@ -33,14 +35,17 @@ struct Point
     float y;
 };
 
-const vector<string>
-split(const string &str, const char &delimiter);
+const vector<string> split(const string &str, const char &delimiter);
 
 float File_to_String(const string str);
+
+vector<Point> Assembly_Line_to_Point(const vector<segment> Assembly); //將線段切割成點
 
 vector<segment> Print_Silkscreen(const vector<segment> Assembly);
 
 Point Outside_of_Assembly(const Point a, const Point b, const vector<segment> Assembly);
+
+void Write_File(const vector<segment> Silkscreen);
 
 int main()
 {
@@ -157,6 +162,8 @@ int main()
     copper_master.clear();
 
     silkscreen = Print_Silkscreen(assembly);
+
+    Write_File(silkscreen);
     // the main IC uses polygon
     // arc uses linestring
     // pin uses polygon
@@ -211,23 +218,21 @@ segment line_offset(const segment original_line, const float assemblygap)
     return silkscreen;
 }
 
-vector<segment> Print_Silkscreen(const vector<segment> Assembly)
+vector<Point> Assembly_Line_to_Point(const vector<segment> Assembly)
 {
     const int size = Assembly.size();
-    vector<Point> Extended_Points;
-    segment A_Line;
-    vector<segment> Silkscreen;
+    vector<Point> Point_Vector;
+    segment first_line, second_line;
+    double first_angle, second_angle;
+    Point Point_Overlap; //兩線段交點
+
     for (size_t i = 0; i < size; i++)
     {
-        segment first_line, second_line;
         first_line = Assembly[i];
         if (i != size - 1)
             second_line = Assembly[i + 1];
         else
             second_line = Assembly[0];
-        double first_angle = atan2(first_line.slope, 1);
-        double second_angle = atan2(second_line.slope, 1);
-        Point Point_Overlap; //兩線段交點
         if (first_line.x1 == second_line.x1 || first_line.x1 == second_line.x2)
         {
             Point_Overlap.x = first_line.x1;
@@ -238,14 +243,39 @@ vector<segment> Print_Silkscreen(const vector<segment> Assembly)
             Point_Overlap.x = first_line.x2;
             Point_Overlap.y = first_line.y2;
         }
+        Point_Vector.push_back(Point_Overlap);
+    }
+    return Point_Vector;
+}
+
+vector<segment> Print_Silkscreen(const vector<segment> Assembly)
+{
+    const int size = Assembly.size();
+    vector<Point> Assembly_Points;
+    vector<Point> Extended_Points;
+    segment A_Line;
+    vector<segment> Silkscreen;
+
+    Assembly_Points = Assembly_Line_to_Point(Assembly); //線切割為點
+
+    for (size_t i = 0; i < size; i++)
+    {
+        segment first_line, second_line;
+        first_line = Assembly[i];
+        if (i != size - 1)
+            second_line = Assembly[i + 1];
+        else
+            second_line = Assembly[0];
+        double first_angle = atan2(first_line.slope, 1);
+        double second_angle = atan2(second_line.slope, 1);
         double Angle_Divided = (first_angle + second_angle) / 2;                    //角平分線的角度
         float Bisector_Slope = tan(Angle_Divided);                                  //角平分線
         double Point_Extend_Range = assemblygap / sin(Angle_Divided - first_angle); //點外擴距離
         Point Extend_1, Extend_2;                                                   //交點向外延伸的兩個點
-        Extend_1.x = Point_Overlap.x + Point_Extend_Range * cos(Angle_Divided);
-        Extend_1.y = Point_Overlap.y + Point_Extend_Range * sin(Angle_Divided);
-        Extend_2.x = Point_Overlap.x - Point_Extend_Range * cos(Angle_Divided);
-        Extend_2.y = Point_Overlap.y - Point_Extend_Range * sin(Angle_Divided);
+        Extend_1.x = Assembly_Points[i].x + Point_Extend_Range * cos(Angle_Divided);
+        Extend_1.y = Assembly_Points[i].y + Point_Extend_Range * sin(Angle_Divided);
+        Extend_2.x = Assembly_Points[i].x - Point_Extend_Range * cos(Angle_Divided);
+        Extend_2.y = Assembly_Points[i].y - Point_Extend_Range * sin(Angle_Divided);
         Extended_Points.push_back(Outside_of_Assembly(Extend_1, Extend_2, Assembly));
     }
     for (size_t i = 0; i < size; i++) // for line
@@ -270,8 +300,30 @@ vector<segment> Print_Silkscreen(const vector<segment> Assembly)
     }
     return Silkscreen;
 }
-Point Outside_of_Assembly(const Point a, const Point b, const vector<segment> Assembly)
+
+Point Outside_of_Assembly(const Point a, const Point b, const vector<segment> Assembly) //使用角度方法
 {
     Point Outside;
+    vector<Point> Assembly_Points = Assembly_Line_to_Point(Assembly);
     return Outside;
+}
+
+void Write_File(const vector<segment> Silkscreen)
+{
+    fstream Output;
+
+    Output.open("test_Ans.txt", ios::out);
+    Output << "silkscreen" << endl;
+    const int size = Silkscreen.size();
+    for (size_t i = 0; i < size; i++)
+    {
+        if (Silkscreen[i].is_line)
+        {
+            Output << "line," << fixed << setprecision(4) << Silkscreen[i].x1 << "," << Silkscreen[i].y1 << "," << Silkscreen[i].x2 << "," << Silkscreen[i].y2 << endl;
+        }
+        else
+        {
+            Output << "Arc," << fixed << setprecision(4) << Silkscreen[i].x1 << "," << Silkscreen[i].y1 << "," << Silkscreen[i].x2 << "," << Silkscreen[i].y2 << "," << Silkscreen[i].center_x << "," << Silkscreen[i].center_y << (Silkscreen[i].direction ? "CCW" : "CW") << endl;
+        }
+    }
 }

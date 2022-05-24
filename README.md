@@ -2,6 +2,16 @@
 
 ## Algorithms
 
+2022/5/25
+
+new function
+
+    Assembly_Line_to_Point()
+
+    change data structure from lines to points
+
+Peter
+
 2022/5/24
 
 new function
@@ -11,6 +21,16 @@ new function
 Peter
 
 ## File Processing
+
+2022/5/25
+
+new function
+
+    Write_File()
+
+    can output the txt in correct format
+
+Peter
 
 2022/5/21
 
