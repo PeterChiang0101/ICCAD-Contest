@@ -5,11 +5,13 @@
 #include <cstring> // strtok
 #include <vector>
 #include <cmath>
-#include "Segment.h"
 // use boost library
 
 using namespace std;
-
+float assemblygap, coppergap, silkscreenlen;
+// assemblygap : the minimum distance between assembly and silkscreen
+// coppergap : the minimum distance between copper and silkscreen
+// silkscreenlen : the minimum length of silkscreen
 struct segment
 {
     bool is_line; // 0 = arc, 1 = line
@@ -17,30 +19,36 @@ struct segment
     float y1;
     float x2;
     float y2;
+    float slope;       //斜率
+    float y_intercept; //截距
     // below is needed by arc, when deals with line set all to 0
     float center_x;
     float center_y;
     bool direction; // 0 = ClockWise(CW), 1 = ConterClockwise(CCW)
 };
 
-const vector<string> split(const string &str, const char &delimiter);
+struct Point
+{
+    float x;
+    float y;
+};
+
+const vector<string>
+split(const string &str, const char &delimiter);
 
 float File_to_String(string str);
+
+vector<segment> Print_Silkscreen(vector<segment> Assembly);
 
 int main()
 {
     fstream file;
     string assemblygap_str, coppergap_str, silkscreenlen_str;
-    float assemblygap, coppergap, silkscreenlen;
 
-    file.open("input.txt", ios::in);
+    file.open("test.txt", ios::in);
 
     // the first three line of the file, defines parameters for silkscreen
     file >> assemblygap_str >> coppergap_str >> silkscreenlen_str;
-
-    // assemblygap : the minimum distance between assembly and silkscreen
-    // coppergap : the minimum distance between copper and silkscreen
-    // silkscreenlen : the minimum length of silkscreen
     assemblygap = File_to_String(assemblygap_str);
     coppergap = File_to_String(coppergap_str);
     silkscreenlen = File_to_String(silkscreenlen_str);
@@ -49,6 +57,7 @@ int main()
     vector<vector<segment>> copper;
     vector<segment> copper_master;
     vector<string> ret;
+    vector<segment> silkscreen;
 
     struct segment master;
     bool type;       // 0 = assembly, 1 = copper
@@ -128,6 +137,9 @@ int main()
                     }
                 }
             }
+            master.slope = (master.y2 - master.y1) / (master.x2 - master.x1);
+            master.y_intercept = master.y1 - master.slope * master.x1;
+
             if (type == 0)
             {
                 assembly.push_back(master);
@@ -142,7 +154,7 @@ int main()
     copper.push_back(copper_master);
     copper_master.clear();
 
-    // transform into data structure
+    silkscreen = Print_Silkscreen(assembly);
     // the main IC uses polygon
     // arc uses linestring
     // pin uses polygon
@@ -195,4 +207,34 @@ segment line_offset(segment original_line, float assemblygap)
     silkscreen.y2 = original_line.y2 + y_offset / line_length;
 
     return silkscreen;
+}
+
+vector<segment> Print_Silkscreen(vector<segment> Assembly)
+{
+    const int size = Assembly.size();
+    for (size_t i = 0; i < size - 1; i++)
+    {
+        segment first_line = Assembly[i], second_line = Assembly[i + 1];
+        double first_angle = atan2(first_line.slope, 1);
+        double second_angle = atan2(second_line.slope, 1);
+        Point Point_Overlap; //兩線段交點
+        if (first_line.x1 == second_line.x1 || first_line.x1 == second_line.x2)
+        {
+            Point_Overlap.x = first_line.x1;
+            Point_Overlap.y = first_line.y1;
+        }
+        else
+        {
+            Point_Overlap.x = first_line.x2;
+            Point_Overlap.y = first_line.y2;
+        }
+        double Angle_Divided = (first_angle + second_angle) / 2;               //角平分線的角度
+        float Bisector_Slope = tan(Angle_Divided);                             //角平分線
+        double Point_Extend_Range = assemblygap / cos(M_PI_2 - Angle_Divided); //點外擴距離
+        Point Extend_1, Extend_2;                                              //交點向外延伸的兩個點
+        Extend_1.x = Point_Overlap.x + sin(Point_Extend_Range);
+        Extend_1.y = Point_Overlap.y + cos(Point_Extend_Range);
+        Extend_2.x = Point_Overlap.x - sin(Point_Extend_Range);
+        Extend_2.y = Point_Overlap.y - cos(Point_Extend_Range);
+    }
 }
