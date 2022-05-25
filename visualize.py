@@ -23,12 +23,17 @@ fg = plt.figure()
 fg.patch.set_facecolor('k')
 ax = fg.add_subplot(111)
 ax.set_facecolor('k')
+plt.title("PublicCase_" + choice, color='y')
 
 
 def ReadIn(type, x1, x2, y1, y2, cirx, ciry, cir_dir, f):
+    assembly_going = True
     for line in f.readlines():
         s = line.split(',')
         if len(s) < 4:
+            if s[0] == "copper\n" and assembly_going:
+                assembly_going = False
+                type.append('end_of_assembly')
             continue
         else:
             type.append(str(s[0]))
@@ -57,6 +62,9 @@ for i in range(len(x1)):
     if type[i] == 'end_of_input':
         type.remove('end_of_input')
         color = 'y'
+    elif type[i] == 'end_of_assembly':
+        type.remove('end_of_assembly')
+        color = 'b'
     if type[i] == 'line':
         x = [x1[i], x2[i]]
         y = [y1[i], y2[i]]
