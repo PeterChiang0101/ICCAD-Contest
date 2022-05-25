@@ -5,9 +5,11 @@
 #include <cstring> // strtok
 #include <vector>
 #include <cmath>
-#include <iomanip> //setprecision
+#include <iomanip> //setprecision & fixed
 
 using namespace std;
+#define Angle_Tolerance 0.1 //算角度誤差容許值 (rad)
+#define PI 3.14159265358979323846
 
 // assemblygap : the minimum distance between assembly and silkscreen
 // coppergap : the minimum distance between copper and silkscreen
@@ -43,7 +45,7 @@ vector<Point> Assembly_Line_to_Point(const vector<segment> Assembly); //將線�
 
 vector<segment> Print_Silkscreen(const vector<segment> Assembly);
 
-Point Outside_of_Assembly(const Point a, const Point b, const vector<segment> Assembly);
+bool Outside_of_Assembly(const Point a, const vector<segment> Assembly);
 
 void Write_File(const vector<segment> Silkscreen);
 
@@ -266,24 +268,30 @@ vector<segment> Print_Silkscreen(const vector<segment> Assembly)
             second_line = Assembly[i + 1];
         else
             second_line = Assembly[0];
-        double first_angle = atan2(first_line.slope, 1);
-        double second_angle = atan2(second_line.slope, 1);
+        double first_angle = atan2(first_line.y2 - first_line.y1, first_line.x2 - first_line.x1);
+        double second_angle = atan2(second_line.y2 - second_line.y1, second_line.x2 - second_line.x1);
         double Angle_Divided = (first_angle + second_angle) / 2;                    //角平分線的角度
         float Bisector_Slope = tan(Angle_Divided);                                  //角平分線
         double Point_Extend_Range = assemblygap / sin(Angle_Divided - first_angle); //點外擴距離
         Point Extend_1, Extend_2;                                                   //交點向外延伸的兩個點
+        bool Outside_1, Outside_2;
         Extend_1.x = Assembly_Points[i].x + Point_Extend_Range * cos(Angle_Divided);
         Extend_1.y = Assembly_Points[i].y + Point_Extend_Range * sin(Angle_Divided);
         Extend_2.x = Assembly_Points[i].x - Point_Extend_Range * cos(Angle_Divided);
         Extend_2.y = Assembly_Points[i].y - Point_Extend_Range * sin(Angle_Divided);
-        Extended_Points.push_back(Outside_of_Assembly(Extend_1, Extend_2, Assembly));
+        Outside_1 = Outside_of_Assembly(Extend_1, Assembly);
+        Outside_2 = Outside_of_Assembly(Extend_2, Assembly);
+        if (Outside_1 && !Outside_2)
+            Extended_Points.push_back(Extend_1);
+        else if (Outside_2 && !Outside_1)
+            Extended_Points.push_back(Extend_2);
     }
     for (size_t i = 0; i < size; i++) // for line
     {
         A_Line.is_line = true;
         A_Line.x1 = Extended_Points[i].x;
         A_Line.y1 = Extended_Points[i].y;
-        if (i != size)
+        if (i != size - 1)
         {
             A_Line.x2 = Extended_Points[i + 1].x;
             A_Line.y2 = Extended_Points[i + 1].y;
@@ -301,11 +309,35 @@ vector<segment> Print_Silkscreen(const vector<segment> Assembly)
     return Silkscreen;
 }
 
-Point Outside_of_Assembly(const Point a, const Point b, const vector<segment> Assembly) //使用角度方法
+bool Outside_of_Assembly(const Point a, const vector<segment> Assembly) //使用角度方法
 {
-    Point Outside;
     vector<Point> Assembly_Points = Assembly_Line_to_Point(Assembly);
-    return Outside;
+    vector<float> Angle_Vector;
+    float Angle;
+    float First_Angle, Second_Angle;
+    float Total_Angle = 0;
+
+    int size = Assembly_Points.size();
+    for (size_t i = 0; i < size; i++)
+    {
+        Angle_Vector.push_back(atan2(Assembly_Points[i].y - a.y, Assembly_Points[i].x - a.x));
+    }
+    for (size_t i = 0; i < size; i++)
+    {
+        First_Angle = Angle_Vector[i];
+        if (i == size - 1)
+            Second_Angle = Angle_Vector[0];
+        else
+            Second_Angle = Angle_Vector[i + 1];
+        Angle = Second_Angle - First_Angle;
+        Angle = (Angle < 0) ? Angle + 2 * PI : Angle;
+        Total_Angle += Angle;
+    }
+
+    if (abs(Total_Angle - 2 * PI) > Angle_Tolerance)
+        return true;
+    else
+        return false;
 }
 
 void Write_File(const vector<segment> Silkscreen)

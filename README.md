@@ -2,6 +2,22 @@
 
 ## Algorithms
 
+2022/5/26
+
+fix the bugs in functions, still some weird bugs to go on. (a point is not correct)
+
+change function
+
+    Outside_of_Assembly() return type from Point to bool
+
+add parameters
+
+    Angle_Tolerance = 0.1
+
+    PI = pi
+
+Peter
+
 2022/5/25
 
 new function
