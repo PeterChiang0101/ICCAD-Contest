@@ -2,6 +2,16 @@
 
 ## Algorithms
 
+!!!NOT_DONE!!!
+
+    BUGsss
+
+    圓與直線交點斜率
+
+    外擴圓心
+
+    copper 外擴 與 絲印交點
+
 2022/5/26
 
 fix the bugs in functions, still some weird bugs to go on. (a point is not correct)

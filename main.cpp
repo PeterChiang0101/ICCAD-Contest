@@ -10,7 +10,8 @@
 using namespace std;
 #define Angle_Tolerance 0.1 //算角度誤差容許值 (rad)
 #define PI 3.14159265358979323846
-
+#define INPUT_PATH "test_CaseB.txt"
+#define OUTPUT_PATH "test_CaseB_Ans.txt"
 // assemblygap : the minimum distance between assembly and silkscreen
 // coppergap : the minimum distance between copper and silkscreen
 // silkscreenlen : the minimum length of silkscreen
@@ -41,9 +42,9 @@ const vector<string> split(const string &str, const char &delimiter);
 
 float File_to_String(const string str);
 
-vector<Point> Assembly_Line_to_Point(const vector<segment> Assembly); //將線段切割成點
+vector<Point> Line_to_Point(const vector<segment> Assembly); //將線段切割成點
 
-vector<segment> Print_Silkscreen(const vector<segment> Assembly);
+vector<segment> Silkscreen_Buffer(const vector<segment> Assembly);
 
 bool Outside_of_Assembly(const Point a, const vector<segment> Assembly);
 
@@ -54,7 +55,7 @@ int main()
     fstream file;
     string assemblygap_str, coppergap_str, silkscreenlen_str;
 
-    file.open("test.txt", ios::in);
+    file.open(INPUT_PATH, ios::in);
 
     // the first three line of the file, defines parameters for silkscreen
     file >> assemblygap_str >> coppergap_str >> silkscreenlen_str;
@@ -163,7 +164,7 @@ int main()
     copper.push_back(copper_master);
     copper_master.clear();
 
-    silkscreen = Print_Silkscreen(assembly);
+    silkscreen = Silkscreen_Buffer(assembly);
 
     Write_File(silkscreen);
     // the main IC uses polygon
@@ -200,7 +201,7 @@ float File_to_String(const string str)
     return stof(str_truncate);
 }
 
-segment line_offset(const segment original_line, const float assemblygap)
+segment line_offset(const segment original_line, const float assemblygap) // not implemented
 {
     float line_length;
     float x_offset, y_offset;
@@ -220,7 +221,7 @@ segment line_offset(const segment original_line, const float assemblygap)
     return silkscreen;
 }
 
-vector<Point> Assembly_Line_to_Point(const vector<segment> Assembly)
+vector<Point> Line_to_Point(const vector<segment> Assembly) //將線段切割成點
 {
     const int size = Assembly.size();
     vector<Point> Point_Vector;
@@ -231,11 +232,11 @@ vector<Point> Assembly_Line_to_Point(const vector<segment> Assembly)
     for (size_t i = 0; i < size; i++)
     {
         first_line = Assembly[i];
-        if (i != size - 1)
+        if (i != size - 1) // the line is not the last line
             second_line = Assembly[i + 1];
-        else
+        else // the line is the last line
             second_line = Assembly[0];
-        if (first_line.x1 == second_line.x1 || first_line.x1 == second_line.x2)
+        if (first_line.x1 == second_line.x1 || first_line.x1 == second_line.x2) //找重疊線段
         {
             Point_Overlap.x = first_line.x1;
             Point_Overlap.y = first_line.y1;
@@ -250,7 +251,7 @@ vector<Point> Assembly_Line_to_Point(const vector<segment> Assembly)
     return Point_Vector;
 }
 
-vector<segment> Print_Silkscreen(const vector<segment> Assembly)
+vector<segment> Silkscreen_Buffer(const vector<segment> Assembly) //產生絲印
 {
     const int size = Assembly.size();
     vector<Point> Assembly_Points;
@@ -258,7 +259,7 @@ vector<segment> Print_Silkscreen(const vector<segment> Assembly)
     segment A_Line;
     vector<segment> Silkscreen;
 
-    Assembly_Points = Assembly_Line_to_Point(Assembly); //線切割為點
+    Assembly_Points = Line_to_Point(Assembly); //線切割為點
 
     for (size_t i = 0; i < size; i++)
     {
@@ -268,9 +269,9 @@ vector<segment> Print_Silkscreen(const vector<segment> Assembly)
             second_line = Assembly[i + 1];
         else
             second_line = Assembly[0];
-        double first_angle = atan2(first_line.y2 - first_line.y1, first_line.x2 - first_line.x1);
+        double first_angle = atan2(first_line.y2 - first_line.y1, first_line.x2 - first_line.x1); //不可用斜率
         double second_angle = atan2(second_line.y2 - second_line.y1, second_line.x2 - second_line.x1);
-        if (Assembly_Points[i].x == first_line.x1)
+        if (Assembly_Points[i].x == first_line.x1) // 向量共同點校正
         {
             first_angle -= PI;
             if (first_angle < -PI)
@@ -292,11 +293,14 @@ vector<segment> Print_Silkscreen(const vector<segment> Assembly)
         Extend_1.y = Assembly_Points[i].y + Point_Extend_Range * sin(Angle_Divided);
         Extend_2.x = Assembly_Points[i].x - Point_Extend_Range * cos(Angle_Divided);
         Extend_2.y = Assembly_Points[i].y - Point_Extend_Range * sin(Angle_Divided);
-        Outside_1 = Outside_of_Assembly(Extend_1, Assembly);
+
+        //點是否在圖型外
+        Outside_1 = Outside_of_Assembly(Extend_1, Assembly); // true for outside, false for inside
         Outside_2 = Outside_of_Assembly(Extend_2, Assembly);
-        if (Outside_1 && !Outside_2)
+
+        if (Outside_1 && !Outside_2) // 1 is outside, 2 is inside
             Extended_Points.push_back(Extend_1);
-        else if (Outside_2 && !Outside_1)
+        else if (Outside_2 && !Outside_1) // 2 is outside, 1 is inside
             Extended_Points.push_back(Extend_2);
     }
     for (size_t i = 0; i < size; i++) // for line
@@ -324,8 +328,8 @@ vector<segment> Print_Silkscreen(const vector<segment> Assembly)
 
 bool Outside_of_Assembly(const Point a, const vector<segment> Assembly) //使用角度方法
 {
-    vector<Point> Assembly_Points = Assembly_Line_to_Point(Assembly);
-    vector<float> Angle_Vector;
+    vector<Point> Assembly_Points = Line_to_Point(Assembly);
+    vector<float> Angle_Vector; // 各點之間角度差
     float Angle;
     float First_Angle, Second_Angle;
     float Total_Angle = 0;
@@ -342,8 +346,8 @@ bool Outside_of_Assembly(const Point a, const vector<segment> Assembly) //使用
             Second_Angle = Angle_Vector[0];
         else
             Second_Angle = Angle_Vector[i + 1];
-        Angle = Second_Angle - First_Angle;
-        Angle = (Angle < 0) ? Angle + 2 * PI : Angle;
+        Angle = Second_Angle - First_Angle;           // 角度差
+        Angle = (Angle < 0) ? Angle + 2 * PI : Angle; // 差值永遠為正
         Total_Angle += Angle;
     }
 
@@ -357,7 +361,7 @@ void Write_File(const vector<segment> Silkscreen)
 {
     fstream Output;
 
-    Output.open("test_Ans.txt", ios::out);
+    Output.open(OUTPUT_PATH, ios::out);
     Output << "silkscreen" << endl;
     const int size = Silkscreen.size();
     for (size_t i = 0; i < size; i++)
