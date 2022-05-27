@@ -270,6 +270,19 @@ vector<segment> Print_Silkscreen(const vector<segment> Assembly)
             second_line = Assembly[0];
         double first_angle = atan2(first_line.y2 - first_line.y1, first_line.x2 - first_line.x1);
         double second_angle = atan2(second_line.y2 - second_line.y1, second_line.x2 - second_line.x1);
+        if (Assembly_Points[i].x == first_line.x1)
+        {
+            first_angle -= PI;
+            if (first_angle < -PI)
+                first_angle += 2 * PI;
+        }
+        if (Assembly_Points[i].x == second_line.x1)
+        {
+            second_angle -= PI;
+            if (first_angle < -PI)
+                first_angle += 2 * PI;
+        }
+
         double Angle_Divided = (first_angle + second_angle) / 2;                    //角平分線的角度
         float Bisector_Slope = tan(Angle_Divided);                                  //角平分線
         double Point_Extend_Range = assemblygap / sin(Angle_Divided - first_angle); //點外擴距離
