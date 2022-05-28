@@ -26,6 +26,7 @@ struct segment
     float y2;
     float slope;       //斜率
     float y_intercept; //截距
+    double theta;      // the angle reference to positive x axis
     // below is needed by arc, when deals with line set all to 0
     float center_x;
     float center_y;
@@ -38,17 +39,23 @@ struct Point
     float y;
 };
 
-const vector<string> split(const string &str, const char &delimiter);
+float File_to_Parameter(const string);
 
-float File_to_String(const string str);
+const vector<string> split(const string &, const char &);
 
-vector<Point> Line_to_Point(const vector<segment> Assembly); //將線段切割成點
+segment String_to_Line(const string);
 
-vector<segment> Silkscreen_Buffer(const vector<segment> Assembly);
+vector<segment> Read_Assembly(fstream &);
 
-bool Outside_of_Assembly(const Point a, const vector<segment> Assembly);
+vector<vector<segment>> Read_Copper(fstream &);
 
-void Write_File(const vector<segment> Silkscreen);
+vector<Point> Line_to_Point(const vector<segment>); //將線段切割成點
+
+vector<segment> Silkscreen_Buffer(const vector<segment>);
+
+bool Outside_of_Assembly(const Point, const vector<segment>);
+
+void Write_File(const vector<segment>);
 
 int main()
 {
@@ -59,126 +66,34 @@ int main()
 
     // the first three line of the file, defines parameters for silkscreen
     file >> assemblygap_str >> coppergap_str >> silkscreenlen_str;
-    assemblygap = File_to_String(assemblygap_str);
-    coppergap = File_to_String(coppergap_str);
-    silkscreenlen = File_to_String(silkscreenlen_str);
+    assemblygap = File_to_Parameter(assemblygap_str);
+    coppergap = File_to_Parameter(coppergap_str);
+    silkscreenlen = File_to_Parameter(silkscreenlen_str);
 
     vector<segment> assembly;
     vector<vector<segment>> copper;
-    vector<segment> copper_master;
-    vector<string> ret;
     vector<segment> silkscreen;
 
-    struct segment master;
-    bool type;       // 0 = assembly, 1 = copper
-    int element = 0; // which element of a segment
-    int num = 0;     // which copper
-
-    string line;
-    getline(file, line); // stange string???????
-
-    while (getline(file, line))
-    {
-        cout << line << endl;
-        if (line == "assembly")
-        {
-            type = 0;
-            continue;
-        }
-        else if (line == "copper")
-        {
-            type = 1;
-            num++;
-            if (num != 1)
-            {
-                cout << "size0=" << copper_master.size() << endl;
-                copper.push_back(copper_master);
-                copper_master.clear();
-            }
-            continue;
-        }
-        else
-        {
-            ret = split(line, ',');
-            for (auto &s : ret)
-            {
-                if (s == "line") // reading line
-                {
-                    master.is_line = 1;
-                    master.center_x = 0;
-                    master.center_y = 0;
-                    master.direction = 0;
-                    element = 0;
-                }
-                else if (s == "arc") // reading arc
-                {
-                    master.is_line = 0;
-                    element = 0;
-                }
-                else
-                {
-                    element++;
-                    switch (element)
-                    {
-                    case 1:
-                        master.x1 = stof(s);
-                        break;
-                    case 2:
-                        master.y1 = stof(s);
-                        break;
-                    case 3:
-                        master.x2 = stof(s);
-                        break;
-                    case 4:
-                        master.y2 = stof(s);
-                        break;
-                    case 5:
-                        master.center_x = stof(s);
-                        break;
-                    case 6:
-                        master.center_y = stof(s);
-                        break;
-                    case 7:
-                        if (s == "CW")
-                            master.direction = 0;
-                        else
-                            master.direction = 1;
-                        break;
-                    }
-                }
-            }
-            master.slope = (master.y2 - master.y1) / (master.x2 - master.x1);
-            master.y_intercept = master.y1 - master.slope * master.x1;
-
-            if (type == 0)
-            {
-                assembly.push_back(master);
-            }
-            else
-            {
-                // cout<<"num="<<num<<endl;
-                copper_master.push_back(master);
-            }
-        }
-    }
-    copper.push_back(copper_master);
-    copper_master.clear();
+    assembly = Read_Assembly(file);
+    copper = Read_Copper(file);
 
     silkscreen = Silkscreen_Buffer(assembly);
 
     Write_File(silkscreen);
-    // the main IC uses polygon
-    // arc uses linestring
-    // pin uses polygon
 
     // calculate the silkscreen
     // ignore the arc first
-    // maximize the usage of boost
-    // buffer() , closest_point(), distance(), within()
 
     // arc needed to be treated manually
 
     // output
+}
+
+float File_to_Parameter(const string str)
+{
+    string str_truncate;
+    str_truncate = str.substr(str.find(',') + 1);
+    return stof(str_truncate);
 }
 
 const vector<string> split(const string &str, const char &delimiter)
@@ -194,13 +109,108 @@ const vector<string> split(const string &str, const char &delimiter)
     return result;
 }
 
-float File_to_String(const string str)
+segment String_to_Line(string line)
 {
-    string str_truncate;
-    str_truncate = str.substr(str.find(',') + 1);
-    return stof(str_truncate);
+    vector<string> Splited;
+    Splited = split(line, ',');
+    int vector_size = Splited.size();
+    segment part;
+
+    for (size_t i = 1; i < vector_size; i++)
+    {
+        switch (i)
+        {
+        case 1:
+            part.x1 = stof(Splited[i]);
+            break;
+        case 2:
+            part.y1 = stof(Splited[i]);
+            break;
+        case 3:
+            part.x2 = stof(Splited[i]);
+            break;
+        case 4:
+            part.y2 = stof(Splited[i]);
+            break;
+        case 5:
+            part.center_x = stof(Splited[i]);
+            break;
+        case 6:
+            part.center_y = stof(Splited[i]);
+            break;
+        case 7:
+            part.direction = (Splited[i] == "CCW") ? 1 : 0;
+            break;
+        }
+    }
+    if (vector_size == 5)
+    {
+        part.is_line = true;
+        part.center_x = 0;
+        part.center_y = 0;
+        part.direction = 0;
+        part.slope = (part.y2 - part.y1) / (part.x2 - part.x1);
+        part.y_intercept = part.y1 - part.slope * part.x1;
+        part.theta = atan2(part.y2 - part.y1, part.x2 - part.x1);
+    }
+    else if (vector_size == 8)
+    {
+        part.is_line = false;
+        part.slope = 0;
+        part.y_intercept = 0;
+        part.theta = 0;
+    }
+    return part;
 }
 
+vector<segment> Read_Assembly(fstream &Input_File)
+{
+    vector<segment> Assembly;
+    segment part;
+    vector<string> split_return;
+    string line;
+    int line_size;
+    getline(Input_File, line);
+
+    while (getline(Input_File, line))
+    {
+        if (line == "copper")
+            return Assembly;
+        else if (line == "assembly")
+            continue;
+        else
+            part = String_to_Line(line);
+        Assembly.push_back(part);
+    }
+    return Assembly;
+}
+
+vector<vector<segment>> Read_Copper(fstream &Input_File)
+{
+    vector<segment> copper;
+    vector<vector<segment>> copper_pack;
+    segment part;
+    vector<string> split_return;
+    string line;
+    int line_size;
+    while (getline(Input_File, line))
+    {
+        if (line == "copper")
+        {
+            copper_pack.push_back(copper);
+            copper.clear();
+        }
+        else
+        {
+            part = String_to_Line(line);
+            copper.push_back(part);
+        }
+    }
+    copper_pack.push_back(copper);
+    return copper_pack;
+}
+
+/*
 segment line_offset(const segment original_line, const float assemblygap) // not implemented
 {
     float line_length;
@@ -220,6 +230,7 @@ segment line_offset(const segment original_line, const float assemblygap) // not
 
     return silkscreen;
 }
+*/
 
 vector<Point> Line_to_Point(const vector<segment> Assembly) //將線段切割成點
 {
