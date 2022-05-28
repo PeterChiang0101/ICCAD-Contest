@@ -12,18 +12,18 @@ y2 = []
 cirx = []
 ciry = []
 cir_dir = []
-choice = input("What testcase you want to visualize? (A, B, C) :")
-home = os.getcwd() + "\\PublicCase"
+choice = input("What testcase you want to visualize? (0, A, B, C) :")
+home = os.getcwd() + "\\TestingCase"
 # print(home)
-path = home + "\\PublicCase_" + choice + ".txt"
-silkpath = home + "\\PublicCase_" + choice + "_Ans.txt"
-img_out = home + "\\PublicCase_" + choice + "_output.png"
+path = home + "\\test_" + choice + ".txt"
+silkpath = home + "\\test_" + choice + "_Ans.txt"
+img_out = home + "\\test_" + choice + "_output.png"
 
 fg = plt.figure()
 fg.patch.set_facecolor('k')
 ax = fg.add_subplot(111)
 ax.set_facecolor('k')
-plt.title("PublicCase_" + choice, color='y')
+plt.title("test_" + choice, color='y')
 
 
 def ReadIn(type, x1, x2, y1, y2, cirx, ciry, cir_dir, f):

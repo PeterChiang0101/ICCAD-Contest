@@ -1,7 +1,5 @@
 # ICCAD Contest 2022 Problem E
 
-## Algorithms
-
 !!!NOT_DONE!!!
 
     BUGsss
@@ -15,6 +13,14 @@
     外擴圓心
 
     copper 外擴 與 絲印交點
+
+I/O
+
+    i/o file location: TestingCase folder
+
+    naming rule:    test_"NAME".txt    test_"NAME"_Ans.txt
+
+## Algorithms
 
 2022/5/26
 
