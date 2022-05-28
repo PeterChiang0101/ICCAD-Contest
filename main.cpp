@@ -36,6 +36,7 @@ struct Point
 {
     float x;
     float y;
+    bool arc_or_not; //true for arc, false for line
 };
 
 const vector<string> split(const string &str, const char &delimiter);
@@ -43,6 +44,8 @@ const vector<string> split(const string &str, const char &delimiter);
 float File_to_String(const string str);
 
 vector<Point> Line_to_Point(const vector<segment> Assembly); //將線段切割成點
+
+vector<Point> Arc_to_Line(const vector<segment> Assembly);//圓弧邊界找切線，取代圓弧以利Silkscreen_Buffer實作
 
 vector<segment> Silkscreen_Buffer(const vector<segment> Assembly);
 
@@ -148,7 +151,7 @@ int main()
                 }
             }
             master.slope = (master.y2 - master.y1) / (master.x2 - master.x1);
-            master.y_intercept = master.y1 - master.slope * master.x1;
+            master.y_intercept = master.y1 - master.slope * master.x1;//y軸節距
 
             if (type == 0)
             {
@@ -240,16 +243,29 @@ vector<Point> Line_to_Point(const vector<segment> Assembly) //將線段切割成
         {
             Point_Overlap.x = first_line.x1;
             Point_Overlap.y = first_line.y1;
+            if(!first_line.is_line) Point_Overlap.arc_or_not = true;
         }
         else
         {
             Point_Overlap.x = first_line.x2;
             Point_Overlap.y = first_line.y2;
+            if(!second_line.is_line) Point_Overlap.arc_or_not = true;
         }
         Point_Vector.push_back(Point_Overlap);
     }
     return Point_Vector;
 }
+
+vector<Point> Arc_to_Line(const vector<segment> Assembly)
+{
+    const int size = Assembly.size();
+    //one arc will generate two lines
+    //using vector.insert() to insert the second line
+    //this action will modify the original data
+    //the struct segment need a extra bool to tell Silkscreen_Buffer the first and second line are forbidden to extrapolate
+}
+
+
 
 vector<segment> Silkscreen_Buffer(const vector<segment> Assembly) //產生絲印
 {
