@@ -236,7 +236,7 @@ vector<Point> Line_to_Point(const vector<segment> Assembly) //將線段切割成
             second_line = Assembly[i + 1];
         else // the line is the last line
             second_line = Assembly[0];
-        if (first_line.x1 == second_line.x1 || first_line.x1 == second_line.x2) //找重疊線段
+        if ((first_line.x1 == second_line.x1 && first_line.y1 == second_line.y1) || (first_line.x1 == second_line.x2 && first_line.y1 == second_line.y2)) //找重疊線段
         {
             Point_Overlap.x = first_line.x1;
             Point_Overlap.y = first_line.y1;
@@ -271,13 +271,13 @@ vector<segment> Silkscreen_Buffer(const vector<segment> Assembly) //產生絲印
             second_line = Assembly[0];
         double first_angle = atan2(first_line.y2 - first_line.y1, first_line.x2 - first_line.x1); //不可用斜率
         double second_angle = atan2(second_line.y2 - second_line.y1, second_line.x2 - second_line.x1);
-        if (Assembly_Points[i].x == first_line.x1) // 向量共同點校正
+        if (Assembly_Points[i].x == first_line.x1 && Assembly_Points[i].y == first_line.y1) // 向量共同點校正
         {
             first_angle -= PI;
             if (first_angle < -PI)
                 first_angle += 2 * PI;
         }
-        if (Assembly_Points[i].x == second_line.x1)
+        if (Assembly_Points[i].x == second_line.x1 && Assembly_Points[i].y == second_line.y1)
         {
             second_angle -= PI;
             if (first_angle < -PI)
@@ -346,8 +346,8 @@ bool Outside_of_Assembly(const Point a, const vector<segment> Assembly) //使用
             Second_Angle = Angle_Vector[0];
         else
             Second_Angle = Angle_Vector[i + 1];
-        Angle = Second_Angle - First_Angle;           // 角度差
-        Angle = (Angle < 0) ? Angle + 2 * PI : Angle; // 差值永遠為正
+        Angle = abs(Second_Angle - First_Angle);       // 角度差
+        Angle = (Angle > PI) ? 2 * PI - Angle : Angle; // 差值永遠為正
         Total_Angle += Angle;
     }
 
