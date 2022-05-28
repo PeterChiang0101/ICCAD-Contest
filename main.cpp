@@ -10,8 +10,8 @@
 using namespace std;
 #define Angle_Tolerance 0.1 //算角度誤差容許值 (rad)
 #define PI 3.14159265358979323846
-#define INPUT_PATH "test_CaseB.txt"
-#define OUTPUT_PATH "test_CaseB_Ans.txt"
+#define INPUT_PATH "test_CaseA.txt"
+#define OUTPUT_PATH "test_CaseA_Ans.txt"
 // assemblygap : the minimum distance between assembly and silkscreen
 // coppergap : the minimum distance between copper and silkscreen
 // silkscreenlen : the minimum length of silkscreen
