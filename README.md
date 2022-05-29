@@ -79,6 +79,12 @@ Point
 
 ## Algorithms
 
+2022/5/27
+
+start processing arc, have some issue.(see test_A pic)
+
+Peter Raymond
+
 2022/5/26
 
 fix the bugs in functions, still some weird bugs to go on. (a point is not correct)

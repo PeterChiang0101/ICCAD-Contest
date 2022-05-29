@@ -31,12 +31,15 @@ struct segment
     float center_x;
     float center_y;
     bool direction; // 0 = ClockWise(CW), 1 = ConterClockwise(CCW)
+    double theta_1; // 圓心到點一角度
+    double theta_2; // 圓心到點二角度
 };
 
 struct Point
 {
     float x;
     float y;
+    bool Next_Arc; // if the point connected to arc
 };
 
 float File_to_Parameter(const string);
@@ -159,6 +162,8 @@ segment String_to_Line(string line)
         part.slope = 0;
         part.y_intercept = 0;
         part.theta = 0;
+        part.theta_1 = atan2(part.y1 - part.center_y, part.x1 - part.center_x);
+        part.theta_2 = atan2(part.y2 - part.center_y, part.x2 - part.center_x);
     }
     return part;
 }
@@ -237,7 +242,6 @@ vector<Point> Line_to_Point(const vector<segment> Assembly) //將線段切割成
     const int size = Assembly.size();
     vector<Point> Point_Vector;
     segment first_line, second_line;
-    double first_angle, second_angle;
     Point Point_Overlap; //兩線段交點
 
     for (size_t i = 0; i < size; i++)
@@ -275,13 +279,23 @@ vector<segment> Silkscreen_Buffer(const vector<segment> Assembly) //產生絲印
     for (size_t i = 0; i < size; i++)
     {
         segment first_line, second_line;
+        double first_angle, second_angle;
         first_line = Assembly[i];
         if (i != size - 1)
             second_line = Assembly[i + 1];
         else
             second_line = Assembly[0];
-        double first_angle = atan2(first_line.y2 - first_line.y1, first_line.x2 - first_line.x1); //不可用斜率
-        double second_angle = atan2(second_line.y2 - second_line.y1, second_line.x2 - second_line.x1);
+
+        if (first_line.is_line) // line
+            first_angle = first_line.theta;
+        else // arc
+            first_angle = (first_line.direction) ? first_line.theta_1 - PI / 2 : first_line.theta_1 + PI / 2;
+
+        if (second_line.is_line) // line
+            second_angle = second_line.theta;
+        else // arc
+            second_angle = (second_line.direction) ? second_line.theta_1 - PI / 2 : second_line.theta_1 + PI / 2;
+
         if (Assembly_Points[i].x == first_line.x1 && Assembly_Points[i].y == first_line.y1) // 向量共同點校正
         {
             first_angle -= PI;
@@ -294,7 +308,6 @@ vector<segment> Silkscreen_Buffer(const vector<segment> Assembly) //產生絲印
             if (first_angle < -PI)
                 first_angle += 2 * PI;
         }
-
         double Angle_Divided = (first_angle + second_angle) / 2;                    //角平分線的角度
         float Bisector_Slope = tan(Angle_Divided);                                  //角平分線
         double Point_Extend_Range = assemblygap / sin(Angle_Divided - first_angle); //點外擴距離
@@ -304,6 +317,9 @@ vector<segment> Silkscreen_Buffer(const vector<segment> Assembly) //產生絲印
         Extend_1.y = Assembly_Points[i].y + Point_Extend_Range * sin(Angle_Divided);
         Extend_2.x = Assembly_Points[i].x - Point_Extend_Range * cos(Angle_Divided);
         Extend_2.y = Assembly_Points[i].y - Point_Extend_Range * sin(Angle_Divided);
+
+        Extend_1.Next_Arc = (second_line.is_line) ? false : true;
+        Extend_2.Next_Arc = (second_line.is_line) ? false : true;
 
         //點是否在圖型外
         Outside_1 = Outside_of_Assembly(Extend_1, Assembly); // true for outside, false for inside
@@ -316,7 +332,7 @@ vector<segment> Silkscreen_Buffer(const vector<segment> Assembly) //產生絲印
     }
     for (size_t i = 0; i < size; i++) // for line
     {
-        A_Line.is_line = true;
+        A_Line.is_line = (Extended_Points[i].Next_Arc) ? false : true;
         A_Line.x1 = Extended_Points[i].x;
         A_Line.y1 = Extended_Points[i].y;
         if (i != size - 1)
@@ -329,9 +345,30 @@ vector<segment> Silkscreen_Buffer(const vector<segment> Assembly) //產生絲印
             A_Line.x2 = Extended_Points[0].x;
             A_Line.y2 = Extended_Points[0].y;
         }
-        A_Line.slope = (A_Line.y2 - A_Line.y1) / (A_Line.x2 - A_Line.x1);
-        A_Line.y_intercept = A_Line.y1 - A_Line.slope * A_Line.x1;
-        A_Line.center_x = A_Line.center_y = A_Line.direction = 0;
+        if (A_Line.is_line)
+        {
+            A_Line.slope = (A_Line.y2 - A_Line.y1) / (A_Line.x2 - A_Line.x1);
+            A_Line.y_intercept = A_Line.y1 - A_Line.slope * A_Line.x1;
+            A_Line.center_x = A_Line.center_y = A_Line.direction = 0;
+        }
+        else
+        {
+            A_Line.slope = A_Line.y_intercept = A_Line.theta = 0;
+            if (i != size - 1)
+            {
+                A_Line.center_x = Assembly[i + 1].center_x;
+                A_Line.center_y = Assembly[i + 1].center_y;
+                A_Line.direction = Assembly[i + 1].direction;
+            }
+            else
+            {
+                A_Line.center_x = Assembly[0].center_x;
+                A_Line.center_y = Assembly[0].center_y;
+                A_Line.direction = Assembly[0].direction;
+            }
+            A_Line.theta_1 = atan2(A_Line.y1 - A_Line.center_y, A_Line.x1 - A_Line.center_x);
+            A_Line.theta_2 = atan2(A_Line.y2 - A_Line.center_y, A_Line.x2 - A_Line.center_x);
+        }
         Silkscreen.push_back(A_Line);
     }
     return Silkscreen;
@@ -383,7 +420,7 @@ void Write_File(const vector<segment> Silkscreen)
         }
         else
         {
-            Output << "Arc," << fixed << setprecision(4) << Silkscreen[i].x1 << "," << Silkscreen[i].y1 << "," << Silkscreen[i].x2 << "," << Silkscreen[i].y2 << "," << Silkscreen[i].center_x << "," << Silkscreen[i].center_y << (Silkscreen[i].direction ? "CCW" : "CW") << endl;
+            Output << "arc," << fixed << setprecision(4) << Silkscreen[i].x1 << "," << Silkscreen[i].y1 << "," << Silkscreen[i].x2 << "," << Silkscreen[i].y2 << "," << Silkscreen[i].center_x << "," << Silkscreen[i].center_y << "," << (Silkscreen[i].direction ? "CCW" : "CW") << endl;
         }
     }
 }
