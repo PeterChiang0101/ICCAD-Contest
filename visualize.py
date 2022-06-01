@@ -1,8 +1,10 @@
+from email.mime import base
 from math import atan2, degrees, sqrt
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Arc as Arc
 import os as os
+import glob
 
 type = []
 x1 = []
@@ -12,18 +14,27 @@ y2 = []
 cirx = []
 ciry = []
 cir_dir = []
-choice = input("What testcase you want to visualize? (A, B, C) :")
-home = os.getcwd() + "\\PublicCase"
-# print(home)
-path = home + "\\PublicCase_" + choice + ".txt"
-silkpath = home + "\\PublicCase_" + choice + "_Ans.txt"
-img_out = home + "\\PublicCase_" + choice + "_output.png"
+home = os.getcwd() + "\\TestingCase"
+target = (home + "\\test_?.txt")
+result = glob.glob(target)
+i = 0
+print("What testcase you want to visualize?")
+for entry in result:
+    i += 1
+    basename = os.path.basename(entry)
+    filename = os.path.splitext(basename)[0]
+    print(str(i) + '. ' + filename)
+choice = input("Selection (input the name after test_ ): ")
+
+path = home + "\\test_" + choice + ".txt"
+silkpath = home + "\\test_" + choice + "_Ans.txt"
+img_out = home + "\\test_" + choice + "_output.png"
 
 fg = plt.figure()
 fg.patch.set_facecolor('k')
 ax = fg.add_subplot(111)
 ax.set_facecolor('k')
-plt.title("PublicCase_" + choice, color='y')
+plt.title("test_" + choice, color='y')
 
 
 def ReadIn(type, x1, x2, y1, y2, cirx, ciry, cir_dir, f):

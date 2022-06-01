@@ -10,8 +10,8 @@
 using namespace std;
 #define Angle_Tolerance 0.1 //算角度誤差容許值 (rad)
 #define PI 3.14159265358979323846
-#define INPUT_PATH "test_CaseB.txt"
-#define OUTPUT_PATH "test_CaseB_Ans.txt"
+#define INPUT_PATH "./TestingCase/test_A.txt"
+#define OUTPUT_PATH "./TestingCase/test_A_Ans.txt"
 // assemblygap : the minimum distance between assembly and silkscreen
 // coppergap : the minimum distance between copper and silkscreen
 // silkscreenlen : the minimum length of silkscreen
@@ -26,33 +26,39 @@ struct segment
     float y2;
     float slope;       //斜率
     float y_intercept; //截距
-    bool arc_tangent_line;//因arc而產生的tangent_line
+    double theta;      // the angle reference to positive x axis
     // below is needed by arc, when deals with line set all to 0
     float center_x;
     float center_y;
     bool direction; // 0 = ClockWise(CW), 1 = ConterClockwise(CCW)
+    double theta_1; // 圓心到點一角度
+    double theta_2; // 圓心到點二角度
 };
 
 struct Point
 {
     float x;
     float y;
-    bool arc_or_not; //true for arc, false for line
+    bool Next_Arc; // if the point connected to arc
 };
 
-const vector<string> split(const string &str, const char &delimiter);
+float File_to_Parameter(const string);
 
-float File_to_String(const string str);
+const vector<string> split(const string &, const char &);
 
-vector<Point> Line_to_Point(const vector<segment> Assembly); //將線段切割成點
+segment String_to_Line(const string);
 
-vector<Point> Arc_to_Line(const vector<segment> Assembly);//圓弧邊界找切線，取代圓弧以利Silkscreen_Buffer實作
+vector<segment> Read_Assembly(fstream &);
 
-vector<segment> Silkscreen_Buffer(const vector<segment> Assembly);
+vector<vector<segment>> Read_Copper(fstream &);
 
-bool Outside_of_Assembly(const Point a, const vector<segment> Assembly);
+vector<Point> Line_to_Point(const vector<segment>); //將線段切割成點
 
-void Write_File(const vector<segment> Silkscreen);
+vector<segment> Silkscreen_Buffer(const vector<segment>);
+
+bool Outside_of_Assembly(const Point, const vector<segment>);
+
+void Write_File(const vector<segment>);
 
 int main()
 {
@@ -63,126 +69,34 @@ int main()
 
     // the first three line of the file, defines parameters for silkscreen
     file >> assemblygap_str >> coppergap_str >> silkscreenlen_str;
-    assemblygap = File_to_String(assemblygap_str);
-    coppergap = File_to_String(coppergap_str);
-    silkscreenlen = File_to_String(silkscreenlen_str);
+    assemblygap = File_to_Parameter(assemblygap_str);
+    coppergap = File_to_Parameter(coppergap_str);
+    silkscreenlen = File_to_Parameter(silkscreenlen_str);
 
     vector<segment> assembly;
     vector<vector<segment>> copper;
-    vector<segment> copper_master;
-    vector<string> ret;
     vector<segment> silkscreen;
 
-    struct segment master;
-    bool type;       // 0 = assembly, 1 = copper
-    int element = 0; // which element of a segment
-    int num = 0;     // which copper
-
-    string line;
-    getline(file, line); // stange string???????
-
-    while (getline(file, line))
-    {
-        cout << line << endl;
-        if (line == "assembly")
-        {
-            type = 0;
-            continue;
-        }
-        else if (line == "copper")
-        {
-            type = 1;
-            num++;
-            if (num != 1)
-            {
-                cout << "size0=" << copper_master.size() << endl;
-                copper.push_back(copper_master);
-                copper_master.clear();
-            }
-            continue;
-        }
-        else
-        {
-            ret = split(line, ',');
-            for (auto &s : ret)
-            {
-                if (s == "line") // reading line
-                {
-                    master.is_line = 1;
-                    master.center_x = 0;
-                    master.center_y = 0;
-                    master.direction = 0;
-                    element = 0;
-                }
-                else if (s == "arc") // reading arc
-                {
-                    master.is_line = 0;
-                    element = 0;
-                }
-                else
-                {
-                    element++;
-                    switch (element)
-                    {
-                    case 1:
-                        master.x1 = stof(s);
-                        break;
-                    case 2:
-                        master.y1 = stof(s);
-                        break;
-                    case 3:
-                        master.x2 = stof(s);
-                        break;
-                    case 4:
-                        master.y2 = stof(s);
-                        break;
-                    case 5:
-                        master.center_x = stof(s);
-                        break;
-                    case 6:
-                        master.center_y = stof(s);
-                        break;
-                    case 7:
-                        if (s == "CW")
-                            master.direction = 0;
-                        else
-                            master.direction = 1;
-                        break;
-                    }
-                }
-            }
-            master.slope = (master.y2 - master.y1) / (master.x2 - master.x1);
-            master.y_intercept = master.y1 - master.slope * master.x1;//y軸節距
-
-            if (type == 0)
-            {
-                assembly.push_back(master);
-            }
-            else
-            {
-                // cout<<"num="<<num<<endl;
-                copper_master.push_back(master);
-            }
-        }
-    }
-    copper.push_back(copper_master);
-    copper_master.clear();
+    assembly = Read_Assembly(file);
+    copper = Read_Copper(file);
 
     silkscreen = Silkscreen_Buffer(assembly);
 
     Write_File(silkscreen);
-    // the main IC uses polygon
-    // arc uses linestring
-    // pin uses polygon
 
     // calculate the silkscreen
     // ignore the arc first
-    // maximize the usage of boost
-    // buffer() , closest_point(), distance(), within()
 
     // arc needed to be treated manually
 
     // output
+}
+
+float File_to_Parameter(const string str)
+{
+    string str_truncate;
+    str_truncate = str.substr(str.find(',') + 1);
+    return stof(str_truncate);
 }
 
 const vector<string> split(const string &str, const char &delimiter)
@@ -198,13 +112,110 @@ const vector<string> split(const string &str, const char &delimiter)
     return result;
 }
 
-float File_to_String(const string str)
+segment String_to_Line(string line)
 {
-    string str_truncate;
-    str_truncate = str.substr(str.find(',') + 1);
-    return stof(str_truncate);
+    vector<string> Splited;
+    Splited = split(line, ',');
+    int vector_size = Splited.size();
+    segment part;
+
+    for (size_t i = 1; i < vector_size; i++)
+    {
+        switch (i)
+        {
+        case 1:
+            part.x1 = stof(Splited[i]);
+            break;
+        case 2:
+            part.y1 = stof(Splited[i]);
+            break;
+        case 3:
+            part.x2 = stof(Splited[i]);
+            break;
+        case 4:
+            part.y2 = stof(Splited[i]);
+            break;
+        case 5:
+            part.center_x = stof(Splited[i]);
+            break;
+        case 6:
+            part.center_y = stof(Splited[i]);
+            break;
+        case 7:
+            part.direction = (Splited[i] == "CCW") ? 1 : 0;
+            break;
+        }
+    }
+    if (vector_size == 5)
+    {
+        part.is_line = true;
+        part.center_x = 0;
+        part.center_y = 0;
+        part.direction = 0;
+        part.slope = (part.y2 - part.y1) / (part.x2 - part.x1);
+        part.y_intercept = part.y1 - part.slope * part.x1;
+        part.theta = atan2(part.y2 - part.y1, part.x2 - part.x1);
+    }
+    else if (vector_size == 8)
+    {
+        part.is_line = false;
+        part.slope = 0;
+        part.y_intercept = 0;
+        part.theta = 0;
+        part.theta_1 = atan2(part.y1 - part.center_y, part.x1 - part.center_x);
+        part.theta_2 = atan2(part.y2 - part.center_y, part.x2 - part.center_x);
+    }
+    return part;
 }
 
+vector<segment> Read_Assembly(fstream &Input_File)
+{
+    vector<segment> Assembly;
+    segment part;
+    vector<string> split_return;
+    string line;
+    int line_size;
+    getline(Input_File, line);
+
+    while (getline(Input_File, line))
+    {
+        if (line == "copper")
+            return Assembly;
+        else if (line == "assembly")
+            continue;
+        else
+            part = String_to_Line(line);
+        Assembly.push_back(part);
+    }
+    return Assembly;
+}
+
+vector<vector<segment>> Read_Copper(fstream &Input_File)
+{
+    vector<segment> copper;
+    vector<vector<segment>> copper_pack;
+    segment part;
+    vector<string> split_return;
+    string line;
+    int line_size;
+    while (getline(Input_File, line))
+    {
+        if (line == "copper")
+        {
+            copper_pack.push_back(copper);
+            copper.clear();
+        }
+        else
+        {
+            part = String_to_Line(line);
+            copper.push_back(part);
+        }
+    }
+    copper_pack.push_back(copper);
+    return copper_pack;
+}
+
+/*
 segment line_offset(const segment original_line, const float assemblygap) // not implemented
 {
     float line_length;
@@ -224,13 +235,13 @@ segment line_offset(const segment original_line, const float assemblygap) // not
 
     return silkscreen;
 }
+*/
 
 vector<Point> Line_to_Point(const vector<segment> Assembly) //將線段切割成點
 {
     const int size = Assembly.size();
     vector<Point> Point_Vector;
     segment first_line, second_line;
-    double first_angle, second_angle;
     Point Point_Overlap; //兩線段交點
 
     for (size_t i = 0; i < size; i++)
@@ -240,7 +251,7 @@ vector<Point> Line_to_Point(const vector<segment> Assembly) //將線段切割成
             second_line = Assembly[i + 1];
         else // the line is the last line
             second_line = Assembly[0];
-        if (first_line.x1 == second_line.x1 || first_line.x1 == second_line.x2) //找重疊線段
+        if ((first_line.x1 == second_line.x1 && first_line.y1 == second_line.y1) || (first_line.x1 == second_line.x2 && first_line.y1 == second_line.y2)) //找重疊線段
         {
             Point_Overlap.x = first_line.x1;
             Point_Overlap.y = first_line.y1;
@@ -305,26 +316,35 @@ vector<segment> Silkscreen_Buffer(const vector<segment> Assembly) //產生絲印
     for (size_t i = 0; i < size; i++)
     {
         segment first_line, second_line;
+        double first_angle, second_angle;
         first_line = Assembly[i];
         if (i != size - 1)
             second_line = Assembly[i + 1];
         else
             second_line = Assembly[0];
-        double first_angle = atan2(first_line.y2 - first_line.y1, first_line.x2 - first_line.x1); //不可用斜率
-        double second_angle = atan2(second_line.y2 - second_line.y1, second_line.x2 - second_line.x1);
-        if (Assembly_Points[i].x == first_line.x1) // 向量共同點校正
+
+        if (first_line.is_line) // line
+            first_angle = first_line.theta;
+        else // arc
+            first_angle = (first_line.direction) ? first_line.theta_2 + PI / 2 : first_line.theta_2 - PI / 2;
+
+        if (second_line.is_line) // line
+            second_angle = second_line.theta;
+        else // arc direction 0 = ClockWise(CW), 1 = ConterClockwise(CCW)
+            second_angle = (second_line.direction) ? second_line.theta_1 + PI / 2 : second_line.theta_1 - PI / 2;
+
+        if (Assembly_Points[i].x == first_line.x1 && Assembly_Points[i].y == first_line.y1) // 向量共同點校正
         {
             first_angle -= PI;
             if (first_angle < -PI)
                 first_angle += 2 * PI;
         }
-        if (Assembly_Points[i].x == second_line.x1)
+        if (Assembly_Points[i].x == second_line.x1 && Assembly_Points[i].y == second_line.y1)
         {
             second_angle -= PI;
-            if (first_angle < -PI)
-                first_angle += 2 * PI;
+            if (second_angle < -PI)
+                second_angle += 2 * PI;
         }
-
         double Angle_Divided = (first_angle + second_angle) / 2;                    //角平分線的角度
         float Bisector_Slope = tan(Angle_Divided);                                  //角平分線
         double Point_Extend_Range = assemblygap / sin(Angle_Divided - first_angle); //點外擴距離
@@ -334,6 +354,9 @@ vector<segment> Silkscreen_Buffer(const vector<segment> Assembly) //產生絲印
         Extend_1.y = Assembly_Points[i].y + Point_Extend_Range * sin(Angle_Divided);
         Extend_2.x = Assembly_Points[i].x - Point_Extend_Range * cos(Angle_Divided);
         Extend_2.y = Assembly_Points[i].y - Point_Extend_Range * sin(Angle_Divided);
+
+        Extend_1.Next_Arc = (second_line.is_line) ? false : true;
+        Extend_2.Next_Arc = (second_line.is_line) ? false : true;
 
         //點是否在圖型外
         Outside_1 = Outside_of_Assembly(Extend_1, Assembly); // true for outside, false for inside
@@ -346,7 +369,7 @@ vector<segment> Silkscreen_Buffer(const vector<segment> Assembly) //產生絲印
     }
     for (size_t i = 0; i < size; i++) // for line
     {
-        A_Line.is_line = true;
+        A_Line.is_line = (Extended_Points[i].Next_Arc) ? false : true;
         A_Line.x1 = Extended_Points[i].x;
         A_Line.y1 = Extended_Points[i].y;
         if (i != size - 1)
@@ -359,9 +382,30 @@ vector<segment> Silkscreen_Buffer(const vector<segment> Assembly) //產生絲印
             A_Line.x2 = Extended_Points[0].x;
             A_Line.y2 = Extended_Points[0].y;
         }
-        A_Line.slope = (A_Line.y2 - A_Line.y1) / (A_Line.x2 - A_Line.x1);
-        A_Line.y_intercept = A_Line.y1 - A_Line.slope * A_Line.x1;
-        A_Line.center_x = A_Line.center_y = A_Line.direction = 0;
+        if (A_Line.is_line)
+        {
+            A_Line.slope = (A_Line.y2 - A_Line.y1) / (A_Line.x2 - A_Line.x1);
+            A_Line.y_intercept = A_Line.y1 - A_Line.slope * A_Line.x1;
+            A_Line.center_x = A_Line.center_y = A_Line.direction = 0;
+        }
+        else
+        {
+            A_Line.slope = A_Line.y_intercept = A_Line.theta = 0;
+            if (i != size - 1)
+            {
+                A_Line.center_x = Assembly[i + 1].center_x;
+                A_Line.center_y = Assembly[i + 1].center_y;
+                A_Line.direction = Assembly[i + 1].direction;
+            }
+            else
+            {
+                A_Line.center_x = Assembly[0].center_x;
+                A_Line.center_y = Assembly[0].center_y;
+                A_Line.direction = Assembly[0].direction;
+            }
+            A_Line.theta_1 = atan2(A_Line.y1 - A_Line.center_y, A_Line.x1 - A_Line.center_x);
+            A_Line.theta_2 = atan2(A_Line.y2 - A_Line.center_y, A_Line.x2 - A_Line.center_x);
+        }
         Silkscreen.push_back(A_Line);
     }
     return Silkscreen;
@@ -387,8 +431,8 @@ bool Outside_of_Assembly(const Point a, const vector<segment> Assembly) //使用
             Second_Angle = Angle_Vector[0];
         else
             Second_Angle = Angle_Vector[i + 1];
-        Angle = Second_Angle - First_Angle;           // 角度差
-        Angle = (Angle < 0) ? Angle + 2 * PI : Angle; // 差值永遠為正
+        Angle = abs(Second_Angle - First_Angle);       // 角度差
+        Angle = (Angle > PI) ? 2 * PI - Angle : Angle; // 差值永遠為正
         Total_Angle += Angle;
     }
 
@@ -413,7 +457,7 @@ void Write_File(const vector<segment> Silkscreen)
         }
         else
         {
-            Output << "Arc," << fixed << setprecision(4) << Silkscreen[i].x1 << "," << Silkscreen[i].y1 << "," << Silkscreen[i].x2 << "," << Silkscreen[i].y2 << "," << Silkscreen[i].center_x << "," << Silkscreen[i].center_y << (Silkscreen[i].direction ? "CCW" : "CW") << endl;
+            Output << "arc," << fixed << setprecision(4) << Silkscreen[i].x1 << "," << Silkscreen[i].y1 << "," << Silkscreen[i].x2 << "," << Silkscreen[i].y2 << "," << Silkscreen[i].center_x << "," << Silkscreen[i].center_y << "," << (Silkscreen[i].direction ? "CCW" : "CW") << endl;
         }
     }
 }

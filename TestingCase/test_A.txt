@@ -1,4 +1,4 @@
-assemblygap,1.0
+assemblygap,0.1
 coppergap,0.07
 silkscreenlen,0.4
 assembly
