@@ -241,6 +241,7 @@ segment line_offset(const segment original_line, const float assemblygap) // not
 }
 */
 
+/*
 vector<Point> Line_to_Point(const vector<segment> Assembly) //將線段切割成點
 {
     const int size = Assembly.size();
@@ -307,7 +308,7 @@ vector<Point> Arc_to_Line(const vector<segment> Assembly)
     //using vector.insert() to insert the second line
     //this action will modify the original data
     //the struct "segment" need a extra bool to tell Silkscreen_Buffer the first and second line are forbidden to extrapolate
-}
+}*/
 
 
 
