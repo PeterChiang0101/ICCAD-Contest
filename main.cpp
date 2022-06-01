@@ -10,8 +10,8 @@
 using namespace std;
 #define Angle_Tolerance 0.1 //算角度誤差容許值 (rad)
 #define PI 3.14159265358979323846
-#define INPUT_PATH "./TestingCase/test_A.txt"
-#define OUTPUT_PATH "./TestingCase/test_A_Ans.txt"
+#define INPUT_PATH "./TestingCase/test_C.txt"
+#define OUTPUT_PATH "./TestingCase/test_C_Ans.txt"
 // assemblygap : the minimum distance between assembly and silkscreen
 // coppergap : the minimum distance between copper and silkscreen
 // silkscreenlen : the minimum length of silkscreen
@@ -54,7 +54,11 @@ vector<vector<segment>> Read_Copper(fstream &);
 
 vector<Point> Line_to_Point(const vector<segment>); //將線段切割成點
 
-vector<segment> Silkscreen_Buffer(const vector<segment>);
+vector<segment> Buffer(const vector<segment>);
+
+float interpolate_x(const float, const Point, const Point);
+
+bool point_in_polygon(const Point, const vector<Point>);
 
 bool Outside_of_Assembly(const Point, const vector<segment>);
 
@@ -80,10 +84,19 @@ int main()
     assembly = Read_Assembly(file);
     copper = Read_Copper(file);
 
-    silkscreen = Silkscreen_Buffer(assembly);
+    silkscreen = Buffer(assembly);
 
     Write_File(silkscreen);
+    vector<segment> copper_barrier;
+    vector<vector<segment>> whole_copper_barrier;
 
+    for (int i = 0; i < copper.size(); i++)
+    {
+        copper_barrier.clear();
+        copper_barrier = Buffer(copper[i]);
+        Write_File(copper_barrier);
+        whole_copper_barrier.push_back(copper_barrier);
+    }
     // calculate the silkscreen
     // ignore the arc first
 
@@ -255,18 +268,57 @@ vector<Point> Line_to_Point(const vector<segment> Assembly) //將線段切割成
         {
             Point_Overlap.x = first_line.x1;
             Point_Overlap.y = first_line.y1;
+            // if(!first_line.is_line) Point_Overlap.arc_or_not = true;
         }
         else
         {
             Point_Overlap.x = first_line.x2;
             Point_Overlap.y = first_line.y2;
+            // if(!second_line.is_line) Point_Overlap.arc_or_not = true;
         }
+        if (second_line.is_line)
+            Point_Overlap.Next_Arc = false;
+        else
+            Point_Overlap.Next_Arc = true;
         Point_Vector.push_back(Point_Overlap);
     }
     return Point_Vector;
 }
+/*
+vector<Point> Arc_to_Line(const vector<segment> Assembly)
+{
+    const int size = Assembly.size();
+    for (size_t i = 0; i < size; i++)
+    {
+        segment new_line;
+        segment first_line, second_line;
+        first_line = Assembly[i];
+        if (i != size - 1)
+            second_line = Assembly[i + 1];
+        else
+            second_line = Assembly[0];
+        if(!second_line.is_line)
+        {
+            new_line.slope = -1/second_line.slope;
+            new_line.x1 = second_line.x1;
+            new_line.y1 = second_line.y1;
+            new_line.x2 = second_line.x1 + 1;
+            new_line.y2 = second_line.y2 + new_line.slope;
+            new_line.center_x = 0;
+            new_line.center_y = 0;
+            new_line.direction = 0;
+            new_line.is_line = true;
+            new_line.arc_tangent_line = true;
+            new_line.y_intercept = new_line.y1 - new_line.slope * new_line.x1;
+        }
+    }
+    //one arc will generate two lines
+    //using vector.insert() to insert the second line
+    //this action will modify the original data
+    //the struct "segment" need a extra bool to tell Silkscreen_Buffer the first and second line are forbidden to extrapolate
+}*/
 
-vector<segment> Silkscreen_Buffer(const vector<segment> Assembly) //產生絲印
+vector<segment> Buffer(const vector<segment> Assembly) //產生絲印
 {
     const int size = Assembly.size();
     vector<Point> Assembly_Points;
@@ -289,12 +341,12 @@ vector<segment> Silkscreen_Buffer(const vector<segment> Assembly) //產生絲印
         if (first_line.is_line) // line
             first_angle = first_line.theta;
         else // arc
-            first_angle = (first_line.direction) ? first_line.theta_1 - PI / 2 : first_line.theta_1 + PI / 2;
+            first_angle = (first_line.direction) ? first_line.theta_2 + PI / 2 : first_line.theta_2 - PI / 2;
 
         if (second_line.is_line) // line
             second_angle = second_line.theta;
-        else // arc
-            second_angle = (second_line.direction) ? second_line.theta_1 - PI / 2 : second_line.theta_1 + PI / 2;
+        else // arc direction 0 = ClockWise(CW), 1 = ConterClockwise(CCW)
+            second_angle = (second_line.direction) ? second_line.theta_1 + PI / 2 : second_line.theta_1 - PI / 2;
 
         if (Assembly_Points[i].x == first_line.x1 && Assembly_Points[i].y == first_line.y1) // 向量共同點校正
         {
@@ -305,8 +357,8 @@ vector<segment> Silkscreen_Buffer(const vector<segment> Assembly) //產生絲印
         if (Assembly_Points[i].x == second_line.x1 && Assembly_Points[i].y == second_line.y1)
         {
             second_angle -= PI;
-            if (first_angle < -PI)
-                first_angle += 2 * PI;
+            if (second_angle < -PI)
+                second_angle += 2 * PI;
         }
         double Angle_Divided = (first_angle + second_angle) / 2;                    //角平分線的角度
         float Bisector_Slope = tan(Angle_Divided);                                  //角平分線
@@ -318,12 +370,12 @@ vector<segment> Silkscreen_Buffer(const vector<segment> Assembly) //產生絲印
         Extend_2.x = Assembly_Points[i].x - Point_Extend_Range * cos(Angle_Divided);
         Extend_2.y = Assembly_Points[i].y - Point_Extend_Range * sin(Angle_Divided);
 
-        Extend_1.Next_Arc = (second_line.is_line) ? false : true;
-        Extend_2.Next_Arc = (second_line.is_line) ? false : true;
+        Extend_1.Next_Arc = Assembly_Points[i].Next_Arc;
+        Extend_2.Next_Arc = Assembly_Points[i].Next_Arc;
 
         //點是否在圖型外
-        Outside_1 = Outside_of_Assembly(Extend_1, Assembly); // true for outside, false for inside
-        Outside_2 = Outside_of_Assembly(Extend_2, Assembly);
+        Outside_1 = !point_in_polygon(Extend_1, Assembly_Points); // true for outside, false for inside
+        Outside_2 = !point_in_polygon(Extend_2, Assembly_Points);
 
         if (Outside_1 && !Outside_2) // 1 is outside, 2 is inside
             Extended_Points.push_back(Extend_1);
@@ -374,6 +426,25 @@ vector<segment> Silkscreen_Buffer(const vector<segment> Assembly) //產生絲印
     return Silkscreen;
 }
 
+float interpolate_x(float y, Point p1, Point p2)
+{
+    if (p1.y == p2.y)
+        return p1.x;
+    return p1.x + (p2.x - p1.x) * (y - p1.y) / (p2.y - p1.y);
+}
+
+// 沒有判斷點在多邊形上的情況
+bool point_in_polygon(Point t, vector<Point> Assembly_Point)
+{
+    int Assembly_size = Assembly_Point.size();
+    bool c = false;
+    for (int i = Assembly_size - 1, j = 0; j < Assembly_size; i = j++)
+        if ((Assembly_Point[i].y > t.y) != (Assembly_Point[j].y > t.y) &&
+            t.x < interpolate_x(t.y, Assembly_Point[i], Assembly_Point[j]))
+            c = !c;
+    return c;
+}
+
 bool Outside_of_Assembly(const Point a, const vector<segment> Assembly) //使用角度方法
 {
     vector<Point> Assembly_Points = Line_to_Point(Assembly);
@@ -409,7 +480,7 @@ void Write_File(const vector<segment> Silkscreen)
 {
     fstream Output;
 
-    Output.open(OUTPUT_PATH, ios::out);
+    Output.open(OUTPUT_PATH, ios::app);
     Output << "silkscreen" << endl;
     const int size = Silkscreen.size();
     for (size_t i = 0; i < size; i++)
