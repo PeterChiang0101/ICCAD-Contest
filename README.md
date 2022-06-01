@@ -121,6 +121,12 @@ Peter
 
 ## File Processing
 
+2022/6/1
+
+visualizer input update, show the file list in the folder, easier to understand how to use
+
+Peter
+
 2022/5/29
 
 new functions

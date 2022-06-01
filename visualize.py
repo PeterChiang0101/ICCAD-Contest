@@ -1,8 +1,10 @@
+from email.mime import base
 from math import atan2, degrees, sqrt
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Arc as Arc
 import os as os
+import glob
 
 type = []
 x1 = []
@@ -12,9 +14,18 @@ y2 = []
 cirx = []
 ciry = []
 cir_dir = []
-choice = input("What testcase you want to visualize? (0, A, B, C) :")
 home = os.getcwd() + "\\TestingCase"
-# print(home)
+target = (home + "\\test_?.txt")
+result = glob.glob(target)
+i = 0
+print("What testcase you want to visualize?")
+for entry in result:
+    i += 1
+    basename = os.path.basename(entry)
+    filename = os.path.splitext(basename)[0]
+    print(str(i) + '. ' + filename)
+choice = input("Selection (input the name after test_ ): ")
+
 path = home + "\\test_" + choice + ".txt"
 silkpath = home + "\\test_" + choice + "_Ans.txt"
 img_out = home + "\\test_" + choice + "_output.png"
