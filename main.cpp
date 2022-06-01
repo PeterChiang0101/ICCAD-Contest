@@ -289,12 +289,12 @@ vector<segment> Silkscreen_Buffer(const vector<segment> Assembly) //產生絲印
         if (first_line.is_line) // line
             first_angle = first_line.theta;
         else // arc
-            first_angle = (first_line.direction) ? first_line.theta_1 - PI / 2 : first_line.theta_1 + PI / 2;
+            first_angle = (first_line.direction) ? first_line.theta_2 + PI / 2 : first_line.theta_2 - PI / 2;
 
         if (second_line.is_line) // line
             second_angle = second_line.theta;
-        else // arc
-            second_angle = (second_line.direction) ? second_line.theta_1 - PI / 2 : second_line.theta_1 + PI / 2;
+        else // arc direction 0 = ClockWise(CW), 1 = ConterClockwise(CCW)
+            second_angle = (second_line.direction) ? second_line.theta_1 + PI / 2 : second_line.theta_1 - PI / 2;
 
         if (Assembly_Points[i].x == first_line.x1 && Assembly_Points[i].y == first_line.y1) // 向量共同點校正
         {
@@ -305,8 +305,8 @@ vector<segment> Silkscreen_Buffer(const vector<segment> Assembly) //產生絲印
         if (Assembly_Points[i].x == second_line.x1 && Assembly_Points[i].y == second_line.y1)
         {
             second_angle -= PI;
-            if (first_angle < -PI)
-                first_angle += 2 * PI;
+            if (second_angle < -PI)
+                second_angle += 2 * PI;
         }
         double Angle_Divided = (first_angle + second_angle) / 2;                    //角平分線的角度
         float Bisector_Slope = tan(Angle_Divided);                                  //角平分線
