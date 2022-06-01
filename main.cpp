@@ -54,7 +54,7 @@ vector<vector<segment>> Read_Copper(fstream &);
 
 vector<Point> Line_to_Point(const vector<segment>); //將線段切割成點
 
-vector<segment> Silkscreen_Buffer(const vector<segment>);
+vector<segment> Buffer(const vector<segment>);
 
 float interpolate_x(const float, const Point, const Point);
 
@@ -84,10 +84,19 @@ int main()
     assembly = Read_Assembly(file);
     copper = Read_Copper(file);
 
-    silkscreen = Silkscreen_Buffer(assembly);
+    silkscreen = Buffer(assembly);
 
     Write_File(silkscreen);
+    vector<segment> copper_barrier;
+    vector<vector<segment>> whole_copper_barrier;
 
+    for (int i = 0; i < copper.size(); i++)
+    {
+        copper_barrier.clear();
+        copper_barrier = Buffer(copper[i]);
+        Write_File(copper_barrier);
+        whole_copper_barrier.push_back(copper_barrier);
+    }
     // calculate the silkscreen
     // ignore the arc first
 
@@ -241,7 +250,6 @@ segment line_offset(const segment original_line, const float assemblygap) // not
 }
 */
 
-
 vector<Point> Line_to_Point(const vector<segment> Assembly) //將線段切割成點
 {
     const int size = Assembly.size();
@@ -260,13 +268,13 @@ vector<Point> Line_to_Point(const vector<segment> Assembly) //將線段切割成
         {
             Point_Overlap.x = first_line.x1;
             Point_Overlap.y = first_line.y1;
-            //if(!first_line.is_line) Point_Overlap.arc_or_not = true;
+            // if(!first_line.is_line) Point_Overlap.arc_or_not = true;
         }
         else
         {
             Point_Overlap.x = first_line.x2;
             Point_Overlap.y = first_line.y2;
-            //if(!second_line.is_line) Point_Overlap.arc_or_not = true;
+            // if(!second_line.is_line) Point_Overlap.arc_or_not = true;
         }
         if (second_line.is_line)
             Point_Overlap.Next_Arc = false;
@@ -281,7 +289,7 @@ vector<Point> Arc_to_Line(const vector<segment> Assembly)
 {
     const int size = Assembly.size();
     for (size_t i = 0; i < size; i++)
-    {   
+    {
         segment new_line;
         segment first_line, second_line;
         first_line = Assembly[i];
@@ -310,9 +318,7 @@ vector<Point> Arc_to_Line(const vector<segment> Assembly)
     //the struct "segment" need a extra bool to tell Silkscreen_Buffer the first and second line are forbidden to extrapolate
 }*/
 
-
-
-vector<segment> Silkscreen_Buffer(const vector<segment> Assembly) //產生絲印
+vector<segment> Buffer(const vector<segment> Assembly) //產生絲印
 {
     const int size = Assembly.size();
     vector<Point> Assembly_Points;
@@ -474,7 +480,7 @@ void Write_File(const vector<segment> Silkscreen)
 {
     fstream Output;
 
-    Output.open(OUTPUT_PATH, ios::out);
+    Output.open(OUTPUT_PATH, ios::app);
     Output << "silkscreen" << endl;
     const int size = Silkscreen.size();
     for (size_t i = 0; i < size; i++)

@@ -8,9 +8,9 @@
 
         直線外擴焦點
 
-    圓與直線交點斜率
+    (DONE) 圓與直線交點斜率
 
-    外擴圓心
+    (DONE) 外擴圓心
 
     copper 外擴 與 絲印交點
 
@@ -78,6 +78,22 @@ Point
     ```
 
 ## Algorithms
+
+2022/6/1
+
+silkscreen successfull printed, same as copper expansion
+
+new function
+
+    interpolate_x()
+    
+    point_in_polygon()
+
+    use them to correct the point in polygon judgement
+
+copyright: <https://web.ntnu.edu.tw/~algo/Polygon.html>
+
+Peter Raymond Macoto
 
 2022/5/27
 
