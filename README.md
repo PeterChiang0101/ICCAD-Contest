@@ -79,6 +79,15 @@ Point
 
 ## Algorithms
 
+2022/6/2
+
+Arc_to_Poly (not finish!!!!)
+
+last point access
+
+Macoto
+
+
 2022/6/1
 
 silkscreen successfull printed, same as copper expansion
