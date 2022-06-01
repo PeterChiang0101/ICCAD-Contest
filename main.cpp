@@ -241,7 +241,7 @@ segment line_offset(const segment original_line, const float assemblygap) // not
 }
 */
 
-/*
+
 vector<Point> Line_to_Point(const vector<segment> Assembly) //將線段切割成點
 {
     const int size = Assembly.size();
@@ -260,13 +260,13 @@ vector<Point> Line_to_Point(const vector<segment> Assembly) //將線段切割成
         {
             Point_Overlap.x = first_line.x1;
             Point_Overlap.y = first_line.y1;
-            if(!first_line.is_line) Point_Overlap.arc_or_not = true;
+            //if(!first_line.is_line) Point_Overlap.arc_or_not = true;
         }
         else
         {
             Point_Overlap.x = first_line.x2;
             Point_Overlap.y = first_line.y2;
-            if(!second_line.is_line) Point_Overlap.arc_or_not = true;
+            //if(!second_line.is_line) Point_Overlap.arc_or_not = true;
         }
         if (second_line.is_line)
             Point_Overlap.Next_Arc = false;
@@ -276,7 +276,7 @@ vector<Point> Line_to_Point(const vector<segment> Assembly) //將線段切割成
     }
     return Point_Vector;
 }
-
+/*
 vector<Point> Arc_to_Line(const vector<segment> Assembly)
 {
     const int size = Assembly.size();
