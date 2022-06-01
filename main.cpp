@@ -259,11 +259,13 @@ vector<Point> Line_to_Point(const vector<segment> Assembly) //將線段切割成
         {
             Point_Overlap.x = first_line.x1;
             Point_Overlap.y = first_line.y1;
+            if(!first_line.is_line) Point_Overlap.arc_or_not = true;
         }
         else
         {
             Point_Overlap.x = first_line.x2;
             Point_Overlap.y = first_line.y2;
+            if(!second_line.is_line) Point_Overlap.arc_or_not = true;
         }
         if (second_line.is_line)
             Point_Overlap.Next_Arc = false;
@@ -273,6 +275,41 @@ vector<Point> Line_to_Point(const vector<segment> Assembly) //將線段切割成
     }
     return Point_Vector;
 }
+
+vector<Point> Arc_to_Line(const vector<segment> Assembly)
+{
+    const int size = Assembly.size();
+    for (size_t i = 0; i < size; i++)
+    {   
+        segment new_line;
+        segment first_line, second_line;
+        first_line = Assembly[i];
+        if (i != size - 1)
+            second_line = Assembly[i + 1];
+        else
+            second_line = Assembly[0];
+        if(!second_line.is_line)
+        {
+            new_line.slope = -1/second_line.slope;
+            new_line.x1 = second_line.x1;
+            new_line.y1 = second_line.y1;
+            new_line.x2 = second_line.x1 + 1;
+            new_line.y2 = second_line.y2 + new_line.slope;
+            new_line.center_x = 0;
+            new_line.center_y = 0;
+            new_line.direction = 0;
+            new_line.is_line = true;
+            new_line.arc_tangent_line = true;
+            new_line.y_intercept = new_line.y1 - new_line.slope * new_line.x1;
+        }
+    }
+    //one arc will generate two lines
+    //using vector.insert() to insert the second line
+    //this action will modify the original data
+    //the struct "segment" need a extra bool to tell Silkscreen_Buffer the first and second line are forbidden to extrapolate
+}
+
+
 
 vector<segment> Silkscreen_Buffer(const vector<segment> Assembly) //產生絲印
 {
