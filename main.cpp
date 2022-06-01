@@ -424,3 +424,73 @@ void Write_File(const vector<segment> Silkscreen)
         }
     }
 }
+
+vector<segment> Arc_to_Poly(vector<segment> Arc)
+{
+    vector<segment> Poly_out;
+    double theta_ref;
+    double theta_in;
+    double theta_div;
+    int times;
+    int count;
+
+    theta_ref = Arc.theta1;
+    theta_div = 2 * PI / 360; // div/degree
+
+    if(Arc.direction == 0) // CW
+    {
+        if(Arc.theta1 - Arc.theta2 < 0)
+            theta_in = Arc.theta1 - Arc.theta2 + 2*PI;
+        else
+            theta_in = Arc.theta1 - Arc.theta2;
+    }
+    else
+    {
+        if(Arc.theta2 - Arc.theta1 < 0)
+            theta_in = Arc.theta2 - Arc.theta1 + 2*PI;
+        else
+            theta_in = Arc.theta2 - Arc.theta1;
+    }
+
+    times = (int)(theta_in / (2 * PI) * 360) + 1;
+    count = times;
+
+    while(count > 0)
+    {
+        Poly_out.is_line.push_back(1);
+        if(count == times)
+        {
+            Poly_out.x1.push_back(Arc.x1);
+            Poly_out.y1.push_back(Arc.y1);
+        }
+        else
+        {
+            Poly_out.x1.push_back(Poly_out.x1[times-count-1]);
+            Poly_out.y1.push_back(Poly_out.y1[times-count-1]);
+        }
+        if(Arc.direction == 0)
+        {
+            theta_ref -= theta_div;
+            if(theta_ref < -PI)
+                theta_ref += 2 * PI;
+        }
+        else
+        {
+            theta_ref += theta_div;
+            if(theta_ref > PI)
+                theta_ref -= 2 * PI;
+        }
+
+        Poly_out.x2.push_back(Arc.center_x - cos(theta_ref));
+        Poly_out.y2.push_back(Arc.center_y - sin(theta_ref));       
+        count -= 1;
+    }
+
+    /*if(Poly_out.x2[Poly_out.size()-1] < Arc.x2)
+    
+        
+    }*/
+
+
+
+}
