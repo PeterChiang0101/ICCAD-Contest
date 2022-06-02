@@ -167,7 +167,8 @@ segment String_to_Line(string line)
         part.direction = 0;
         part.slope = (part.y2 - part.y1) / (part.x2 - part.x1);
         part.y_intercept = part.y1 - part.slope * part.x1;
-        part.theta = atan2(part.y2 - part.y1, part.x2 - part.x1);
+        part.theta = atan2(part.y2 - part.y1, part.x2 - part.x1); 
+        // theta_1 = 0 , theta_2 = 0 ???
     }
     else if (vector_size == 8)
     {
@@ -496,50 +497,55 @@ void Write_File(const vector<segment> Silkscreen)
     }
 }
 
-vector<segment> Arc_to_Poly(vector<segment> Arc)
+vector<segment> Arc_to_Poly(segment Arc)
 {
     vector<segment> Poly_out;
+    segment part;
+    
     double theta_ref;
     double theta_in;
     double theta_div;
+    double radius;
     int times;
     int count;
 
-    theta_ref = Arc.theta1;
+    theta_ref = Arc.theta_1;
     theta_div = 2 * PI / 360; // div/degree
+    radius = sqrt((Arc.x1 - Arc.center_x)*(Arc.x1 - Arc.center_x) + (Arc.y1 - Arc.center_y)*(Arc.y1 - Arc.center_y));
 
     if(Arc.direction == 0) // CW
     {
-        if(Arc.theta1 - Arc.theta2 < 0)
-            theta_in = Arc.theta1 - Arc.theta2 + 2*PI;
+        if(Arc.theta_1 - Arc.theta_2 < 0)
+            theta_in = Arc.theta_1 - Arc.theta_2 + 2*PI;
         else
-            theta_in = Arc.theta1 - Arc.theta2;
+            theta_in = Arc.theta_1 - Arc.theta_2;
     }
     else
     {
-        if(Arc.theta2 - Arc.theta1 < 0)
-            theta_in = Arc.theta2 - Arc.theta1 + 2*PI;
+        if(Arc.theta_2 - Arc.theta_1 < 0)
+            theta_in = Arc.theta_2 - Arc.theta_1 + 2*PI;
         else
-            theta_in = Arc.theta2 - Arc.theta1;
+            theta_in = Arc.theta_2 - Arc.theta_1;
     }
 
-    times = (int)(theta_in / (2 * PI) * 360) + 1;
+    times = (int)(theta_in / (2 * PI) * 360);
     count = times;
 
     while(count > 0)
     {
-        Poly_out.is_line.push_back(1);
+        
         if(count == times)
         {
-            Poly_out.x1.push_back(Arc.x1);
-            Poly_out.y1.push_back(Arc.y1);
+            part.x1 = Arc.x1;
+            part.y1 = Arc.y1;
         }
         else
         {
-            Poly_out.x1.push_back(Poly_out.x1[times-count-1]);
-            Poly_out.y1.push_back(Poly_out.y1[times-count-1]);
+            part.x1 = Poly_out[times-count-1].x2;
+            part.y1 = Poly_out[times-count-1].y2;
         }
-        if(Arc.direction == 0)
+
+        if(Arc.direction == 0) //CW
         {
             theta_ref -= theta_div;
             if(theta_ref < -PI)
@@ -552,16 +558,38 @@ vector<segment> Arc_to_Poly(vector<segment> Arc)
                 theta_ref -= 2 * PI;
         }
 
-        Poly_out.x2.push_back(Arc.center_x - cos(theta_ref));
-        Poly_out.y2.push_back(Arc.center_y - sin(theta_ref));       
+        part.x2 = Arc.center_x + radius * cos(theta_ref);
+        part.y2 = Arc.center_y + radius * sin(theta_ref);
+
+        part.is_line = 1;
+        part.center_x = 0;
+        part.center_y = 0;
+        part.direction = 0;
+        part.slope = (part.y2 - part.y1) / (part.x2 - part.x1);
+        part.y_intercept = part.y1 - part.slope * part.x1;
+        part.theta = atan2(part.y2 - part.y1, part.x2 - part.x1);
+
+        Poly_out.push_back(part);
         count -= 1;
     }
 
-    /*if(Poly_out.x2[Poly_out.size()-1] < Arc.x2)
-    
-        
-    }*/
+    if(Poly_out[Poly_out.size()-1].x2 != Arc.x2 && Poly_out[Poly_out.size()-1].y2 != Arc.y2)
+    {
+        part.x1 = Poly_out[Poly_out.size()-1].x2;
+        part.y1 = Poly_out[Poly_out.size()-1].y2;
+        part.x2 = Arc.x2;
+        part.y2 = Arc.y2;
 
+        part.center_x = 0;
+        part.center_y = 0;
+        part.direction = 0;
+        part.slope = (part.y2 - part.y1) / (part.x2 - part.x1);
+        part.y_intercept = part.y1 - part.slope * part.x1;
+        part.theta = atan2(part.y2 - part.y1, part.x2 - part.x1);
 
+        Poly_out.push_back(part);
+    }
+
+    return Poly_out;
 
 }
