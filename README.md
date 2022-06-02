@@ -46,6 +46,7 @@ Point
     ```C++
     float x;
     float y;
+    bool Next_Arc;
     ```
 
 ### functions
@@ -66,18 +67,35 @@ Point
 
     vector<Point> Line_to_Point(const vector<segment>); //將線段切割成點
 
-    vector<segment> Silkscreen_Buffer(const vector<segment>); // 繪製絲印
-    // dependency: Line_to_Point(), Outside_of_Assembly()
+    vector<segment> Buffer(const vector<segment>); // 繪製絲印
+    // dependency: Line_to_Point(), point_in_polygon(), Arc_Optimization()
 
-    bool Outside_of_Assembly(const Point, const vector<segment>); // 判斷點是否在圖形外
-    // dependency: Line_to_Point()
+    float interpolate_x(const float, const Point, const Point);
+
+    bool point_in_polygon(const Point, const vector<Point>, const vector<vector<Point>>);
+    // dependency: interpolate_x()
 
     void Write_File(const vector<segment>); //匯出
+
+    vector<segment> Arc_to_Poly(segment);
+
+    vector<vector<Point>> Arc_Optimization(const vector<segment>);
+    // dependency: Arc_to_Poly(), Line_to_Point()
 
     int main(); // 主程式
     ```
 
 ## Algorithms
+
+2022/6/2
+
+add comment to improve readability
+
+implement Arc_to_poly() into other functions
+
+suggestion: Arc_to_poly() can return vector of points, the vector includes start point and end point
+
+Peter
 
 2022/6/2
 
@@ -87,8 +105,6 @@ help me to run the PublicCases to check if it successes, plz.
 
 Macoto
 
-
-
 2022/6/2
 
 Arc_to_Poly (not finish!!!!)
@@ -96,7 +112,6 @@ Arc_to_Poly (not finish!!!!)
 last point access
 
 Macoto
-
 
 2022/6/1
 
