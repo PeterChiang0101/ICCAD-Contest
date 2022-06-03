@@ -10,6 +10,7 @@
 using namespace std;
 #define Angle_Tolerance 0.1 //算角度誤差容許值 (rad)
 #define PI 3.14159265358979323846
+#define ARC_TO_LINE_SLICE_DENSITY 1 // 切片密度(in degree)
 #define INPUT_PATH "./TestingCase/test_C.txt"
 #define OUTPUT_PATH "./TestingCase/test_C_Ans.txt"
 // assemblygap : the minimum distance between assembly and silkscreen
@@ -17,7 +18,7 @@ using namespace std;
 // silkscreenlen : the minimum length of silkscreen
 float assemblygap, coppergap, silkscreenlen;
 
-struct segment
+struct Segment
 {
     bool is_line; // 0 = arc, 1 = line
     float x1;
@@ -42,31 +43,55 @@ struct Point
     bool Next_Arc; // if the point connected to arc
 };
 
+struct Copper // 外擴Copper
+{
+    float x_min, x_max, y_min, y_max;
+    vector<Segment> segment;
+};
+
+///////////////////////////////////////////////////////////////////////////////////
+////////////////////////////// functions declaration //////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////
+
 float File_to_Parameter(const string);
 
 const vector<string> split(const string &, const char &);
 
-segment String_to_Line(const string);
+Segment String_to_Line(const string);
 
-vector<segment> Read_Assembly(fstream &);
+vector<Segment> Read_Assembly(fstream &);
 
-vector<vector<segment>> Read_Copper(fstream &);
+vector<vector<Segment>> Read_Copper(fstream &);
 
-vector<Point> Line_to_Point(const vector<segment>); //將線段切割成點
+vector<Point> Line_to_Point(const vector<Segment>); //將線段切割成點
 
-vector<segment> Buffer(const vector<segment>);
+vector<Segment> Assembly_Buffer(const vector<Segment>);
+
+vector<Copper> Copper_Buffer(const vector<vector<Segment>>);
+
+vector<Point> Point_Extension(const vector<Segment>);
+
+vector<Segment> Point_to_Line(vector<Point>, vector<Segment>);
+
+Copper Copper_Point_to_Line(vector<Point>, vector<Segment>);
 
 float interpolate_x(const float, const Point, const Point);
 
 bool point_in_polygon(const Point, const vector<Point>, const vector<vector<Point>>);
 
-// bool Outside_of_Assembly(const Point, const vector<segment>);
+// bool Outside_of_Assembly(const Point, const vector<Segment>);
 
-void Write_File(const vector<segment>);
+void Write_File(const vector<Segment>);
 
-vector<segment> Arc_to_Poly(segment);
+vector<Point> Arc_to_Poly(Segment);
 
-vector<vector<Point>> Arc_Optimization(const vector<segment>);
+vector<vector<Point>> Arc_Optimization(const vector<Segment>);
+
+Copper Arc_Boundary_Meas(Segment);
+
+////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////// main functions //////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
 
 int main()
 {
@@ -81,26 +106,20 @@ int main()
     coppergap = File_to_Parameter(coppergap_str);
     silkscreenlen = File_to_Parameter(silkscreenlen_str);
 
-    vector<segment> assembly;
-    vector<vector<segment>> copper;
-    vector<segment> silkscreen;
+    vector<Segment> assembly;
+    vector<vector<Segment>> copper;
+    vector<Segment> silkscreen;
 
     assembly = Read_Assembly(file);
     copper = Read_Copper(file);
 
-    silkscreen = Buffer(assembly);
+    silkscreen = Assembly_Buffer(assembly);
 
     Write_File(silkscreen);
-    vector<segment> copper_barrier;
-    vector<vector<segment>> whole_copper_barrier;
 
-    for (int i = 0; i < copper.size(); i++)
-    {
-        copper_barrier.clear();
-        copper_barrier = Buffer(copper[i]);
-        Write_File(copper_barrier);
-        whole_copper_barrier.push_back(copper_barrier);
-    }
+    vector<Copper> whole_copper_barrier;
+    whole_copper_barrier = Copper_Buffer(copper);
+
     // calculate the silkscreen
     // ignore the arc first
 
@@ -129,12 +148,12 @@ const vector<string> split(const string &str, const char &delimiter) // 拆分�
     return result;
 }
 
-segment String_to_Line(string line) // 讀取時建立線段
+Segment String_to_Line(string line) // 讀取時建立線段
 {
     vector<string> Splited;
     Splited = split(line, ',');
     int vector_size = Splited.size();
-    segment part;
+    Segment part;
 
     for (size_t i = 1; i < vector_size; i++)
     {
@@ -186,10 +205,10 @@ segment String_to_Line(string line) // 讀取時建立線段
     return part;
 }
 
-vector<segment> Read_Assembly(fstream &Input_File) // 讀取assembly，轉換為vector
+vector<Segment> Read_Assembly(fstream &Input_File) // 讀取assembly，轉換為vector
 {
-    vector<segment> Assembly;
-    segment part;
+    vector<Segment> Assembly;
+    Segment part;
     vector<string> split_return;
     string line;
     int line_size;
@@ -208,11 +227,11 @@ vector<segment> Read_Assembly(fstream &Input_File) // 讀取assembly，轉換為
     return Assembly;
 }
 
-vector<vector<segment>> Read_Copper(fstream &Input_File) // 讀取copper，轉換為二維vector
+vector<vector<Segment>> Read_Copper(fstream &Input_File) // 讀取copper，轉換為二維vector
 {
-    vector<segment> copper;
-    vector<vector<segment>> copper_pack;
-    segment part;
+    vector<Segment> copper;
+    vector<vector<Segment>> copper_pack;
+    Segment part;
     vector<string> split_return;
     string line;
     int line_size;
@@ -233,20 +252,17 @@ vector<vector<segment>> Read_Copper(fstream &Input_File) // 讀取copper，轉�
     return copper_pack;
 }
 
-vector<Point> Line_to_Point(const vector<segment> Assembly) // 將線段切割成點
+vector<Point> Line_to_Point(const vector<Segment> Assembly) // 將線段切割成點
 {
     const int size = Assembly.size();
     vector<Point> Point_Vector;
-    segment first_line, second_line;
+    Segment first_line, second_line;
     Point Point_Overlap; //兩線段交點
 
-    for (size_t i = 0; i < size; i++)
+    for (size_t i = size - 1, j = 0; j < size; i = j++)
     {
         first_line = Assembly[i];
-        if (i != size - 1) // the line is not the last line
-            second_line = Assembly[i + 1];
-        else // the line is the last line
-            second_line = Assembly[0];
+        second_line = Assembly[j];
         if ((first_line.x1 == second_line.x1 && first_line.y1 == second_line.y1) || (first_line.x1 == second_line.x2 && first_line.y1 == second_line.y2)) //找重疊線段
         {
             Point_Overlap.x = first_line.x1;
@@ -268,31 +284,46 @@ vector<Point> Line_to_Point(const vector<segment> Assembly) // 將線段切割�
     return Point_Vector;
 }
 
-vector<segment> Buffer(const vector<segment> Assembly) // 圖形外擴
+vector<Segment> Assembly_Buffer(const vector<Segment> Assembly)
+{
+    vector<Point> Extended_Points = Point_Extension(Assembly);
+    vector<Segment> silkscreen = Point_to_Line(Extended_Points, Assembly);
+    return silkscreen;
+}
+
+vector<Copper> Copper_Buffer(const vector<vector<Segment>> coppers)
+{
+    int size = coppers.size();
+    Copper Single_Copper;
+    vector<Copper> Every_Copper;
+    for (int i = 0; i < size; i++)
+    {
+        Single_Copper = Copper_Point_to_Line(Point_Extension(coppers[i]), coppers[i]);
+        Every_Copper.push_back(Single_Copper);
+    }
+    return Every_Copper;
+}
+vector<Point> Point_Extension(const vector<Segment> Assembly) // 圖形外擴
 {
     const int size = Assembly.size();
     vector<Point> Assembly_Points;
     vector<Point> Extended_Points;
     vector<vector<Point>> Arc_Dots;
-    segment A_Line;
-    vector<segment> Silkscreen;
+    Segment A_Line;
+    vector<Segment> Silkscreen;
 
     Assembly_Points = Line_to_Point(Assembly); //線切割為點
     Arc_Dots = Arc_Optimization(Assembly);     // 將圓弧切割成多個點，以利辨識點在圖形內外
 
-    for (size_t i = 0; i < size; i++)
+    for (size_t i = size - 1, j = 0; j < size; i = j++)
     {
-        segment first_line, second_line;
+        Segment first_line, second_line;
         double first_angle, second_angle;
         first_line = Assembly[i];
-        if (i != size - 1)
-            second_line = Assembly[i + 1];
-        else
-            second_line = Assembly[0];
-
-        if (first_line.is_line) // first segment is line
+        second_line = Assembly[j];
+        if (first_line.is_line) // first Segment is line
             first_angle = first_line.theta;
-        else // first segment is arc
+        else // first Segment is arc
             first_angle = (first_line.direction) ? first_line.theta_2 + PI / 2 : first_line.theta_2 - PI / 2;
 
         if (second_line.is_line) // line
@@ -300,13 +331,13 @@ vector<segment> Buffer(const vector<segment> Assembly) // 圖形外擴
         else // arc direction 0 = ClockWise(CW), 1 = ConterClockwise(CCW)
             second_angle = (second_line.direction) ? second_line.theta_1 + PI / 2 : second_line.theta_1 - PI / 2;
 
-        if (Assembly_Points[i].x == first_line.x1 && Assembly_Points[i].y == first_line.y1) // 向量共同點校正
+        if (Assembly_Points[j].x == first_line.x1 && Assembly_Points[j].y == first_line.y1) // 向量共同點校正
         {
             first_angle -= PI;
             if (first_angle < -PI)
                 first_angle += 2 * PI;
         }
-        if (Assembly_Points[i].x == second_line.x1 && Assembly_Points[i].y == second_line.y1)
+        if (Assembly_Points[j].x == second_line.x1 && Assembly_Points[j].y == second_line.y1)
         {
             second_angle -= PI;
             if (second_angle < -PI)
@@ -317,13 +348,13 @@ vector<segment> Buffer(const vector<segment> Assembly) // 圖形外擴
         double Point_Extend_Range = assemblygap / sin(Angle_Divided - first_angle); //點外擴距離
         Point Extend_1, Extend_2;                                                   //交點向外延伸的兩個點
         bool Outside_1, Outside_2;
-        Extend_1.x = Assembly_Points[i].x + Point_Extend_Range * cos(Angle_Divided);
-        Extend_1.y = Assembly_Points[i].y + Point_Extend_Range * sin(Angle_Divided);
-        Extend_2.x = Assembly_Points[i].x - Point_Extend_Range * cos(Angle_Divided);
-        Extend_2.y = Assembly_Points[i].y - Point_Extend_Range * sin(Angle_Divided);
+        Extend_1.x = Assembly_Points[j].x + Point_Extend_Range * cos(Angle_Divided);
+        Extend_1.y = Assembly_Points[j].y + Point_Extend_Range * sin(Angle_Divided);
+        Extend_2.x = Assembly_Points[j].x - Point_Extend_Range * cos(Angle_Divided);
+        Extend_2.y = Assembly_Points[j].y - Point_Extend_Range * sin(Angle_Divided);
 
-        Extend_1.Next_Arc = Assembly_Points[i].Next_Arc;
-        Extend_2.Next_Arc = Assembly_Points[i].Next_Arc;
+        Extend_1.Next_Arc = Assembly_Points[j].Next_Arc;
+        Extend_2.Next_Arc = Assembly_Points[j].Next_Arc;
 
         //點是否在圖型外
         Outside_1 = !point_in_polygon(Extend_1, Assembly_Points, Arc_Dots); // true for outside, false for inside
@@ -334,7 +365,15 @@ vector<segment> Buffer(const vector<segment> Assembly) // 圖形外擴
         else if (Outside_2 && !Outside_1) // 2 is outside, 1 is inside
             Extended_Points.push_back(Extend_2);
     }
-    for (size_t i = 0; i < size; i++) // for line
+    return Extended_Points;
+}
+
+vector<Segment> Point_to_Line(vector<Point> Extended_Points, vector<Segment> Assembly)
+{
+    int size = Assembly.size();
+    Segment A_Line;
+    vector<Segment> Silkscreen;
+    for (size_t i = 0; i < size; i++)
     {
         A_Line.is_line = (Extended_Points[i].Next_Arc) ? false : true;
         A_Line.x1 = Extended_Points[i].x;
@@ -360,9 +399,9 @@ vector<segment> Buffer(const vector<segment> Assembly) // 圖形外擴
             A_Line.slope = A_Line.y_intercept = A_Line.theta = 0;
             if (i != size - 1)
             {
-                A_Line.center_x = Assembly[i + 1].center_x;
-                A_Line.center_y = Assembly[i + 1].center_y;
-                A_Line.direction = Assembly[i + 1].direction;
+                A_Line.center_x = Assembly[i].center_x;
+                A_Line.center_y = Assembly[i].center_y;
+                A_Line.direction = Assembly[i].direction;
             }
             else
             {
@@ -374,6 +413,86 @@ vector<segment> Buffer(const vector<segment> Assembly) // 圖形外擴
             A_Line.theta_2 = atan2(A_Line.y2 - A_Line.center_y, A_Line.x2 - A_Line.center_x);
         }
         Silkscreen.push_back(A_Line);
+    }
+    return Silkscreen;
+}
+
+Copper Copper_Point_to_Line(vector<Point> Extended_Points, vector<Segment> copper)
+{
+    int size = copper.size();
+    int x_min, x_max, y_min, y_max;
+    Segment A_Line;
+    Copper Silkscreen, Arc_Boundary;
+    Silkscreen.x_min = Silkscreen.x_max = Extended_Points[0].x; // initialize
+    Silkscreen.y_min = Silkscreen.y_max = Extended_Points[0].y;
+    for (size_t i = 0; i < size; i++)
+    {
+        // calculate boundary
+        if (!copper[i].is_line)
+        {
+            Arc_Boundary = Arc_Boundary_Meas(copper[i]);
+            Silkscreen.x_min = min(Silkscreen.x_min, Arc_Boundary.x_min);
+            Silkscreen.x_max = max(Silkscreen.x_max, Arc_Boundary.x_max);
+            Silkscreen.y_min = min(Silkscreen.y_min, Arc_Boundary.y_min);
+            Silkscreen.y_max = max(Silkscreen.y_max, Arc_Boundary.y_max);
+        }
+        if (Extended_Points[i].x > x_max)
+        {
+            Silkscreen.x_max = Extended_Points[i].x;
+        }
+        else if (Extended_Points[i].x < x_min)
+        {
+            Silkscreen.x_min = Extended_Points[i].x;
+        }
+
+        if (Extended_Points[i].y > y_max)
+        {
+            Silkscreen.y_max = Extended_Points[i].y;
+        }
+        else if (Extended_Points[i].y < y_min)
+        {
+            Silkscreen.y_min = Extended_Points[i].y;
+        }
+
+        // calculate point to line
+        A_Line.is_line = (Extended_Points[i].Next_Arc) ? false : true;
+        A_Line.x1 = Extended_Points[i].x;
+        A_Line.y1 = Extended_Points[i].y;
+        if (i != size - 1)
+        {
+            A_Line.x2 = Extended_Points[i + 1].x;
+            A_Line.y2 = Extended_Points[i + 1].y;
+        }
+        else
+        {
+            A_Line.x2 = Extended_Points[0].x;
+            A_Line.y2 = Extended_Points[0].y;
+        }
+        if (A_Line.is_line)
+        {
+            A_Line.slope = (A_Line.y2 - A_Line.y1) / (A_Line.x2 - A_Line.x1);
+            A_Line.y_intercept = A_Line.y1 - A_Line.slope * A_Line.x1;
+            A_Line.center_x = A_Line.center_y = A_Line.direction = 0;
+        }
+        else
+        {
+            A_Line.slope = A_Line.y_intercept = A_Line.theta = 0;
+            if (i != size - 1)
+            {
+                A_Line.center_x = copper[i].center_x;
+                A_Line.center_y = copper[i].center_y;
+                A_Line.direction = copper[i].direction;
+            }
+            else
+            {
+                A_Line.center_x = copper[0].center_x;
+                A_Line.center_y = copper[0].center_y;
+                A_Line.direction = copper[0].direction;
+            }
+            A_Line.theta_1 = atan2(A_Line.y1 - A_Line.center_y, A_Line.x1 - A_Line.center_x);
+            A_Line.theta_2 = atan2(A_Line.y2 - A_Line.center_y, A_Line.x2 - A_Line.center_x);
+        }
+        Silkscreen.segment.push_back(A_Line);
     }
     return Silkscreen;
 }
@@ -395,11 +514,12 @@ bool point_in_polygon(Point t, vector<Point> Assembly_Point, vector<vector<Point
         if (Assembly_Point[i].Next_Arc)
         {
             int Arc_point_length = Arc_Points[Arc_count].size();
-            for (int k = Arc_point_length - 1, l = 0; l < Arc_point_length; k = l++)
+            for (int k = 0, l = 1; l < Arc_point_length; k = l++)
             {
                 if ((Arc_Points[Arc_count][k].y > t.y) != (Arc_Points[Arc_count][l].y > t.y) && t.x < interpolate_x(t.y, Arc_Points[Arc_count][k], Arc_Points[Arc_count][l]))
                     c = !c;
             }
+            Arc_count++;
         }
         else
             // 待測點在該線段的高度上下限內 且 交會點x值大於待測點x值 (射線為 + x 方向)
@@ -409,11 +529,11 @@ bool point_in_polygon(Point t, vector<Point> Assembly_Point, vector<vector<Point
     return c;
 }
 
-void Write_File(const vector<segment> Silkscreen)
+void Write_File(const vector<Segment> Silkscreen)
 {
     fstream Output;
 
-    Output.open(OUTPUT_PATH, ios::app);
+    Output.open(OUTPUT_PATH, ios::out);
     Output << "silkscreen" << endl;
     const int size = Silkscreen.size();
     for (size_t i = 0; i < size; i++)
@@ -429,10 +549,11 @@ void Write_File(const vector<segment> Silkscreen)
     }
 }
 
-vector<segment> Arc_to_Poly(segment Arc)
+/*
+vector<Segment> Arc_to_Poly(Segment Arc)
 {
-    vector<segment> Poly_out;
-    segment part;
+    vector<Segment> Poly_out;
+    Segment part;
 
     double theta_ref;
     double theta_in;
@@ -524,35 +645,142 @@ vector<segment> Arc_to_Poly(segment Arc)
 
     return Poly_out;
 }
+*/
 
-vector<vector<Point>> Arc_Optimization(vector<segment> Assembly)
+vector<Point> Arc_to_Poly(Segment Arc)
+{
+    vector<Point> Poly_out;
+    Point part;
+
+    double theta_ref;
+    double theta_in;
+    double theta_div;
+    double radius;
+    int times;
+    int count;
+
+    theta_ref = Arc.theta_1;
+    theta_div = 2 * PI / (360 / ARC_TO_LINE_SLICE_DENSITY); // div/degree
+    radius = hypot(Arc.x1 - Arc.center_x, Arc.y1 - Arc.center_y);
+    // radius = sqrt((Arc.x1 - Arc.center_x) * (Arc.x1 - Arc.center_x) + (Arc.y1 - Arc.center_y) * (Arc.y1 - Arc.center_y));
+
+    if (Arc.direction == 0) // CW
+    {
+        if (Arc.theta_1 - Arc.theta_2 <= 0)
+            theta_in = Arc.theta_1 - Arc.theta_2 + 2 * PI;
+        else
+            theta_in = Arc.theta_1 - Arc.theta_2;
+    }
+    else
+    {
+        if (Arc.theta_2 - Arc.theta_1 <= 0)
+            theta_in = Arc.theta_2 - Arc.theta_1 + 2 * PI;
+        else
+            theta_in = Arc.theta_2 - Arc.theta_1;
+    }
+
+    times = (int)(theta_in / (2 * PI) * (360 / ARC_TO_LINE_SLICE_DENSITY));
+    count = times;
+
+    while (count > 0)
+    {
+        if (count == times)
+        {
+            part.x = Arc.x1;
+            part.y = Arc.y1;
+        }
+        else
+        {
+            part.x = Arc.center_x + radius * cos(theta_ref);
+            part.y = Arc.center_y + radius * sin(theta_ref);
+        }
+
+        if (Arc.direction == 0) // CW
+        {
+            theta_ref -= theta_div;
+            if (theta_ref < -PI)
+                theta_ref += 2 * PI;
+        }
+        else
+        {
+            theta_ref += theta_div;
+            if (theta_ref > PI)
+                theta_ref -= 2 * PI;
+        }
+        part.Next_Arc = false;
+        Poly_out.push_back(part);
+        count -= 1;
+    }
+
+    if (Poly_out[Poly_out.size() - 1].x != Arc.x2 && Poly_out[Poly_out.size() - 1].y != Arc.y2)
+    {
+        part.x = Arc.x2;
+        part.y = Arc.y2;
+        part.Next_Arc = false;
+        Poly_out.push_back(part);
+    }
+
+    return Poly_out;
+}
+
+vector<vector<Point>> Arc_Optimization(vector<Segment> Assembly)
 {
     int Assembly_size = Assembly.size();
     vector<Point> Dots_of_Arc;
     vector<vector<Point>> vector_of_Arc;
     for (int i = 0; i < Assembly_size; i++)
     {
-        if (!Assembly[i].is_line) // the segment is arc
+        if (!Assembly[i].is_line) // the Segment is arc
         {
             Dots_of_Arc.clear();
-            Dots_of_Arc = Line_to_Point(Arc_to_Poly(Assembly[i]));
+            Dots_of_Arc = Arc_to_Poly(Assembly[i]);
             vector_of_Arc.push_back(Dots_of_Arc);
         }
     }
     return vector_of_Arc;
 }
+
+Copper Arc_Boundary_Meas(Segment Arc)
+{
+    Copper A_Arc;
+    float first, second;
+    float radius = hypot(Arc.x1 - Arc.center_x, Arc.y1 - Arc.center_y);
+    first = Arc.theta_1;
+    second = Arc.theta_2;
+    if (first == second)
+    {
+        A_Arc.x_min = Arc.center_x - radius;
+        A_Arc.x_max = Arc.center_x + radius;
+        A_Arc.y_min = Arc.center_y - radius;
+        A_Arc.y_max = Arc.center_y + radius;
+        return A_Arc;
+    }
+
+    if (Arc.direction)
+    {
+        swap(first, second);
+    }
+
+    A_Arc.x_max = (first >= 0 && second <= 0) ? Arc.center_x + radius : max(max(Arc.x1, Arc.x2), Arc.center_x);
+    A_Arc.x_min = (first <= 0 && second >= 0) ? Arc.center_x - radius : min(min(Arc.x1, Arc.x2), Arc.center_x);
+    A_Arc.y_max = (first >= PI / 2 && second <= PI / 2) ? Arc.center_y + radius : max(max(Arc.y1, Arc.y2), Arc.center_y);
+    A_Arc.y_min = (first >= -PI / 2 && second <= -PI / 2) ? Arc.center_y - radius : min(min(Arc.y1, Arc.y2), Arc.center_y);
+
+    return A_Arc;
+}
+
 ///////////////////////////////////////////////////////
 ///////////////// abandoned functions /////////////////
 ///////////////////////////////////////////////////////
 
 /*
-// 原因：原本想用線段外擴求焦點，因過於複雜放棄，改用點外擴 Buffer()
+// 原因：原本想用線段外擴求焦點，因過於複雜放棄，改用點外擴 Point_Extension()
 
-segment line_offset(const segment original_line, const float assemblygap) // not implemented
+Segment line_offset(const Segment original_line, const float assemblygap) // not implemented
 {
     float line_length;
     float x_offset, y_offset;
-    segment silkscreen;
+    Segment silkscreen;
     x_offset = abs(original_line.y1 - original_line.y2);
     y_offset = abs(original_line.x1 - original_line.x2);
 
@@ -570,13 +798,13 @@ segment line_offset(const segment original_line, const float assemblygap) // not
 */
 
 /*
-vector<Point> Arc_to_Line(const vector<segment> Assembly)
+vector<Point> Arc_to_Line(const vector<Segment> Assembly)
 {
     const int size = Assembly.size();
     for (size_t i = 0; i < size; i++)
     {
-        segment new_line;
-        segment first_line, second_line;
+        Segment new_line;
+        Segment first_line, second_line;
         first_line = Assembly[i];
         if (i != size - 1)
             second_line = Assembly[i + 1];
@@ -600,14 +828,14 @@ vector<Point> Arc_to_Line(const vector<segment> Assembly)
     //one arc will generate two lines
     //using vector.insert() to insert the second line
     //this action will modify the original data
-    //the struct "segment" need a extra bool to tell Silkscreen_Buffer the first and second line are forbidden to extrapolate
+    //the struct "Segment" need a extra bool to tell Silkscreen_Point_Extension the first and second line are forbidden to extrapolate
 }
 */
 
 /*
 // 原因：此方法僅適用凸多邊形，Case C 會導致錯誤，改用射線法 point_in_polygon()
 
-bool Outside_of_Assembly(const Point a, const vector<segment> Assembly) //  使用角度相加為2 * PI，
+bool Outside_of_Assembly(const Point a, const vector<Segment> Assembly) //  使用角度相加為2 * PI，
 {
     vector<Point> Assembly_Points = Line_to_Point(Assembly);
     vector<float> Angle_Vector; // 各點之間角度差

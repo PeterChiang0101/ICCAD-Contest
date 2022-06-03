@@ -87,6 +87,36 @@ Point
 
 ## Algorithms
 
+2022/6/4
+
+new parameter
+
+    ARC_TO_LINE_SLICE_DENSITY: 幾度取一次點
+
+new struct
+
+    Copper 包含上下左右邊界
+
+new functions
+
+    Arc_Boundary_Meas()
+
+    Copper_Point_to_Line()
+
+    Copper_Buffer()
+
+struct change name
+
+    segment -> Segment
+
+function change name
+
+    Buffer -> Assembly_Buffer
+
+revise Arc_to_Poly
+
+Peter Macoto
+
 2022/6/2
 
 add comment to improve readability
