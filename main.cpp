@@ -303,6 +303,7 @@ vector<Copper> Copper_Buffer(const vector<vector<Segment>> coppers)
     }
     return Every_Copper;
 }
+
 vector<Point> Point_Extension(const vector<Segment> Assembly) // 圖形外擴
 {
     const int size = Assembly.size();

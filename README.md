@@ -2,23 +2,27 @@
 
 ## !!!NOT_DONE
 
-    BUGsss
+BUGsss
 
-        FIXED:
+```text
+FIXED:
 
-        直線外擴焦點
+直線外擴焦點
 
-    (DONE) 圓與直線交點斜率
+(DONE) 圓與直線交點斜率
 
-    (DONE) 外擴圓心
+(DONE) 外擴圓心
 
-    copper 外擴 與 絲印交點
+copper 外擴 與 絲印交點
+```
 
 ## I/O
 
-    i/o file location: TestingCase folder
+```text
+i/o file location: TestingCase folder
 
-    naming rule:    test_"NAME".txt    test_"NAME"_Ans.txt
+naming rule:    test_"NAME".txt    test_"NAME"_Ans.txt
+```
 
 ## Outline
 
@@ -26,64 +30,151 @@
 
 segment
 
-    ```C++
-    bool is_line; // 0 = arc, 1 = line
-    float x1;
-    float y1;
-    float x2;
-    float y2;
-    float slope;       //斜率
-    float y_intercept; //截距
-    double theta;      // the angle reference to positive x axis
-    // below is needed by arc, when deals with line set all to 0
-    float center_x;
-    float center_y;
-    bool direction; // 0 = ClockWise(CW), 1 = ConterClockwise(CCW)
-    ```
+```C++
+bool is_line; // 0 = arc, 1 = line
+float x1;
+float y1;
+float x2;
+float y2;
+float slope;       //斜率
+float y_intercept; //截距
+double theta;      // the angle reference to positive x axis
+// below is needed by arc, when deals with line set all to 0
+float center_x;
+float center_y;
+bool direction; // 0 = ClockWise(CW), 1 = ConterClockwise(CCW)
+double theta_1; // 圓心到點一角度
+double theta_2; // 圓心到點二角度
+```
 
 Point
 
-    ```C++
-    float x;
-    float y;
-    bool Next_Arc;
-    ```
+```C++
+float x;
+float y;
+bool Next_Arc;
+```
+
+Copper
+
+因計算絲印與銅箔交點，需先計算銅箔極值
+
+```C++
+float x_min;
+float x_max;
+float y_min;
+float y_max;
+vector<Segment> segment;
+```
 
 ### functions
 
-    ```C++
-    float File_to_Parameter(const string); // 匯入三個絲印參數
+```mermaid
+flowchart LR
+    subgraph main
 
-    const vector<string> split(const string &, const char &); // 將匯入文字分解
+    a0([open file])
+    a1([File_to_Parameter])
+    a2([Read_Assembly])
+    a3([Read_Copper])
+    a4([Assembly_Buffer])
+    a5([Copper_Buffer])
+    a6([Write_File])
 
-    segment String_to_Line(const string); // 將文字轉換為struct segment
-    // dependency: split()
+        subgraph parameter
+        b1([assemblygap])
+        b2([coppergap])
+        b3([silkscreenlen])
+        end 
 
-    vector<segment> Read_Assembly(fstream &); // 將Assembly讀入
-    // dependency: String_to_Line()
+        subgraph assembly
+        c1([Point_Extension])
+        c2([Point_to_Line])
+        end
 
-    vector<vector<segment>> Read_Copper(fstream &); // 將Copper讀入
-    // dependency: String_to_Line()
+        subgraph copper
+        d1([Point_Extension])
+        d2([Copper_Point_to_Line])
+        end
+    end
+    
+    a0 --> a1
+    a0 --> a2
+    a0 --> a3
+    a1 --> b1
+    a1 --> b2
+    a1 --> b3
 
-    vector<Point> Line_to_Point(const vector<segment>); //將線段切割成點
+    a4 --> a6
+    a5 --> a6
+    b3 --> a6
 
-    vector<segment> Buffer(const vector<segment>); // 繪製絲印
-    // dependency: Line_to_Point(), point_in_polygon(), Arc_Optimization()
+    a2 --> c1
+    c1 --> c2
+    c2 --> a4
 
-    float interpolate_x(const float, const Point, const Point);
+    a3 --> d1
+    d1 --> d2
+    d2 --> a5
 
-    bool point_in_polygon(const Point, const vector<Point>, const vector<vector<Point>>);
-    // dependency: interpolate_x()
+    b1 --> c1
+    b2 --> d1 
+```
 
-    void Write_File(const vector<segment>); //匯出
+```C++
+float File_to_Parameter(const string); // 匯入三個絲印參數
+// dependency: none
 
-    vector<segment> Arc_to_Poly(segment);
+const vector<string> split(const string &, const char &); // 將匯入文字分解
+// dependency: none
 
-    vector<vector<Point>> Arc_Optimization(const vector<segment>);
-    // dependency: Arc_to_Poly(), Line_to_Point()
+segment String_to_Line(const string); // 將文字轉換為struct segment
+// dependency: split()
 
-    int main(); // 主程式
-    ```
+vector<segment> Read_Assembly(fstream &); // 將Assembly讀入
+// dependency: String_to_Line()
+
+vector<vector<segment>> Read_Copper(fstream &); // 將Copper讀入
+// dependency: String_to_Line()
+
+vector<Point> Line_to_Point(const vector<segment>); //將線段切割成點
+// dependency: none
+
+vector<Segment> Assembly_Buffer(const vector<Segment>); // 繪製絲印
+// dependency: Point_Extension(), Point_to_Line()
+
+vector<Copper> Copper_Buffer(const vector<vector<Segment>>);
+// dependency: Point_Extension(), Copper_Point_to_Line()
+
+vector<Point> Point_Extension(const vector<Segment>);
+// dependency: Line_to_Point(), point_in_polygon(), Arc_Optimization()
+
+vector<Segment> Point_to_Line(vector<Point>, vector<Segment>);
+// dependency: none
+
+Copper Copper_Point_to_Line(vector<Point>, vector<Segment>);
+// dependency: Arc_Boundary_Meas()
+
+float interpolate_x(const float, const Point, const Point);
+// dependency: none
+
+bool point_in_polygon(const Point, const vector<Point>, const vector<vector<Point>>);
+// dependency: interpolate_x()
+
+void Write_File(const vector<segment>); //匯出
+// dependency: none
+
+vector<Point> Arc_to_Poly(segment);
+// dependency: none
+
+vector<vector<Point>> Arc_Optimization(const vector<segment>);
+// dependency: Arc_to_Poly()
+
+Copper Arc_Boundary_Meas(Segment);
+// dependency: none
+
+int main(); // 主程式
+```
 
 ## Algorithms
 
@@ -91,31 +182,43 @@ Point
 
 new parameter
 
-    ARC_TO_LINE_SLICE_DENSITY: 幾度取一次點
+```text
+ARC_TO_LINE_SLICE_DENSITY: 幾度取一次點
+```
 
 new struct
 
-    Copper 包含上下左右邊界
+```text
+Copper 包含上下左右邊界
+```
 
 new functions
 
-    Arc_Boundary_Meas()
+```text
+Arc_Boundary_Meas()
 
-    Copper_Point_to_Line()
+Copper_Point_to_Line()
 
-    Copper_Buffer()
+Copper_Buffer()
+```
 
 struct change name
 
-    segment -> Segment
+```text
+segment -> Segment
+```
 
 function change name
 
-    Buffer -> Assembly_Buffer
+```text
+Buffer -> Assembly_Buffer
+```
 
 revise Arc_to_Poly
 
 Peter Macoto
+
+---
 
 2022/6/2
 
@@ -127,21 +230,35 @@ suggestion: Arc_to_poly() can return vector of points, the vector includes start
 
 Peter
 
+---
+
 2022/6/2
 
+function
+
+```text
 Arc_to_Poly (finish!!!!)
+```
 
 help me to run the PublicCases to check if it successes, plz.
 
 Macoto
 
+---
+
 2022/6/2
 
+new function
+
+```text
 Arc_to_Poly (not finish!!!!)
+```
 
 last point access
 
 Macoto
+
+---
 
 2022/6/1
 
@@ -149,15 +266,19 @@ silkscreen successfull printed, same as copper expansion
 
 new function
 
-    interpolate_x()
+```text
+interpolate_x()
     
-    point_in_polygon()
+point_in_polygon()
+```
 
-    use them to correct the point in polygon judgement
+use them to correct the point in polygon judgement
 
 copyright: <https://web.ntnu.edu.tw/~algo/Polygon.html>
 
 Peter Raymond Macoto
+
+---
 
 2022/5/27
 
@@ -165,39 +286,56 @@ start processing arc, have some issue.(see test_A pic)
 
 Peter Raymond
 
+---
+
 2022/5/26
 
 fix the bugs in functions, still some weird bugs to go on. (a point is not correct)
 
 change function
 
-    Outside_of_Assembly() return type from Point to bool
+```text
+Outside_of_Assembly() return type from Point to bool
+```
 
 add parameters
 
-    Angle_Tolerance = 0.1
+```text
+Angle_Tolerance = 0.1
 
-    PI = pi
+PI = pi
+```
 
 Peter
+
+---
 
 2022/5/25
 
 new function
 
-    Assembly_Line_to_Point()
+```text
+Assembly_Line_to_Point()
+```
 
-    change data structure from lines to points
+change data structure from lines to points
 
 Peter
+
+---
 
 2022/5/24
 
 new function
 
-    Print_Silkscreen(), Outside_of_Assembly()
+```text
+Print_Silkscreen(), Outside_of_Assembly()
+```
 
 Peter
+
+---
+---
 
 ## File Processing
 
@@ -207,43 +345,57 @@ visualizer input update, show the file list in the folder, easier to understand 
 
 Peter
 
+---
+
 2022/5/29
 
 new functions
 
-    String_to_Line()
+```text
+String_to_Line()
 
-    Read_Assembly()
+Read_Assembly()
 
-    Read_Copper()
+Read_Copper()
 
-    propose: migrate input into functions
+propose: migrate input into functions
+```
 
 change name function
 
-    File_to_String() -> File_to_Parameter()
+```text
+File_to_String() -> File_to_Parameter()
+```
 
 class Segment Abandoned
 
 Peter
 
+---
+
 2022/5/25
 
 new function
 
-    Write_File()
+```text
+Write_File()
+```
 
-    can output the txt in correct format
+can output the txt in correct format
 
 Peter
+
+---
 
 2022/5/21
 
 create new class
 
-    Segment 
+```text
+Segment 
 
-    replace the struct segment
+replace the struct segment
+```
 
 Peter
 
@@ -253,7 +405,9 @@ Peter
 
 create new function
 
-    File_to_String(string str)
+```text
+File_to_String(string str)
+```
 
 use as processing the parameter of the silkscreen
 
@@ -275,8 +429,11 @@ Macoto
 
 finished reading assembly.
 
-    new function:
-    const vector<string> split(const string& str, const char& delimiter)
+new function:
+
+```text
+const vector<string> split(const string& str, const char& delimiter)
+```
 
 Macoto
 
@@ -286,15 +443,18 @@ Macoto
 
 Start processing of the file, finished three specs of silkscreen, working on reading assembly.
 
-    assemblygap : float, parameter passed by problem
+```text
+assemblygap : float, parameter passed by problem
 
-    coppergap : float, parameter passed by problem
+coppergap : float, parameter passed by problem
 
-    silkscreenlen : float, parameter passed by problem
+silkscreenlen : float, parameter passed by problem
 
-    segment : struct, include lines and arcs
+segment : struct, include lines and arcs
 
-    assembly : vector<segment>, store the assembly details
+assembly : vector<segment>, store the assembly details
+```
+
 Peter
 
 ## Optimization
