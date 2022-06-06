@@ -146,7 +146,7 @@ vector<Segment> Assembly_Buffer(const vector<Segment>); // 繪製絲印
 vector<Copper> Copper_Buffer(const vector<vector<Segment>>);
 // dependency: Point_Extension(), Copper_Point_to_Line()
 
-vector<Point> Point_Extension(const vector<Segment>);
+vector<Point> Point_Extension(const vector<Segment>, const bool);
 // dependency: Line_to_Point(), point_in_polygon(), Arc_Optimization()
 
 vector<Segment> Point_to_Line(vector<Point>, vector<Segment>);
@@ -177,6 +177,14 @@ int main(); // 主程式
 ```
 
 ## Algorithms
+
+2022/6/1
+
+deal with single circle copper, processed with special case.
+
+add new parameter is_assembly to Point_Extension(), to identify the segment vector is assembly or copper and switch between assemblygap and coppergap.
+
+peter
 
 2022/6/4
 

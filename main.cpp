@@ -11,8 +11,8 @@ using namespace std;
 #define Angle_Tolerance 0.1 //算角度誤差容許值 (rad)
 #define PI 3.14159265358979323846
 #define ARC_TO_LINE_SLICE_DENSITY 1 // 切片密度(in degree)
-#define INPUT_PATH "./TestingCase/test_C.txt"
-#define OUTPUT_PATH "./TestingCase/test_C_Ans.txt"
+#define INPUT_PATH "./TestingCase/test_A.txt"
+#define OUTPUT_PATH "./TestingCase/test_A_Ans.txt"
 // assemblygap : the minimum distance between assembly and silkscreen
 // coppergap : the minimum distance between copper and silkscreen
 // silkscreenlen : the minimum length of silkscreen
@@ -69,7 +69,7 @@ vector<Segment> Assembly_Buffer(const vector<Segment>);
 
 vector<Copper> Copper_Buffer(const vector<vector<Segment>>);
 
-vector<Point> Point_Extension(const vector<Segment>);
+vector<Point> Point_Extension(const vector<Segment>, const bool);
 
 vector<Segment> Point_to_Line(vector<Point>, vector<Segment>);
 
@@ -82,6 +82,8 @@ bool point_in_polygon(const Point, const vector<Point>, const vector<vector<Poin
 // bool Outside_of_Assembly(const Point, const vector<Segment>);
 
 void Write_File(const vector<Segment>);
+
+void Write_File_Copper(const vector<Copper>); // debugging function
 
 vector<Point> Arc_to_Poly(Segment);
 
@@ -119,6 +121,8 @@ int main()
 
     vector<Copper> whole_copper_barrier;
     whole_copper_barrier = Copper_Buffer(copper);
+
+    Write_File_Copper(whole_copper_barrier);
 
     // calculate the silkscreen
     // ignore the arc first
@@ -286,7 +290,7 @@ vector<Point> Line_to_Point(const vector<Segment> Assembly) // 將線段切割�
 
 vector<Segment> Assembly_Buffer(const vector<Segment> Assembly)
 {
-    vector<Point> Extended_Points = Point_Extension(Assembly);
+    vector<Point> Extended_Points = Point_Extension(Assembly, true);
     vector<Segment> silkscreen = Point_to_Line(Extended_Points, Assembly);
     return silkscreen;
 }
@@ -298,13 +302,13 @@ vector<Copper> Copper_Buffer(const vector<vector<Segment>> coppers)
     vector<Copper> Every_Copper;
     for (int i = 0; i < size; i++)
     {
-        Single_Copper = Copper_Point_to_Line(Point_Extension(coppers[i]), coppers[i]);
+        Single_Copper = Copper_Point_to_Line(Point_Extension(coppers[i], false), coppers[i]);
         Every_Copper.push_back(Single_Copper);
     }
     return Every_Copper;
 }
 
-vector<Point> Point_Extension(const vector<Segment> Assembly) // 圖形外擴
+vector<Point> Point_Extension(const vector<Segment> Assembly, const bool is_assembly) // 圖形外擴
 {
     const int size = Assembly.size();
     vector<Point> Assembly_Points;
@@ -315,7 +319,15 @@ vector<Point> Point_Extension(const vector<Segment> Assembly) // 圖形外擴
 
     Assembly_Points = Line_to_Point(Assembly); //線切割為點
     Arc_Dots = Arc_Optimization(Assembly);     // 將圓弧切割成多個點，以利辨識點在圖形內外
-
+    if (size == 1)                             // i think only happened in copper, eg: a full circle
+    {
+        Point Extended_Point;
+        Extended_Point.x = Assembly[0].x1 + coppergap * cos(Assembly[0].theta_1);
+        Extended_Point.y = Assembly[0].y1 + coppergap * sin(Assembly[0].theta_1);
+        Extended_Point.Next_Arc = true;
+        Extended_Points.push_back(Extended_Point);
+        return Extended_Points;
+    }
     for (size_t i = size - 1, j = 0; j < size; i = j++)
     {
         Segment first_line, second_line;
@@ -344,10 +356,14 @@ vector<Point> Point_Extension(const vector<Segment> Assembly) // 圖形外擴
             if (second_angle < -PI)
                 second_angle += 2 * PI;
         }
-        double Angle_Divided = (first_angle + second_angle) / 2;                    //角平分線的角度
-        float Bisector_Slope = tan(Angle_Divided);                                  //角平分線
-        double Point_Extend_Range = assemblygap / sin(Angle_Divided - first_angle); //點外擴距離
-        Point Extend_1, Extend_2;                                                   //交點向外延伸的兩個點
+        double Angle_Divided = (first_angle + second_angle) / 2; //角平分線的角度
+        float Bisector_Slope = tan(Angle_Divided);               //角平分線
+        double Point_Extend_Range;                               //點外擴距離
+        if (is_assembly)
+            Point_Extend_Range = assemblygap / sin(Angle_Divided - first_angle);
+        else
+            Point_Extend_Range = coppergap / sin(Angle_Divided - first_angle);
+        Point Extend_1, Extend_2; //交點向外延伸的兩個點
         bool Outside_1, Outside_2;
         Extend_1.x = Assembly_Points[j].x + Point_Extend_Range * cos(Angle_Divided);
         Extend_1.y = Assembly_Points[j].y + Point_Extend_Range * sin(Angle_Divided);
@@ -398,18 +414,11 @@ vector<Segment> Point_to_Line(vector<Point> Extended_Points, vector<Segment> Ass
         else
         {
             A_Line.slope = A_Line.y_intercept = A_Line.theta = 0;
-            if (i != size - 1)
-            {
-                A_Line.center_x = Assembly[i].center_x;
-                A_Line.center_y = Assembly[i].center_y;
-                A_Line.direction = Assembly[i].direction;
-            }
-            else
-            {
-                A_Line.center_x = Assembly[0].center_x;
-                A_Line.center_y = Assembly[0].center_y;
-                A_Line.direction = Assembly[0].direction;
-            }
+
+            A_Line.center_x = Assembly[i].center_x;
+            A_Line.center_y = Assembly[i].center_y;
+            A_Line.direction = Assembly[i].direction;
+
             A_Line.theta_1 = atan2(A_Line.y1 - A_Line.center_y, A_Line.x1 - A_Line.center_x);
             A_Line.theta_2 = atan2(A_Line.y2 - A_Line.center_y, A_Line.x2 - A_Line.center_x);
         }
@@ -478,18 +487,11 @@ Copper Copper_Point_to_Line(vector<Point> Extended_Points, vector<Segment> coppe
         else
         {
             A_Line.slope = A_Line.y_intercept = A_Line.theta = 0;
-            if (i != size - 1)
-            {
-                A_Line.center_x = copper[i].center_x;
-                A_Line.center_y = copper[i].center_y;
-                A_Line.direction = copper[i].direction;
-            }
-            else
-            {
-                A_Line.center_x = copper[0].center_x;
-                A_Line.center_y = copper[0].center_y;
-                A_Line.direction = copper[0].direction;
-            }
+
+            A_Line.center_x = copper[i].center_x;
+            A_Line.center_y = copper[i].center_y;
+            A_Line.direction = copper[i].direction;
+
             A_Line.theta_1 = atan2(A_Line.y1 - A_Line.center_y, A_Line.x1 - A_Line.center_x);
             A_Line.theta_2 = atan2(A_Line.y2 - A_Line.center_y, A_Line.x2 - A_Line.center_x);
         }
@@ -768,6 +770,29 @@ Copper Arc_Boundary_Meas(Segment Arc)
     A_Arc.y_min = (first >= -PI / 2 && second <= -PI / 2) ? Arc.center_y - radius : min(min(Arc.y1, Arc.y2), Arc.center_y);
 
     return A_Arc;
+}
+
+void Write_File_Copper(const vector<Copper> coppers)
+{
+    int size = coppers.size();
+    fstream Output;
+
+    Output.open(OUTPUT_PATH, ios::app);
+    for (int i = 0; i < size; i++)
+    {
+        int copper_line = coppers[i].segment.size();
+        for (int j = 0; j < copper_line; j++)
+        {
+            if (coppers[i].segment[j].is_line)
+            {
+                Output << "line," << fixed << setprecision(4) << coppers[i].segment[j].x1 << "," << coppers[i].segment[j].y1 << "," << coppers[i].segment[j].x2 << "," << coppers[i].segment[j].y2 << endl;
+            }
+            else
+            {
+                Output << "arc," << fixed << setprecision(4) << coppers[i].segment[j].x1 << "," << coppers[i].segment[j].y1 << "," << coppers[i].segment[j].x2 << "," << coppers[i].segment[j].y2 << "," << coppers[i].segment[j].center_x << "," << coppers[i].segment[j].center_y << "," << (coppers[i].segment[j].direction ? "CCW" : "CW") << endl;
+            }
+        }
+    }
 }
 
 ///////////////////////////////////////////////////////
