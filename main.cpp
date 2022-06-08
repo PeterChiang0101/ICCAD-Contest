@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cmath>
 #include <cstring> // strtok
 #include <fstream>
@@ -81,6 +82,12 @@ float interpolate_x(const float, const Point, const Point);
 bool point_in_polygon(const Point, const vector<Point>, const vector<vector<Point>>);
 
 vector<Segment> Cut_Silkscreen_by_Copper(const Segment, const vector<Copper>);
+
+vector<Segment> Sort(Segment, vector<Segment>);
+
+bool sort_decrease(const Segment, const Segment);
+
+bool sort_increase(const Segment, const Segment);
 
 vector<vector<Segment>> Final_Silkscreen(const vector<Segment>, const vector<Copper>);
 
@@ -538,75 +545,94 @@ bool point_in_polygon(Point t, vector<Point> Assembly_Point, vector<vector<Point
     return c;
 }
 
+vector<Segment> silkscreen_cut_single_copper(Segment Silkscreen_Piece, Copper Single_Copper)
+{
+}
+
 vector<Segment> Cut_Silkscreen_by_Copper(Segment Silkscreen_Piece, vector<Copper> Coppers)
 {
     int Copper_size = Coppers.size();
-    vector<Segment> Single_Silkscreen_Cut;
-    Copper Boundry; // silkscreen boundary
-    vector<Point> intersect_points;
+    vector<Segment> Single_Silkscreen_Cut, total_copper_cut_segments, copper_cut_segments;
+    vector<Point> cut_points, copper_cut_points;
+    Point points;
+    points.x = Silkscreen_Piece.x1, points.y = Silkscreen_Piece.y1;
+    cut_points.push_back(points); // 塞入第一個點
 
+    for (int i = 0; i < Copper_size; i++) // 每次處理一個copper
+    {
+        copper_cut_segments = silkscreen_cut_single_copper(Silkscreen_Piece, Coppers[i]);                                          // 絲印與單一copper的交點
+        total_copper_cut_segments.insert(total_copper_cut_segments.end(), copper_cut_segments.begin(), copper_cut_segments.end()); // 線段之間可能有交集
+    }
+
+    points.x = Silkscreen_Piece.x2, points.y = Silkscreen_Piece.y2;
+    cut_points.push_back(points); // 塞入最後一點
+
+    // sort(cut_points.begin(), cut_points.end()) 範例
+    return Single_Silkscreen_Cut;
+}
+
+vector<Segment> Sort(Segment Silkscreen_Piece, vector<Segment> total_copper_cut_segments)
+{
+    // 由 x1 or y1 小至大排序
+    // 開頭Segment 為 Silkscreen_Piece.x1, Silkscreen_Piece.y1, Silkscreen_Piece.x1, Silkscreen_Piece.y1
+    // 排序
+    // 結尾Segment 為 Silkscreen_Piece.x2, Silkscreen_Piece.y2, Silkscreen_Piece.x2, Silkscreen_Piece.y2
+    vector<Segment> Cut_Silkscreen;
+    Segment Start_point, End_point;
+    Start_point.x1 = Start_point.x2 = Silkscreen_Piece.x1;
+    Start_point.y1 = Start_point.y2 = Silkscreen_Piece.y1;
+
+    End_point.x1 = End_point.x2 = Silkscreen_Piece.x2;
+    End_point.y1 = End_point.y2 = Silkscreen_Piece.y2;
+    Cut_Silkscreen.push_back(Start_point);
     if (Silkscreen_Piece.is_line)
     {
-        Boundry.x_min = min(Silkscreen_Piece.x1, Silkscreen_Piece.x2);
-        Boundry.x_max = max(Silkscreen_Piece.x1, Silkscreen_Piece.x2);
-        Boundry.y_min = min(Silkscreen_Piece.y1, Silkscreen_Piece.y2);
-        Boundry.y_max = max(Silkscreen_Piece.y1, Silkscreen_Piece.y2);
+        if ((Silkscreen_Piece.theta >= 0 && Silkscreen_Piece.theta < PI / 2) || (Silkscreen_Piece.theta < 3 * PI / 2 && Silkscreen_Piece.theta > PI))
+        { // SORT BY X1,increase
+            sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_increase);
+        }
+        else if ((Silkscreen_Piece.theta > PI / 2 && Silkscreen_Piece.theta <= PI) || (Silkscreen_Piece.theta > 3 * PI / 2 && Silkscreen_Piece.theta < 2 * PI))
+        { // SORT BY X1,decrease
+            sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_decrease);
+        }
+        else if (Silkscreen_Piece.theta == PI / 2)
+        {
+            sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_increase);
+        }
+        else
+        {
+            sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_decrease);
+        }
     }
     else
     {
-        Boundry = Arc_Boundary_Meas(Silkscreen_Piece);
     }
+    Cut_Silkscreen.push_back(End_point);
 
-    for (int i = 0; i < Copper_size; i++)
+    return Cut_Silkscreen;
+}
+
+bool sort_increase(const Segment L1, const Segment L2)
+{
+    if (L1.x1 == L2.x1)
     {
-
-        if ((Coppers[i].x_max >= Boundry.x_min && Coppers[i].x_min <= Boundry.x_max) && (Coppers[i].y_max >= Boundry.y_min && Coppers[i].y_min <= Boundry.y_max))
-        {
-            // 需要判斷的copper
-            // Write_File(Coppers[i].segment);
-            int Copper_Line_size = Coppers[i].segment.size();
-            Copper Line_Boundry;
-            for (size_t j = 0; j < Copper_Line_size; j++)
-            {
-                Line_Boundry.x_min = min(Coppers[i].segment[j].x1, Coppers[i].segment[j].x2);
-                Line_Boundry.x_max = max(Coppers[i].segment[j].x1, Coppers[i].segment[j].x2);
-                Line_Boundry.y_min = min(Coppers[i].segment[j].y1, Coppers[i].segment[j].y2);
-                Line_Boundry.y_max = max(Coppers[i].segment[j].y1, Coppers[i].segment[j].y2);
-                if ((Line_Boundry.x_max >= Boundry.x_min && Line_Boundry.x_min <= Boundry.x_max) && (Line_Boundry.y_max >= Boundry.y_min && Line_Boundry.y_min <= Boundry.y_max))
-                {
-                    // 找交點
-
-                    if (Coppers[i].segment[j].is_line & Silkscreen_Piece.is_line) // line : line
-                    {
-                        Point intersect, first_1, first_2, last_1, last_2;
-                        first_1.x = Coppers[i].segment[j].x1, first_1.y = Coppers[i].segment[j].y1;
-                        first_2.x = Coppers[i].segment[j].x2, first_2.y = Coppers[i].segment[j].y2;
-                        last_1.x = Silkscreen_Piece.x1, last_1.y = Silkscreen_Piece.y1;
-                        last_2.x = Silkscreen_Piece.x2, last_2.y = Silkscreen_Piece.y2;
-                        intersect = intersection(first_1, first_2, last_1, last_2);
-                        if (intersect.x != INFINITY)
-                        {
-                            if ((intersect.x >= max(Line_Boundry.x_min, Boundry.x_min) && intersect.x <= min(Line_Boundry.x_max, Line_Boundry.x_max)) && (intersect.y >= max(Line_Boundry.y_min, Boundry.y_min) && intersect.y <= min(Line_Boundry.y_max, Boundry.y_max)))
-                                intersect_points.push_back(intersect);
-                        }
-                    }
-                    else if (Coppers[i].segment[j].is_line ^ Silkscreen_Piece.is_line) // line : arc
-                    {
-                    }
-                    else // arc : arc
-                    {
-                    }
-                }
-            }
-        }
+        return (L1.y1 < L2.y1);
     }
-
-    int size = intersect_points.size();
-    for (int i = 0; i < size; i++)
+    else
     {
+        return (L1.x1 < L2.x1);
     }
-
-    return Single_Silkscreen_Cut;
+}
+bool sort_decrease(const Segment L1, const Segment L2)
+{
+    if (L1.x1 == L2.x1)
+    {
+        return (L1.y1 > L2.y1);
+    }
+    else
+    {
+        return (L1.x1 > L2.x1);
+    }
 }
 
 vector<vector<Segment>> Final_Silkscreen(vector<Segment> Silkscreen_Original, vector<Copper> Copper)
