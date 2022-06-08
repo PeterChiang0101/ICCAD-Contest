@@ -12,8 +12,8 @@ using namespace std;
 #define Angle_Tolerance 0.1 //算角度誤差容許值 (rad)
 #define PI 3.14159265358979323846
 #define ARC_TO_LINE_SLICE_DENSITY 1 // 切片密度(in degree)
-#define INPUT_PATH "./TestingCase/test_A.txt"
-#define OUTPUT_PATH "./TestingCase/test_A_Ans.txt"
+#define INPUT_PATH "./TestingCase/test_C.txt"
+#define OUTPUT_PATH "./TestingCase/test_C_Ans.txt"
 // assemblygap : the minimum distance between assembly and silkscreen
 // coppergap : the minimum distance between copper and silkscreen
 // silkscreenlen : the minimum length of silkscreen
@@ -80,6 +80,10 @@ float interpolate_x(const float, const Point, const Point);
 
 bool point_in_polygon(const Point, const vector<Point>, const vector<vector<Point>>);
 
+vector<Segment> Cut_Silkscreen_by_Copper(const Segment, const vector<Copper>);
+
+vector<vector<Segment>> Final_Silkscreen(const vector<Segment>, const vector<Copper>);
+
 void Write_File(const vector<Segment>);
 
 void Write_File_Copper(const vector<Copper>); // debugging function
@@ -90,6 +94,9 @@ vector<vector<Point>> Arc_Optimization(const vector<Segment>);
 
 Copper Arc_Boundary_Meas(Segment);
 
+int cross(Point, Point);
+
+Point intersection(Point, Point, Point, Point);
 // bool Outside_of_Assembly(const Point, const vector<Segment>);
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -118,12 +125,14 @@ int main()
 
     silkscreen = Assembly_Buffer(assembly);
 
-    Write_File(silkscreen);
-
     vector<Copper> whole_copper_barrier;
     whole_copper_barrier = Copper_Buffer(copper);
 
-    Write_File_Copper(whole_copper_barrier);
+    vector<vector<Segment>> Silkscreen_Cut;
+    Write_File(silkscreen);
+    Silkscreen_Cut = Final_Silkscreen(silkscreen, whole_copper_barrier);
+
+    // Write_File_Copper(whole_copper_barrier); // output for testing
 
     // calculate the silkscreen
     // ignore the arc first
@@ -529,6 +538,92 @@ bool point_in_polygon(Point t, vector<Point> Assembly_Point, vector<vector<Point
     return c;
 }
 
+vector<Segment> Cut_Silkscreen_by_Copper(Segment Silkscreen_Piece, vector<Copper> Coppers)
+{
+    int Copper_size = Coppers.size();
+    vector<Segment> Single_Silkscreen_Cut;
+    Copper Boundry; // silkscreen boundary
+    vector<Point> intersect_points;
+
+    if (Silkscreen_Piece.is_line)
+    {
+        Boundry.x_min = min(Silkscreen_Piece.x1, Silkscreen_Piece.x2);
+        Boundry.x_max = max(Silkscreen_Piece.x1, Silkscreen_Piece.x2);
+        Boundry.y_min = min(Silkscreen_Piece.y1, Silkscreen_Piece.y2);
+        Boundry.y_max = max(Silkscreen_Piece.y1, Silkscreen_Piece.y2);
+    }
+    else
+    {
+        Boundry = Arc_Boundary_Meas(Silkscreen_Piece);
+    }
+
+    for (int i = 0; i < Copper_size; i++)
+    {
+
+        if ((Coppers[i].x_max >= Boundry.x_min && Coppers[i].x_min <= Boundry.x_max) && (Coppers[i].y_max >= Boundry.y_min && Coppers[i].y_min <= Boundry.y_max))
+        {
+            // 需要判斷的copper
+            // Write_File(Coppers[i].segment);
+            int Copper_Line_size = Coppers[i].segment.size();
+            Copper Line_Boundry;
+            for (size_t j = 0; j < Copper_Line_size; j++)
+            {
+                Line_Boundry.x_min = min(Coppers[i].segment[j].x1, Coppers[i].segment[j].x2);
+                Line_Boundry.x_max = max(Coppers[i].segment[j].x1, Coppers[i].segment[j].x2);
+                Line_Boundry.y_min = min(Coppers[i].segment[j].y1, Coppers[i].segment[j].y2);
+                Line_Boundry.y_max = max(Coppers[i].segment[j].y1, Coppers[i].segment[j].y2);
+                if ((Line_Boundry.x_max >= Boundry.x_min && Line_Boundry.x_min <= Boundry.x_max) && (Line_Boundry.y_max >= Boundry.y_min && Line_Boundry.y_min <= Boundry.y_max))
+                {
+                    // 找交點
+
+                    if (Coppers[i].segment[j].is_line & Silkscreen_Piece.is_line) // line : line
+                    {
+                        Point intersect, first_1, first_2, last_1, last_2;
+                        first_1.x = Coppers[i].segment[j].x1, first_1.y = Coppers[i].segment[j].y1;
+                        first_2.x = Coppers[i].segment[j].x2, first_2.y = Coppers[i].segment[j].y2;
+                        last_1.x = Silkscreen_Piece.x1, last_1.y = Silkscreen_Piece.y1;
+                        last_2.x = Silkscreen_Piece.x2, last_2.y = Silkscreen_Piece.y2;
+                        intersect = intersection(first_1, first_2, last_1, last_2);
+                        if (intersect.x != INFINITY)
+                        {
+                            if ((intersect.x >= max(Line_Boundry.x_min, Boundry.x_min) && intersect.x <= min(Line_Boundry.x_max, Line_Boundry.x_max)) && (intersect.y >= max(Line_Boundry.y_min, Boundry.y_min) && intersect.y <= min(Line_Boundry.y_max, Boundry.y_max)))
+                                intersect_points.push_back(intersect);
+                        }
+                    }
+                    else if (Coppers[i].segment[j].is_line ^ Silkscreen_Piece.is_line) // line : arc
+                    {
+                    }
+                    else // arc : arc
+                    {
+                    }
+                }
+            }
+        }
+    }
+
+    int size = intersect_points.size();
+    for (int i = 0; i < size; i++)
+    {
+    }
+
+    return Single_Silkscreen_Cut;
+}
+
+vector<vector<Segment>> Final_Silkscreen(vector<Segment> Silkscreen_Original, vector<Copper> Copper)
+{
+    vector<vector<Segment>> Silkscreen_Cut_Complete;
+    vector<Segment> Silkscreen_Cut_Part;
+    int Silkscreen_Org_Size = Silkscreen_Original.size();
+
+    for (int i = 0; i < Silkscreen_Org_Size; i++)
+    {
+        Silkscreen_Cut_Part.clear();
+        Silkscreen_Cut_Part = Cut_Silkscreen_by_Copper(Silkscreen_Original[i], Copper);
+        Silkscreen_Cut_Complete.push_back(Silkscreen_Cut_Part);
+    }
+    return Silkscreen_Cut_Complete;
+}
+
 void Write_File(const vector<Segment> Silkscreen)
 {
     fstream Output;
@@ -662,11 +757,39 @@ Copper Arc_Boundary_Meas(Segment Arc)
     {
         swap(first, second);
     }
+    if (first > second)
+    {
+        A_Arc.x_max = (first >= 0 && second <= 0) ? Arc.center_x + radius : max(max(Arc.x1, Arc.x2), Arc.center_x);
+        A_Arc.x_min = min(min(Arc.x1, Arc.x2), Arc.center_x);
+        A_Arc.y_max = (first >= PI / 2 && second <= PI / 2) ? Arc.center_y + radius : max(max(Arc.y1, Arc.y2), Arc.center_y);
+        A_Arc.y_min = (first >= -PI / 2 && second <= -PI / 2) ? Arc.center_y - radius : min(min(Arc.y1, Arc.y2), Arc.center_y);
+    }
+    else if (second < 0) // first < second < 0
+    {
+        A_Arc.x_max = Arc.center_x + radius;
+        A_Arc.x_min = Arc.center_x - radius;
+        A_Arc.y_max = Arc.center_y + radius;
+        A_Arc.y_min = (first >= -PI / 2 || second <= -PI / 2) ? Arc.center_y - radius : min(min(Arc.y1, Arc.y2), Arc.center_y);
+    }
+    else if (first >= 0) // 0 <= first < second
+    {
+        A_Arc.x_max = Arc.center_x + radius;
+        A_Arc.x_min = Arc.center_x - radius;
+        A_Arc.y_max = (first >= PI / 2 || second <= PI / 2) ? Arc.center_y + radius : max(max(Arc.y1, Arc.y2), Arc.center_y);
+        A_Arc.y_min = Arc.center_y - radius;
+    }
+    else // first < 0 < second
+    {
+        A_Arc.x_max = max(max(Arc.x1, Arc.x2), Arc.center_x);
+        A_Arc.x_min = Arc.center_x - radius;
+        A_Arc.y_max = (second <= PI / 2) ? Arc.center_y + radius : max(max(Arc.y1, Arc.y2), Arc.center_y);
+        A_Arc.y_min = (first >= -PI / 2) ? Arc.center_y - radius : min(min(Arc.y1, Arc.y2), Arc.center_y);
+    }
 
-    A_Arc.x_max = (first >= 0 && second <= 0) ? Arc.center_x + radius : max(max(Arc.x1, Arc.x2), Arc.center_x);
-    A_Arc.x_min = (first <= 0 && second >= 0) ? Arc.center_x - radius : min(min(Arc.x1, Arc.x2), Arc.center_x);
+    /*A_Arc.x_max = (first >= 0 && second <= 0) ? Arc.center_x + radius : max(max(Arc.x1, Arc.x2), Arc.center_x);
+    A_Arc.x_min = (first >= PI && second <= PI) ? Arc.center_x - radius : min(min(Arc.x1, Arc.x2), Arc.center_x);
     A_Arc.y_max = (first >= PI / 2 && second <= PI / 2) ? Arc.center_y + radius : max(max(Arc.y1, Arc.y2), Arc.center_y);
-    A_Arc.y_min = (first >= -PI / 2 && second <= -PI / 2) ? Arc.center_y - radius : min(min(Arc.y1, Arc.y2), Arc.center_y);
+    A_Arc.y_min = (first >= -PI / 2 && second <= -PI / 2) ? Arc.center_y - radius : min(min(Arc.y1, Arc.y2), Arc.center_y);*/
 
     return A_Arc;
 }
@@ -692,6 +815,35 @@ void Write_File_Copper(const vector<Copper> coppers)
             }
         }
     }
+}
+
+// 叉積運算，回傳純量（除去方向）
+int cross(Point v1, Point v2) // 向量外積
+{
+    // 沒有除法，儘量避免誤差。
+    return v1.x * v2.y - v1.y * v2.x;
+}
+
+Point intersection(Point a1, Point a2, Point b1, Point b2)
+{
+    Point a, b, s;
+    a.x = a2.x - a1.x, a.y = a2.y - a1.y;
+    b.x = b2.x - b1.x, b.y = b2.y - b1.y;
+    s.x = b1.x - a1.x, s.y = b1.y - a1.y;
+
+    // 兩線平行，交點不存在。
+    // 兩線重疊，交點無限多。
+    if (cross(a, b) == 0)
+    {
+        s.x = s.y = INFINITY;
+        return s;
+    }
+
+    // 計算交點
+
+    a.x = a1.x + a.x * (cross(s, b) / cross(a, b));
+    a.y = a1.y + a.y * (cross(s, b) / cross(a, b));
+    return a;
 }
 
 ///////////////////////////////////////////////////////

@@ -1,10 +1,13 @@
 # ICCAD Contest 2022 Problem E
 
-## !!!NOT_DONE
+## !!!TODO(NOT_DONE)
+
+```text
 
 BUGsss
 
-```text
+copper 切割絲印，再與silkscreeen相減
+
 FIXED:
 
 直線外擴焦點
