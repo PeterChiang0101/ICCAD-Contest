@@ -6,7 +6,7 @@
 
 BUGsss
 
-copper 切割絲印，再與silkscreeen相減
+copper 切割絲印，再與silkscreeen相減 (差point的sorting, main.cpp:827)
 
 FIXED:
 
@@ -181,13 +181,31 @@ int main(); // 主程式
 
 ## Algorithms
 
-2022/6/1
+2022/6/9
+
+working on cut silkscreen by copper, mostly done, NEED SORT on main.cpp:827!!!
+
+Peter
+
+---
+
+2022/6/8
+
+making decision on how to cut silkscreen
+
+Peter Macoto Gray
+
+---
+
+2022/6/7
 
 deal with single circle copper, processed with special case.
 
 add new parameter is_assembly to Point_Extension(), to identify the segment vector is assembly or copper and switch between assemblygap and coppergap.
 
 peter
+
+---
 
 2022/6/4
 
