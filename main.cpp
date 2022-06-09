@@ -81,6 +81,8 @@ float interpolate_x(const float, const Point, const Point);
 
 bool point_in_polygon(const Point, const vector<Point>, const vector<vector<Point>>);
 
+vector<Segment> silkscreen_cut_single_copper(vector<Segment>, Segment, Copper);
+
 vector<Segment> Cut_Silkscreen_by_Copper(const Segment, const vector<Copper>);
 
 vector<Segment> Sort(Segment, vector<Segment>);
@@ -89,7 +91,7 @@ bool sort_decrease(const Segment, const Segment);
 
 bool sort_increase(const Segment, const Segment);
 
-vector<vector<Segment>> Final_Silkscreen(const vector<Segment>, const vector<Copper>);
+vector<Segment> Final_Silkscreen(const vector<Segment>, const vector<Copper>);
 
 void Write_File(const vector<Segment>);
 
@@ -135,7 +137,7 @@ int main()
     vector<Copper> whole_copper_barrier;
     whole_copper_barrier = Copper_Buffer(copper);
 
-    vector<vector<Segment>> Silkscreen_Cut;
+    vector<Segment> Silkscreen_Cut;
     Write_File(silkscreen);
     Silkscreen_Cut = Final_Silkscreen(silkscreen, whole_copper_barrier);
 
@@ -545,111 +547,6 @@ bool point_in_polygon(Point t, vector<Point> Assembly_Point, vector<vector<Point
     return c;
 }
 
-vector<Segment> silkscreen_cut_single_copper(Segment Silkscreen_Piece, Copper Single_Copper)
-{
-}
-
-vector<Segment> Cut_Silkscreen_by_Copper(Segment Silkscreen_Piece, vector<Copper> Coppers)
-{
-    int Copper_size = Coppers.size();
-    vector<Segment> Single_Silkscreen_Cut, total_copper_cut_segments, copper_cut_segments;
-    vector<Point> cut_points, copper_cut_points;
-    Point points;
-    points.x = Silkscreen_Piece.x1, points.y = Silkscreen_Piece.y1;
-    cut_points.push_back(points); // 塞入第一個點
-
-    for (int i = 0; i < Copper_size; i++) // 每次處理一個copper
-    {
-        copper_cut_segments = silkscreen_cut_single_copper(Silkscreen_Piece, Coppers[i]);                                          // 絲印與單一copper的交點
-        total_copper_cut_segments.insert(total_copper_cut_segments.end(), copper_cut_segments.begin(), copper_cut_segments.end()); // 線段之間可能有交集
-    }
-
-    points.x = Silkscreen_Piece.x2, points.y = Silkscreen_Piece.y2;
-    cut_points.push_back(points); // 塞入最後一點
-
-    // sort(cut_points.begin(), cut_points.end()) 範例
-    return Single_Silkscreen_Cut;
-}
-
-vector<Segment> Sort(Segment Silkscreen_Piece, vector<Segment> total_copper_cut_segments)
-{
-    // 由 x1 or y1 小至大排序
-    // 開頭Segment 為 Silkscreen_Piece.x1, Silkscreen_Piece.y1, Silkscreen_Piece.x1, Silkscreen_Piece.y1
-    // 排序
-    // 結尾Segment 為 Silkscreen_Piece.x2, Silkscreen_Piece.y2, Silkscreen_Piece.x2, Silkscreen_Piece.y2
-    vector<Segment> Cut_Silkscreen;
-    Segment Start_point, End_point;
-    Start_point.x1 = Start_point.x2 = Silkscreen_Piece.x1;
-    Start_point.y1 = Start_point.y2 = Silkscreen_Piece.y1;
-
-    End_point.x1 = End_point.x2 = Silkscreen_Piece.x2;
-    End_point.y1 = End_point.y2 = Silkscreen_Piece.y2;
-    Cut_Silkscreen.push_back(Start_point);
-    if (Silkscreen_Piece.is_line)
-    {
-        if ((Silkscreen_Piece.theta >= 0 && Silkscreen_Piece.theta < PI / 2) || (Silkscreen_Piece.theta < 3 * PI / 2 && Silkscreen_Piece.theta > PI))
-        { // SORT BY X1,increase
-            sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_increase);
-        }
-        else if ((Silkscreen_Piece.theta > PI / 2 && Silkscreen_Piece.theta <= PI) || (Silkscreen_Piece.theta > 3 * PI / 2 && Silkscreen_Piece.theta < 2 * PI))
-        { // SORT BY X1,decrease
-            sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_decrease);
-        }
-        else if (Silkscreen_Piece.theta == PI / 2)
-        {
-            sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_increase);
-        }
-        else
-        {
-            sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_decrease);
-        }
-    }
-    else
-    {
-    }
-    Cut_Silkscreen.push_back(End_point);
-
-    return Cut_Silkscreen;
-}
-
-bool sort_increase(const Segment L1, const Segment L2)
-{
-    if (L1.x1 == L2.x1)
-    {
-        return (L1.y1 < L2.y1);
-    }
-    else
-    {
-        return (L1.x1 < L2.x1);
-    }
-}
-bool sort_decrease(const Segment L1, const Segment L2)
-{
-    if (L1.x1 == L2.x1)
-    {
-        return (L1.y1 > L2.y1);
-    }
-    else
-    {
-        return (L1.x1 > L2.x1);
-    }
-}
-
-vector<vector<Segment>> Final_Silkscreen(vector<Segment> Silkscreen_Original, vector<Copper> Copper)
-{
-    vector<vector<Segment>> Silkscreen_Cut_Complete;
-    vector<Segment> Silkscreen_Cut_Part;
-    int Silkscreen_Org_Size = Silkscreen_Original.size();
-
-    for (int i = 0; i < Silkscreen_Org_Size; i++)
-    {
-        Silkscreen_Cut_Part.clear();
-        Silkscreen_Cut_Part = Cut_Silkscreen_by_Copper(Silkscreen_Original[i], Copper);
-        Silkscreen_Cut_Complete.push_back(Silkscreen_Cut_Part);
-    }
-    return Silkscreen_Cut_Complete;
-}
-
 void Write_File(const vector<Segment> Silkscreen)
 {
     fstream Output;
@@ -659,6 +556,9 @@ void Write_File(const vector<Segment> Silkscreen)
     const int size = Silkscreen.size();
     for (size_t i = 0; i < size; i++)
     {
+        if (i == 0 || Silkscreen[i].x1 != Silkscreen[i - 1].x2 || Silkscreen[i].y1 != Silkscreen[i - 1].y2) // 第一條線，或線段不連續
+            Output << "silkscreen" << endl;
+
         if (Silkscreen[i].is_line)
         {
             Output << "line," << fixed << setprecision(4) << Silkscreen[i].x1 << "," << Silkscreen[i].y1 << "," << Silkscreen[i].x2 << "," << Silkscreen[i].y2 << endl;
@@ -843,6 +743,107 @@ void Write_File_Copper(const vector<Copper> coppers)
     }
 }
 
+vector<Segment> Final_Silkscreen(vector<Segment> Silkscreen_Original, vector<Copper> Coppers) // 未切割的絲印 與 銅箔
+{
+    vector<Segment> Silkscreen_Cut_Complete; // 切割完成的完整絲印
+    vector<Segment> Silkscreen_Cut_Part;     // 切割完成的一條絲印
+    int Silkscreen_Org_Size = Silkscreen_Original.size();
+
+    for (int i = 0; i < Silkscreen_Org_Size; i++)
+    {
+        Silkscreen_Cut_Part.clear();
+        Silkscreen_Cut_Part = Cut_Silkscreen_by_Copper(Silkscreen_Original[i], Coppers);
+        Silkscreen_Cut_Complete.insert(Silkscreen_Cut_Complete.end(), Silkscreen_Cut_Part.begin(), Silkscreen_Cut_Part.end());
+    }
+    return Silkscreen_Cut_Complete;
+}
+
+vector<Segment> Cut_Silkscreen_by_Copper(Segment Silkscreen_Piece, vector<Copper> Coppers)
+{
+    int Copper_size = Coppers.size();
+    vector<Segment> Single_Silkscreen_Cut_Complete;
+    vector<Segment> total_copper_cut_segments;
+    vector<Segment> copper_cut_segments; // 一個copper所遮住這條絲印的部分
+
+    vector<Point> cut_points, copper_cut_points;
+    Point points;
+
+    // points.x = Silkscreen_Piece.x1, points.y = Silkscreen_Piece.y1;
+    // cut_points.push_back(points); // 塞入第一個點
+
+    Single_Silkscreen_Cut_Complete.push_back(Silkscreen_Piece);
+    for (int i = 0; i < Copper_size; i++) // 每次處理一個copper
+    {
+        Single_Silkscreen_Cut_Complete = silkscreen_cut_single_copper(Single_Silkscreen_Cut_Complete, Silkscreen_Piece, Coppers[i]); // 絲印與單一copper的交集線段
+        // total_copper_cut_segments.insert(total_copper_cut_segments.end(), copper_cut_segments.begin(), copper_cut_segments.end()); // 線段之間可能有交集
+    }
+
+    // points.x = Silkscreen_Piece.x2, points.y = Silkscreen_Piece.y2;
+    // cut_points.push_back(points); // 塞入最後一點
+
+    // sort(cut_points.begin(), cut_points.end()) 範例
+    return Single_Silkscreen_Cut_Complete;
+}
+
+vector<Segment> silkscreen_cut_single_copper(vector<Segment> Silkscreen_Partial_Cut, Segment Silkscreen_Piece, Copper Single_Copper)
+{
+    vector<Segment> Silk_Copper_Intersection; // 絲印與Copper的交集
+    // 計算 Silk_Copper_Intersection
+    int Silk_Copper_Intersection_size = Silk_Copper_Intersection.size();
+    int Silkscreen_Partial_Cut_size = Silkscreen_Partial_Cut.size();
+
+    int Silkscreen_Slope;
+    bool x1_inside, x2_inside; // 兩點是否在需要被截斷的線段內
+
+    if (Silkscreen_Piece.x2 - Silkscreen_Piece.x1)
+        Silkscreen_Slope = 1; // 1 -> 2方向 +x
+    else if (Silkscreen_Piece.x1 - Silkscreen_Piece.x2)
+        Silkscreen_Slope = -1; // 1 -> 2方向 -x
+    else if (Silkscreen_Piece.y2 - Silkscreen_Piece.y1)
+        Silkscreen_Slope = 2; // 1 -> 2方向 +y
+    else
+        Silkscreen_Slope = -2; // 1 -> 2方向 -y
+
+    for (int j = 0; j < Silkscreen_Partial_Cut_size; j++) // 切割到一半的絲印
+    {
+        for (int i = 0; i < Silk_Copper_Intersection_size; i++) // 需要被切掉的區域
+        {
+            // 找交集
+            if (Silkscreen_Piece.is_line)
+            {
+                switch (Silkscreen_Slope)
+                {
+                case 1:
+                    // 兩點是否在需要被截斷的線段內
+                    if (Silk_Copper_Intersection[i].x1 >= Silkscreen_Partial_Cut[j].x1 && Silk_Copper_Intersection[i].x1 <= Silkscreen_Partial_Cut[j].x2)
+                        x1_inside = true;
+                    else
+                        x1_inside = false;
+                    if (Silk_Copper_Intersection[i].x2 >= Silkscreen_Partial_Cut[j].x1 && Silk_Copper_Intersection[i].x2 <= Silkscreen_Partial_Cut[j].x2)
+                        x2_inside = true;
+                    else
+                        x2_inside = false;
+
+                    break;
+                case -1:
+                    break;
+                case 2:
+                    break;
+                case -2:
+                    break;
+                }
+                if (x1_inside)
+                {
+                }
+            }
+            else
+            {
+            }
+        }
+    }
+    return Silkscreen_Partial_Cut;
+}
+
 // 叉積運算，回傳純量（除去方向）
 int cross(Point v1, Point v2) // 向量外積
 {
@@ -870,6 +871,70 @@ Point intersection(Point a1, Point a2, Point b1, Point b2)
     a.x = a1.x + a.x * (cross(s, b) / cross(a, b));
     a.y = a1.y + a.y * (cross(s, b) / cross(a, b));
     return a;
+}
+
+vector<Segment> Sort(Segment Silkscreen_Piece, vector<Segment> total_copper_cut_segments)
+{
+    // 由 x1 or y1 小至大排序
+    // 開頭Segment 為 Silkscreen_Piece.x1, Silkscreen_Piece.y1, Silkscreen_Piece.x1, Silkscreen_Piece.y1
+    // 排序
+    // 結尾Segment 為 Silkscreen_Piece.x2, Silkscreen_Piece.y2, Silkscreen_Piece.x2, Silkscreen_Piece.y2
+    vector<Segment> Cut_Silkscreen;
+    Segment Start_point, End_point;
+    Start_point.x1 = Start_point.x2 = Silkscreen_Piece.x1;
+    Start_point.y1 = Start_point.y2 = Silkscreen_Piece.y1;
+
+    End_point.x1 = End_point.x2 = Silkscreen_Piece.x2;
+    End_point.y1 = End_point.y2 = Silkscreen_Piece.y2;
+    Cut_Silkscreen.push_back(Start_point);
+    if (Silkscreen_Piece.is_line)
+    {
+        if ((Silkscreen_Piece.theta >= 0 && Silkscreen_Piece.theta < PI / 2) || (Silkscreen_Piece.theta < 3 * PI / 2 && Silkscreen_Piece.theta > PI))
+        { // SORT BY X1,increase
+            sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_increase);
+        }
+        else if ((Silkscreen_Piece.theta > PI / 2 && Silkscreen_Piece.theta <= PI) || (Silkscreen_Piece.theta > 3 * PI / 2 && Silkscreen_Piece.theta < 2 * PI))
+        { // SORT BY X1,decrease
+            sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_decrease);
+        }
+        else if (Silkscreen_Piece.theta == PI / 2)
+        {
+            sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_increase);
+        }
+        else
+        {
+            sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_decrease);
+        }
+    }
+    else
+    {
+    }
+    Cut_Silkscreen.push_back(End_point);
+
+    return Cut_Silkscreen;
+}
+
+bool sort_increase(const Segment L1, const Segment L2)
+{
+    if (L1.x1 == L2.x1)
+    {
+        return (L1.y1 < L2.y1);
+    }
+    else
+    {
+        return (L1.x1 < L2.x1);
+    }
+}
+bool sort_decrease(const Segment L1, const Segment L2)
+{
+    if (L1.x1 == L2.x1)
+    {
+        return (L1.y1 > L2.y1);
+    }
+    else
+    {
+        return (L1.x1 > L2.x1);
+    }
 }
 
 ///////////////////////////////////////////////////////
