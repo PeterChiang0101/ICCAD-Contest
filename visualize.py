@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Arc as Arc
 import os as os
 import glob
+from datetime import date
 
 type = []
 x1 = []
@@ -34,7 +35,9 @@ fg = plt.figure()
 # fg.patch.set_facecolor('k')
 ax = fg.add_subplot(111)
 ax.set_facecolor('k')
-plt.title("test_" + choice, color='y')
+today = date.today()
+d1 = today.strftime("%d/%m/%Y")
+plt.title("test_" + choice + "  " + d1, color='y')
 
 
 def ReadIn(type, x1, x2, y1, y2, cirx, ciry, cir_dir, f):

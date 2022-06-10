@@ -102,6 +102,8 @@ vector<Segment> Final_Silkscreen(const vector<Segment>, const vector<Copper>);
 
 void Write_File(const vector<Segment>);
 
+void Write_File(const vector<vector<Segment>>);
+
 void Write_File_Copper(const vector<Copper>); // debugging function
 
 vector<Point> Arc_to_Poly(Segment);
@@ -115,6 +117,10 @@ float cross(Point, Point);
 Point intersection(Point, Point, Point, Point);
 
 bool In_Between_Lines(Point, Point, Point);
+
+vector<vector<Segment>> Delete_Short_Silkscreen(vector<Segment>);
+
+vector<vector<Segment>> Find_Continuous_Segment(vector<Segment>);
 // bool Outside_of_Assembly(const Point, const vector<Segment>);
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -147,9 +153,15 @@ int main()
     whole_copper_barrier = Copper_Buffer(copper);
 
     vector<Segment> Silkscreen_Cut;
+
+    vector<vector<Segment>> Continuous_Silkscreen; // 連續線段在同一vector裡
     // Write_File(silkscreen);
     Silkscreen_Cut = Final_Silkscreen(silkscreen, whole_copper_barrier);
-    Write_File(Silkscreen_Cut);
+
+    Continuous_Silkscreen = Delete_Short_Silkscreen(Silkscreen_Cut);
+
+    Write_File(Continuous_Silkscreen);
+    // Write_File(Silkscreen_Cut);
 
     // Write_File_Copper(whole_copper_barrier); // output for testing
 
@@ -580,6 +592,31 @@ void Write_File(const vector<Segment> Silkscreen)
     }
 }
 
+void Write_File(const vector<vector<Segment>> Silkscreen)
+{
+    fstream Output;
+
+    Output.open(OUTPUT_PATH, ios::out);
+
+    const int size = Silkscreen.size();
+    for (size_t i = 0; i < size; i++)
+    {
+        Output << "silkscreen" << endl;
+        int conti_size = Silkscreen[i].size();
+        for (int j = 0; j < conti_size; j++)
+        {
+            if (Silkscreen[i][j].is_line)
+            {
+                Output << "line," << fixed << setprecision(4) << Silkscreen[i][j].x1 << "," << Silkscreen[i][j].y1 << "," << Silkscreen[i][j].x2 << "," << Silkscreen[i][j].y2 << endl;
+            }
+            else
+            {
+                Output << "arc," << fixed << setprecision(4) << Silkscreen[i][j].x1 << "," << Silkscreen[i][j].y1 << "," << Silkscreen[i][j].x2 << "," << Silkscreen[i][j].y2 << "," << Silkscreen[i][j].center_x << "," << Silkscreen[i][j].center_y << "," << (Silkscreen[i][j].direction ? "CCW" : "CW") << endl;
+            }
+        }
+    }
+}
+
 vector<Point> Arc_to_Poly(Segment Arc)
 {
     vector<Point> Poly_out;
@@ -917,6 +954,89 @@ bool In_Between_Lines(Point test, Point first, Point last)
     else
         return false;
 }
+
+vector<vector<Segment>> Find_Continuous_Segment(vector<Segment> Silkscreen)
+{
+    vector<vector<Segment>> continue_segment;
+    vector<Segment> continue_temp;
+    size_t Silkscreen_size = Silkscreen.size();
+    for (size_t i = 0; i < Silkscreen_size; i++)
+    {
+        if (i == Silkscreen_size - 1)
+        {
+            continue_temp.push_back(Silkscreen[i]);
+
+            if ((Silkscreen.at(i).x2 == Silkscreen.at(0).x1) && (Silkscreen.at(i).y2 == Silkscreen.at(0).y1))
+            {
+                continue_temp.insert(continue_temp.end(), continue_segment[0].begin(), continue_segment[0].end());
+                continue_segment.erase(continue_segment.begin());
+            }
+            continue_segment.push_back(continue_temp);
+        }
+        else
+        {
+            if ((Silkscreen.at(i).x2 == Silkscreen.at(i + 1).x1) && (Silkscreen.at(i).y2 == Silkscreen.at(i + 1).y1))
+            {
+                continue_temp.push_back(Silkscreen[i]);
+            }
+            else
+            {
+                continue_temp.push_back(Silkscreen[i]);
+                continue_segment.push_back(continue_temp);
+                // clear the continue
+                continue_temp.clear();
+            }
+        }
+    }
+    return continue_segment;
+}
+
+vector<vector<Segment>> Delete_Short_Silkscreen(vector<Segment> Silkscreen)
+{
+    float len;
+    vector<vector<Segment>> All_Continuous;
+    All_Continuous = Find_Continuous_Segment(Silkscreen);
+    int Continue_size = All_Continuous.size();
+    for (int i = 0; i < Continue_size; i++)
+    {
+        int A_Continuous_Segment_size = All_Continuous[i].size();
+        len = 0;
+        for (int j = 0; j < A_Continuous_Segment_size; j++)
+        {
+            if (All_Continuous[i][j].is_line)
+            {
+                len += hypot(All_Continuous[i][j].x2 - All_Continuous[i][j].x1, All_Continuous[i][j].y2 - All_Continuous[i][j].y1);
+            }
+            else // arc
+            {
+                float circumference = hypot(All_Continuous[i][j].x2 - All_Continuous[i][j].center_x, All_Continuous[i][j].y2 - All_Continuous[i][j].center_y);
+                float angle_1, angle_2, angle_between;
+                angle_1 = All_Continuous[i][j].theta_1;
+                angle_2 = All_Continuous[i][j].theta_2;
+                if (All_Continuous[i][j].direction)
+                    swap(angle_1, angle_2);
+                angle_between = angle_1 - angle_2;
+                if (angle_between <= 0)
+                    angle_between += 2 * PI;
+                float partial_circumference = circumference * angle_between;
+
+                len += partial_circumference;
+            }
+            if (len >= silkscreenlen)
+                break;
+        }
+        if (len < silkscreenlen)
+        {
+            All_Continuous.erase(All_Continuous.begin() + i);
+            i--;
+            Continue_size--;
+        }
+    }
+    return All_Continuous;
+}
+///////////////////////////////////////////////////////
+////////////////// sorting functions //////////////////
+///////////////////////////////////////////////////////
 
 vector<Segment> Segment_Sort(Segment Silkscreen_Piece, vector<Segment> total_copper_cut_segments)
 {

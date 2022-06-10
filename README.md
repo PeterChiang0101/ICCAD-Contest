@@ -6,17 +6,19 @@
 
 BUGsss
 
-copper 切割絲印，再與silkscreeen相減 (差point的sorting, main.cpp:827)
+copper 外擴 與 絲印交點 arc & line, arc & arc intersection points 
 
-FIXED:
-
-直線外擴焦點
+(DONE) copper 切割絲印，再與silkscreeen相減 (差point的sorting, main.cpp:827)
 
 (DONE) 圓與直線交點斜率
 
 (DONE) 外擴圓心
 
-copper 外擴 與 絲印交點
+low priority:
+
+Find_Continuous_Segment 可記錄連續線段的開頭位置，節省資料用量
+
+vector [i] 可用 .at(i)
 ```
 
 ## I/O
@@ -180,6 +182,52 @@ int main(); // 主程式
 ```
 
 ## Algorithms
+
+2022/6/11
+
+correct solution of Case_A & Case_B
+
+working on cut silkscreen by copper, kill a lot of bugs.
+
+fit silkscreen to correct output format, delete short silkscreen.
+
+Change the Segment_Sort  judgement from theta to  x1, x2 points
+
+new parameter
+
+```text
+Subtraction_Tolerance 0.00005
+```
+
+new functions
+
+```text
+Find_Continuous_Segment()
+
+Delete_Short_Silkscreen()
+
+Write_File() overload
+```
+
+Peter Gray
+
+---
+
+2022/6/10
+
+Add the Segment_Sort  and Point_Sort function for sorting
+
+new functions
+
+```text
+Segment_Sort()
+
+Point_Sort()
+```
+
+Gray
+
+---
 
 2022/6/9
 
