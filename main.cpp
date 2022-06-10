@@ -85,11 +85,17 @@ vector<Segment> silkscreen_cut_single_copper(Segment, Copper);
 
 vector<Segment> Cut_Silkscreen_by_Copper(const Segment, const vector<Copper>);
 
-vector<Segment> Sort(Segment, vector<Segment>);
+vector<Segment> Segment_Sort(Segment, vector<Segment>);
 
-bool sort_decrease(const Segment, const Segment);
+bool sort_decrease_Segment(const Segment, const Segment);
 
-bool sort_increase(const Segment, const Segment);
+bool sort_increase_Segement(const Segment, const Segment);
+
+vector<Point> Point_Sort (vector<Point>);
+
+bool sort_decrease_points(const Point, const Point);
+
+bool sort_increase_points(const Point, const Point);
 
 vector<Segment> Final_Silkscreen(const vector<Segment>, const vector<Copper>);
 
@@ -775,7 +781,7 @@ vector<Segment> Cut_Silkscreen_by_Copper(Segment Silkscreen_Piece, vector<Copper
         copper_cut_segments = silkscreen_cut_single_copper(Silkscreen_Piece, Coppers[i]);                                          // 絲印與單一copper的交集線段
         total_copper_cut_segments.insert(total_copper_cut_segments.end(), copper_cut_segments.begin(), copper_cut_segments.end()); // 線段之間可能有交集
     }
-    total_copper_cut_segments = Sort(Silkscreen_Piece, total_copper_cut_segments);
+    total_copper_cut_segments = Segment_Sort(Silkscreen_Piece, total_copper_cut_segments);
     int total_segment = total_copper_cut_segments.size(); // 聯集完
     for (int i = 1; i < total_segment; i++)
     {
@@ -826,6 +832,8 @@ vector<Segment> silkscreen_cut_single_copper(Segment Silkscreen_Piece, Copper Si
 
     // NEED SORTING!!!
     // sort the intersection points
+    // pseudocode:Intersection_Points=sort(Intersection_Points);
+    Intersection_Points =Point_Sort(Intersection_Points);
 
     vector<Segment> Cut_Lines;
     Segment A_Line;
@@ -894,7 +902,7 @@ bool In_Between_Lines(Point test, Point first, Point last)
         return false;
 }
 
-vector<Segment> Sort(Segment Silkscreen_Piece, vector<Segment> total_copper_cut_segments)
+vector<Segment> Segment_Sort(Segment Silkscreen_Piece, vector<Segment> total_copper_cut_segments)
 {
     // 由 x1 or y1 小至大排序
     // 開頭Segment 為 Silkscreen_Piece.x1, Silkscreen_Piece.y1, Silkscreen_Piece.x1, Silkscreen_Piece.y1
@@ -910,21 +918,22 @@ vector<Segment> Sort(Segment Silkscreen_Piece, vector<Segment> total_copper_cut_
     Cut_Silkscreen.push_back(Start_point);
     if (Silkscreen_Piece.is_line)
     {
+        //need proformance improvment changing theta to x1, y1 in next verison.
         if ((Silkscreen_Piece.theta >= 0 && Silkscreen_Piece.theta < PI / 2) || (Silkscreen_Piece.theta < 3 * PI / 2 && Silkscreen_Piece.theta > PI))
         { // SORT BY X1,increase
-            sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_increase);
+            sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_increase_Segement);
         }
         else if ((Silkscreen_Piece.theta > PI / 2 && Silkscreen_Piece.theta <= PI) || (Silkscreen_Piece.theta > 3 * PI / 2 && Silkscreen_Piece.theta < 2 * PI))
         { // SORT BY X1,decrease
-            sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_decrease);
+            sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_decrease_Segment);
         }
         else if (Silkscreen_Piece.theta == PI / 2)
         {
-            sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_increase);
+            sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_increase_Segement);
         }
         else
         {
-            sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_decrease);
+            sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_decrease_Segment);
         }
     }
     else
@@ -936,7 +945,7 @@ vector<Segment> Sort(Segment Silkscreen_Piece, vector<Segment> total_copper_cut_
     return Cut_Silkscreen;
 }
 
-bool sort_increase(const Segment L1, const Segment L2)
+bool sort_increase_Segement(const Segment L1, const Segment L2)
 {
     if (L1.x1 == L2.x1)
     {
@@ -947,7 +956,7 @@ bool sort_increase(const Segment L1, const Segment L2)
         return (L1.x1 < L2.x1);
     }
 }
-bool sort_decrease(const Segment L1, const Segment L2)
+bool sort_decrease_Segment(const Segment L1, const Segment L2)
 {
     if (L1.x1 == L2.x1)
     {
@@ -958,6 +967,49 @@ bool sort_decrease(const Segment L1, const Segment L2)
         return (L1.x1 > L2.x1);
     }
 }
+
+vector<Point> Point_Sort (vector<Point> Intersection_Points)
+    {
+        // Warning!! this version will modify the input array and return it back.
+        //vector<Point> sorted_Points;
+        size_t final_point = Intersection_Points.size()-1;
+        
+        if((Intersection_Points.at(0).x) > (Intersection_Points.at(final_point).x))
+        {
+            sort(Intersection_Points.begin(), Intersection_Points.end(),sort_decrease_points);
+        }
+        else if ((Intersection_Points.at(0).x)< (Intersection_Points.at(final_point).x))
+        {
+            sort(Intersection_Points.begin(), Intersection_Points.end(),sort_increase_points);
+        }
+        else if((Intersection_Points.at(0).y) < (Intersection_Points.at(final_point).y))
+        {
+            sort(Intersection_Points.begin(), Intersection_Points.end(),sort_increase_points);
+        }
+        else
+        {
+            sort(Intersection_Points.begin(), Intersection_Points.end(),sort_decrease_points);
+        }
+
+    return Intersection_Points;
+    }
+
+    bool sort_decrease_points(const Point p1, const Point p2)
+    {
+        if (p1.x != p2.x)
+        {return (p1.x > p2.x);}
+        else 
+        {return (p1.y > p2.y);}
+
+    }
+    bool sort_increase_points(const Point p1, const Point p2)
+    {
+        if(p1.x != p2.x)
+        {return (p1.x < p2.x);}
+        else
+        {return (p1.y < p2.y);}
+    }
+
 
 ///////////////////////////////////////////////////////
 ///////////////// abandoned functions /////////////////
