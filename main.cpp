@@ -10,7 +10,8 @@
 
 using namespace std;
 
-#define Angle_Tolerance 0.1 //算角度誤差容許值 (rad)
+#define Angle_Tolerance 0.1           //算角度誤差容許值 (rad)
+#define Subtraction_Tolerance 0.00005 // float 相減誤差容許值
 #define PI 3.14159265358979323846
 #define ARC_TO_LINE_SLICE_DENSITY 1 // 切片密度(in degree)
 #define INPUT_PATH "./TestingCase/test_C.txt"
@@ -91,7 +92,7 @@ bool sort_decrease_Segment(const Segment, const Segment);
 
 bool sort_increase_Segement(const Segment, const Segment);
 
-vector<Point> Point_Sort (vector<Point>);
+vector<Point> Point_Sort(vector<Point>);
 
 bool sort_decrease_points(const Point, const Point);
 
@@ -109,7 +110,7 @@ vector<vector<Point>> Arc_Optimization(const vector<Segment>);
 
 Copper Arc_Boundary_Meas(Segment);
 
-int cross(Point, Point);
+float cross(Point, Point);
 
 Point intersection(Point, Point, Point, Point);
 
@@ -561,7 +562,7 @@ void Write_File(const vector<Segment> Silkscreen)
     fstream Output;
 
     Output.open(OUTPUT_PATH, ios::out);
-    Output << "silkscreen" << endl;
+    // Output << "silkscreen" << endl;
     const int size = Silkscreen.size();
     for (size_t i = 0; i < size; i++)
     {
@@ -775,14 +776,28 @@ vector<Segment> Cut_Silkscreen_by_Copper(Segment Silkscreen_Piece, vector<Copper
     vector<Segment> copper_cut_segments;       // 一個copper所遮住這條絲印的部分
     Segment A_Line;
 
-    Single_Silkscreen_Cut_Complete.push_back(Silkscreen_Piece);
+    float x_min = min(Silkscreen_Piece.x1, Silkscreen_Piece.x2);
+    float x_max = max(Silkscreen_Piece.x1, Silkscreen_Piece.x2);
+    float y_min = min(Silkscreen_Piece.y1, Silkscreen_Piece.y2);
+    float y_max = max(Silkscreen_Piece.y1, Silkscreen_Piece.y2);
+
+    // Single_Silkscreen_Cut_Complete.push_back(Silkscreen_Piece);
     for (int i = 0; i < Copper_size; i++) // 每次處理一個copper
     {
+        if (x_min > Coppers[i].x_max || x_max < Coppers[i].x_min || y_min > Coppers[i].y_max || y_max < Coppers[i].y_min)
+            continue;
         copper_cut_segments = silkscreen_cut_single_copper(Silkscreen_Piece, Coppers[i]);                                          // 絲印與單一copper的交集線段
         total_copper_cut_segments.insert(total_copper_cut_segments.end(), copper_cut_segments.begin(), copper_cut_segments.end()); // 線段之間可能有交集
     }
     total_copper_cut_segments = Segment_Sort(Silkscreen_Piece, total_copper_cut_segments);
+
     int total_segment = total_copper_cut_segments.size(); // 聯集完
+
+    if (total_segment == 2) // 只有頭跟尾，不需要切割
+    {
+        Single_Silkscreen_Cut_Complete.push_back(Silkscreen_Piece);
+        return Single_Silkscreen_Cut_Complete;
+    }
     for (int i = 1; i < total_segment; i++)
     {
         if (total_copper_cut_segments[i].x1 == total_copper_cut_segments[i - 1].x1 && total_copper_cut_segments[i].y1 == total_copper_cut_segments[i - 1].y2) // 共點
@@ -814,8 +829,8 @@ vector<Segment> silkscreen_cut_single_copper(Segment Silkscreen_Piece, Copper Si
     Copper_Points = Line_to_Point(Single_Copper.segment);
     Arc_Dots = Arc_Optimization(Single_Copper.segment);
 
-    first_inside = !point_in_polygon(first_point, Copper_Points, Arc_Dots);
-    last_inside = !point_in_polygon(last_point, Copper_Points, Arc_Dots);
+    first_inside = point_in_polygon(first_point, Copper_Points, Arc_Dots);
+    last_inside = point_in_polygon(last_point, Copper_Points, Arc_Dots);
 
     Intersection_Points.push_back(first_point);
     for (int i = 0; i < Copper_Line_size; i++)
@@ -826,22 +841,23 @@ vector<Segment> silkscreen_cut_single_copper(Segment Silkscreen_Piece, Copper Si
         second_copper_point.x = Single_Copper.segment[i].x2;
         second_copper_point.y = Single_Copper.segment[i].y2;
         Point_Intersect = intersection(first_point, last_point, first_copper_point, second_copper_point); // 交會點
-        Intersection_Points.push_back(Point_Intersect);
+        if (Point_Intersect.x != INFINITY && Point_Intersect.y != INFINITY)
+            Intersection_Points.push_back(Point_Intersect);
     }
     Intersection_Points.push_back(last_point);
 
     // NEED SORTING!!!
     // sort the intersection points
     // pseudocode:Intersection_Points=sort(Intersection_Points);
-    Intersection_Points =Point_Sort(Intersection_Points);
+    Intersection_Points = Point_Sort(Intersection_Points);
 
     vector<Segment> Cut_Lines;
     Segment A_Line;
     int Intersection_Points_size = Intersection_Points.size();
 
-    for (size_t i = 0; i < Intersection_Points_size; i++)
+    for (size_t i = 0; i < Intersection_Points_size; i++) // 量出需要被切割的線段
     {
-        if ((i == 0 && !first_inside) || (i = Intersection_Points_size - 1 && !last_inside))
+        if ((i == 0 && !first_inside) || (i == Intersection_Points_size - 1 && !last_inside))
             continue; // 兩端點在外面可以直接略過
         A_Line.x1 = Intersection_Points[i].x;
         A_Line.y1 = Intersection_Points[i].y;
@@ -855,7 +871,7 @@ vector<Segment> silkscreen_cut_single_copper(Segment Silkscreen_Piece, Copper Si
 }
 
 // 叉積運算，回傳純量（除去方向）
-int cross(Point v1, Point v2) // 向量外積
+float cross(Point v1, Point v2) // 向量外積
 {
     // 沒有除法，儘量避免誤差。
     return v1.x * v2.y - v1.y * v2.x;
@@ -892,11 +908,11 @@ Point intersection(Point a1, Point a2, Point b1, Point b2)
 
 bool In_Between_Lines(Point test, Point first, Point last)
 {
-    int min_x = min(first.x, last.x);
-    int max_x = max(first.x, last.x);
-    int min_y = min(first.y, last.y);
-    int max_y = max(first.y, last.y);
-    if (test.x > min_x && test.x < max_x && test.y > min_y && test.y < max_y)
+    float min_x = min(first.x, last.x);
+    float max_x = max(first.x, last.x);
+    float min_y = min(first.y, last.y);
+    float max_y = max(first.y, last.y);
+    if (test.x >= min_x - Subtraction_Tolerance && test.x <= max_x + Subtraction_Tolerance && test.y >= min_y - Subtraction_Tolerance && test.y <= max_y + Subtraction_Tolerance)
         return true;
     else
         return false;
@@ -918,7 +934,7 @@ vector<Segment> Segment_Sort(Segment Silkscreen_Piece, vector<Segment> total_cop
     Cut_Silkscreen.push_back(Start_point);
     if (Silkscreen_Piece.is_line)
     {
-        //need proformance improvment changing theta to x1, y1 in next verison.
+        // need proformance improvment changing theta to x1, y1 in next verison.
         if ((Silkscreen_Piece.theta >= 0 && Silkscreen_Piece.theta < PI / 2) || (Silkscreen_Piece.theta < 3 * PI / 2 && Silkscreen_Piece.theta > PI))
         { // SORT BY X1,increase
             sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_increase_Segement);
@@ -968,48 +984,54 @@ bool sort_decrease_Segment(const Segment L1, const Segment L2)
     }
 }
 
-vector<Point> Point_Sort (vector<Point> Intersection_Points)
+vector<Point> Point_Sort(vector<Point> Intersection_Points)
+{
+    // Warning!! this version will modify the input array and return it back.
+    // vector<Point> sorted_Points;
+    size_t final_point = Intersection_Points.size() - 1;
+
+    if ((Intersection_Points.at(0).x) > (Intersection_Points.at(final_point).x))
     {
-        // Warning!! this version will modify the input array and return it back.
-        //vector<Point> sorted_Points;
-        size_t final_point = Intersection_Points.size()-1;
-        
-        if((Intersection_Points.at(0).x) > (Intersection_Points.at(final_point).x))
-        {
-            sort(Intersection_Points.begin(), Intersection_Points.end(),sort_decrease_points);
-        }
-        else if ((Intersection_Points.at(0).x)< (Intersection_Points.at(final_point).x))
-        {
-            sort(Intersection_Points.begin(), Intersection_Points.end(),sort_increase_points);
-        }
-        else if((Intersection_Points.at(0).y) < (Intersection_Points.at(final_point).y))
-        {
-            sort(Intersection_Points.begin(), Intersection_Points.end(),sort_increase_points);
-        }
-        else
-        {
-            sort(Intersection_Points.begin(), Intersection_Points.end(),sort_decrease_points);
-        }
+        sort(Intersection_Points.begin(), Intersection_Points.end(), sort_decrease_points);
+    }
+    else if ((Intersection_Points.at(0).x) < (Intersection_Points.at(final_point).x))
+    {
+        sort(Intersection_Points.begin(), Intersection_Points.end(), sort_increase_points);
+    }
+    else if ((Intersection_Points.at(0).y) < (Intersection_Points.at(final_point).y))
+    {
+        sort(Intersection_Points.begin(), Intersection_Points.end(), sort_increase_points);
+    }
+    else
+    {
+        sort(Intersection_Points.begin(), Intersection_Points.end(), sort_decrease_points);
+    }
 
     return Intersection_Points;
-    }
+}
 
-    bool sort_decrease_points(const Point p1, const Point p2)
+bool sort_decrease_points(const Point p1, const Point p2)
+{
+    if (p1.x != p2.x)
     {
-        if (p1.x != p2.x)
-        {return (p1.x > p2.x);}
-        else 
-        {return (p1.y > p2.y);}
-
+        return (p1.x > p2.x);
     }
-    bool sort_increase_points(const Point p1, const Point p2)
+    else
     {
-        if(p1.x != p2.x)
-        {return (p1.x < p2.x);}
-        else
-        {return (p1.y < p2.y);}
+        return (p1.y > p2.y);
     }
-
+}
+bool sort_increase_points(const Point p1, const Point p2)
+{
+    if (p1.x != p2.x)
+    {
+        return (p1.x < p2.x);
+    }
+    else
+    {
+        return (p1.y < p2.y);
+    }
+}
 
 ///////////////////////////////////////////////////////
 ///////////////// abandoned functions /////////////////
