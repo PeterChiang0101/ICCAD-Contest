@@ -90,7 +90,7 @@ vector<Segment> Segment_Sort(Segment, vector<Segment>);
 
 bool sort_decrease_Segment(const Segment, const Segment);
 
-bool sort_increase_Segement(const Segment, const Segment);
+bool sort_increase_Segment(const Segment, const Segment);
 
 vector<Point> Point_Sort(vector<Point>);
 
@@ -934,7 +934,28 @@ vector<Segment> Segment_Sort(Segment Silkscreen_Piece, vector<Segment> total_cop
     Cut_Silkscreen.push_back(Start_point);
     if (Silkscreen_Piece.is_line)
     {
-        // need proformance improvment changing theta to x1, y1 in next verison.
+        if (Silkscreen_Piece.x1 < Silkscreen_Piece.x2)
+        {
+            sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_increase_Segment);
+        }
+        else if (Silkscreen_Piece.x1 > Silkscreen_Piece.x2)
+        {
+            sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_decrease_Segment);
+        }
+        else if (Silkscreen_Piece.y1 < Silkscreen_Piece.y2)
+        {
+            sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_increase_Segment);
+        }
+        else if (Silkscreen_Piece.y1 > Silkscreen_Piece.y2)
+        {
+            sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_decrease_Segment);
+        }
+        else
+        { // ERROR STATUS X1=X2, Y1=Y2;sort_increase_Segment
+            sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_increase_Segment);
+            cerr << "ERROR STATUS points are the same" << endl;
+        }
+        /*---------------------------------------abandon decision function-------------------------
         if ((Silkscreen_Piece.theta >= 0 && Silkscreen_Piece.theta < PI / 2) || (Silkscreen_Piece.theta < 3 * PI / 2 && Silkscreen_Piece.theta > PI))
         { // SORT BY X1,increase
             sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_increase_Segement);
@@ -951,6 +972,7 @@ vector<Segment> Segment_Sort(Segment Silkscreen_Piece, vector<Segment> total_cop
         {
             sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_decrease_Segment);
         }
+        ****************************************************************/
     }
     else
     {
@@ -961,7 +983,7 @@ vector<Segment> Segment_Sort(Segment Silkscreen_Piece, vector<Segment> total_cop
     return Cut_Silkscreen;
 }
 
-bool sort_increase_Segement(const Segment L1, const Segment L2)
+bool sort_increase_Segment(const Segment L1, const Segment L2)
 {
     if (L1.x1 == L2.x1)
     {
