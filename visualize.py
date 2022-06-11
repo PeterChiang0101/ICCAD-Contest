@@ -15,8 +15,10 @@ y2 = []
 cirx = []
 ciry = []
 cir_dir = []
-home = os.getcwd() + "\\TestingCase"
-target = (home + "\\test_?.txt")
+# add support for both linux(RHEL) and Windows directory system(2022/6/11)
+# use os.path.join function
+home = os.path.join(os.getcwd(),"TestingCase")
+target = os.path.join(home,"test_?.txt")
 result = glob.glob(target)
 i = 0
 print("What testcase you want to visualize?")
@@ -27,9 +29,9 @@ for entry in result:
     print(str(i) + '. ' + filename)
 choice = input("Selection (input the name after test_ ): ")
 
-path = home + "\\test_" + choice + ".txt"
-silkpath = home + "\\test_" + choice + "_Ans.txt"
-img_out = home + "\\test_" + choice + "_output.png"
+path = os.path.join(home ,"test_"+choice+".txt")
+silkpath = os.path.join(home, "test_"+choice+"_Ans.txt")
+img_out = os.path.join(home ,"test_"+choice +"_output.png")
 
 fg = plt.figure()
 # fg.patch.set_facecolor('k')
