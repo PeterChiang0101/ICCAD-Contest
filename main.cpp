@@ -14,8 +14,8 @@ using namespace std;
 #define Subtraction_Tolerance 0.00005 // float 相減誤差容許值
 #define PI 3.14159265358979323846
 #define ARC_TO_LINE_SLICE_DENSITY 1 // 切片密度(in degree)
-#define INPUT_PATH "./TestingCase/test_C.txt"
-#define OUTPUT_PATH "./TestingCase/test_C_Ans.txt"
+#define INPUT_PATH "./TestingCase/test_A.txt"
+#define OUTPUT_PATH "./TestingCase/test_A_Ans.txt"
 // assemblygap : the minimum distance between assembly and silkscreen
 // coppergap : the minimum distance between copper and silkscreen
 // silkscreenlen : the minimum length of silkscreen
@@ -205,25 +205,25 @@ Segment String_to_Line(string line) // 讀取時建立線段
         switch (i)
         {
         case 1:
-            part.x1 = stof(Splited[i]);
+            part.x1 = stof(Splited.at(i));
             break;
         case 2:
-            part.y1 = stof(Splited[i]);
+            part.y1 = stof(Splited.at(i));
             break;
         case 3:
-            part.x2 = stof(Splited[i]);
+            part.x2 = stof(Splited.at(i));
             break;
         case 4:
-            part.y2 = stof(Splited[i]);
+            part.y2 = stof(Splited.at(i));
             break;
         case 5:
-            part.center_x = stof(Splited[i]);
+            part.center_x = stof(Splited.at(i));
             break;
         case 6:
-            part.center_y = stof(Splited[i]);
+            part.center_y = stof(Splited.at(i));
             break;
         case 7:
-            part.direction = (Splited[i] == "CCW") ? 1 : 0;
+            part.direction = (Splited.at(i) == "CCW") ? 1 : 0;
             break;
         }
     }
@@ -304,8 +304,8 @@ vector<Point> Line_to_Point(const vector<Segment> Assembly) // 將線段切割�
 
     for (size_t i = size - 1, j = 0; j < size; i = j++)
     {
-        first_line = Assembly[i];
-        second_line = Assembly[j];
+        first_line = Assembly.at(i);
+        second_line = Assembly.at(j);
         if ((first_line.x1 == second_line.x1 && first_line.y1 == second_line.y1) || (first_line.x1 == second_line.x2 && first_line.y1 == second_line.y2)) //找重疊線段
         {
             Point_Overlap.x = first_line.x1;
@@ -341,7 +341,7 @@ vector<Copper> Copper_Buffer(const vector<vector<Segment>> coppers)
     vector<Copper> Every_Copper;
     for (int i = 0; i < size; i++)
     {
-        Single_Copper = Copper_Point_to_Line(Point_Extension(coppers[i], false), coppers[i]);
+        Single_Copper = Copper_Point_to_Line(Point_Extension(coppers.at(i), false), coppers.at(i));
         Every_Copper.push_back(Single_Copper);
     }
     return Every_Copper;
@@ -360,8 +360,8 @@ vector<Point> Point_Extension(const vector<Segment> Assembly, const bool is_asse
     if (size == 1)                             // i think only happened in copper, eg: a full circle
     {
         Point Extended_Point;
-        Extended_Point.x = Assembly[0].x1 + coppergap * cos(Assembly[0].theta_1);
-        Extended_Point.y = Assembly[0].y1 + coppergap * sin(Assembly[0].theta_1);
+        Extended_Point.x = Assembly.at(0).x1 + coppergap * cos(Assembly.at(0).theta_1);
+        Extended_Point.y = Assembly.at(0).y1 + coppergap * sin(Assembly.at(0).theta_1);
         Extended_Point.Next_Arc = true;
         Extended_Points.push_back(Extended_Point);
         return Extended_Points;
@@ -370,8 +370,8 @@ vector<Point> Point_Extension(const vector<Segment> Assembly, const bool is_asse
     {
         Segment first_line, second_line;
         double first_angle, second_angle;
-        first_line = Assembly[i];
-        second_line = Assembly[j];
+        first_line = Assembly.at(i);
+        second_line = Assembly.at(j);
         if (first_line.is_line) // first Segment is line
             first_angle = first_line.theta;
         else // first Segment is arc
@@ -382,13 +382,13 @@ vector<Point> Point_Extension(const vector<Segment> Assembly, const bool is_asse
         else // arc direction 0 = ClockWise(CW), 1 = ConterClockwise(CCW)
             second_angle = (second_line.direction) ? second_line.theta_1 + PI / 2 : second_line.theta_1 - PI / 2;
 
-        if (Assembly_Points[j].x == first_line.x1 && Assembly_Points[j].y == first_line.y1) // 向量共同點校正
+        if (Assembly_Points.at(j).x == first_line.x1 && Assembly_Points.at(j).y == first_line.y1) // 向量共同點校正
         {
             first_angle -= PI;
             if (first_angle < -PI)
                 first_angle += 2 * PI;
         }
-        if (Assembly_Points[j].x == second_line.x1 && Assembly_Points[j].y == second_line.y1)
+        if (Assembly_Points.at(j).x == second_line.x1 && Assembly_Points.at(j).y == second_line.y1)
         {
             second_angle -= PI;
             if (second_angle < -PI)
@@ -403,13 +403,13 @@ vector<Point> Point_Extension(const vector<Segment> Assembly, const bool is_asse
             Point_Extend_Range = coppergap / sin(Angle_Divided - first_angle);
         Point Extend_1, Extend_2; //交點向外延伸的兩個點
         bool Outside_1, Outside_2;
-        Extend_1.x = Assembly_Points[j].x + Point_Extend_Range * cos(Angle_Divided);
-        Extend_1.y = Assembly_Points[j].y + Point_Extend_Range * sin(Angle_Divided);
-        Extend_2.x = Assembly_Points[j].x - Point_Extend_Range * cos(Angle_Divided);
-        Extend_2.y = Assembly_Points[j].y - Point_Extend_Range * sin(Angle_Divided);
+        Extend_1.x = Assembly_Points.at(j).x + Point_Extend_Range * cos(Angle_Divided);
+        Extend_1.y = Assembly_Points.at(j).y + Point_Extend_Range * sin(Angle_Divided);
+        Extend_2.x = Assembly_Points.at(j).x - Point_Extend_Range * cos(Angle_Divided);
+        Extend_2.y = Assembly_Points.at(j).y - Point_Extend_Range * sin(Angle_Divided);
 
-        Extend_1.Next_Arc = Assembly_Points[j].Next_Arc;
-        Extend_2.Next_Arc = Assembly_Points[j].Next_Arc;
+        Extend_1.Next_Arc = Assembly_Points.at(j).Next_Arc;
+        Extend_2.Next_Arc = Assembly_Points.at(j).Next_Arc;
 
         //點是否在圖型外
         Outside_1 = !point_in_polygon(Extend_1, Assembly_Points, Arc_Dots); // true for outside, false for inside
@@ -430,18 +430,18 @@ vector<Segment> Point_to_Line(vector<Point> Extended_Points, vector<Segment> Ass
     vector<Segment> Silkscreen;
     for (size_t i = 0; i < size; i++)
     {
-        A_Line.is_line = (Extended_Points[i].Next_Arc) ? false : true;
-        A_Line.x1 = Extended_Points[i].x;
-        A_Line.y1 = Extended_Points[i].y;
+        A_Line.is_line = (Extended_Points.at(i).Next_Arc) ? false : true;
+        A_Line.x1 = Extended_Points.at(i).x;
+        A_Line.y1 = Extended_Points.at(i).y;
         if (i != size - 1)
         {
-            A_Line.x2 = Extended_Points[i + 1].x;
-            A_Line.y2 = Extended_Points[i + 1].y;
+            A_Line.x2 = Extended_Points.at(i + 1).x;
+            A_Line.y2 = Extended_Points.at(i + 1).y;
         }
         else
         {
-            A_Line.x2 = Extended_Points[0].x;
-            A_Line.y2 = Extended_Points[0].y;
+            A_Line.x2 = Extended_Points.at(0).x;
+            A_Line.y2 = Extended_Points.at(0).y;
         }
         if (A_Line.is_line)
         {
@@ -453,9 +453,9 @@ vector<Segment> Point_to_Line(vector<Point> Extended_Points, vector<Segment> Ass
         {
             A_Line.slope = A_Line.y_intercept = A_Line.theta = 0;
 
-            A_Line.center_x = Assembly[i].center_x;
-            A_Line.center_y = Assembly[i].center_y;
-            A_Line.direction = Assembly[i].direction;
+            A_Line.center_x = Assembly.at(i).center_x;
+            A_Line.center_y = Assembly.at(i).center_y;
+            A_Line.direction = Assembly.at(i).direction;
 
             A_Line.theta_1 = atan2(A_Line.y1 - A_Line.center_y, A_Line.x1 - A_Line.center_x);
             A_Line.theta_2 = atan2(A_Line.y2 - A_Line.center_y, A_Line.x2 - A_Line.center_x);
@@ -470,50 +470,50 @@ Copper Copper_Point_to_Line(vector<Point> Extended_Points, vector<Segment> coppe
     int size = copper.size();
     Segment A_Line;
     Copper Silkscreen, Arc_Boundary;
-    Silkscreen.x_min = Silkscreen.x_max = Extended_Points[0].x; // initialize
-    Silkscreen.y_min = Silkscreen.y_max = Extended_Points[0].y;
+    Silkscreen.x_min = Silkscreen.x_max = Extended_Points.at(0).x; // initialize
+    Silkscreen.y_min = Silkscreen.y_max = Extended_Points.at(0).y;
     for (size_t i = 0; i < size; i++)
     {
         // calculate boundary
-        if (!copper[i].is_line)
+        if (!copper.at(i).is_line)
         {
-            Arc_Boundary = Arc_Boundary_Meas(copper[i]);
+            Arc_Boundary = Arc_Boundary_Meas(copper.at(i));
             Silkscreen.x_min = min(Silkscreen.x_min, Arc_Boundary.x_min);
             Silkscreen.x_max = max(Silkscreen.x_max, Arc_Boundary.x_max);
             Silkscreen.y_min = min(Silkscreen.y_min, Arc_Boundary.y_min);
             Silkscreen.y_max = max(Silkscreen.y_max, Arc_Boundary.y_max);
         }
-        if (Extended_Points[i].x > Silkscreen.x_max)
+        if (Extended_Points.at(i).x > Silkscreen.x_max)
         {
-            Silkscreen.x_max = Extended_Points[i].x;
+            Silkscreen.x_max = Extended_Points.at(i).x;
         }
-        else if (Extended_Points[i].x < Silkscreen.x_min)
+        else if (Extended_Points.at(i).x < Silkscreen.x_min)
         {
-            Silkscreen.x_min = Extended_Points[i].x;
+            Silkscreen.x_min = Extended_Points.at(i).x;
         }
 
-        if (Extended_Points[i].y > Silkscreen.y_max)
+        if (Extended_Points.at(i).y > Silkscreen.y_max)
         {
-            Silkscreen.y_max = Extended_Points[i].y;
+            Silkscreen.y_max = Extended_Points.at(i).y;
         }
-        else if (Extended_Points[i].y < Silkscreen.y_min)
+        else if (Extended_Points.at(i).y < Silkscreen.y_min)
         {
-            Silkscreen.y_min = Extended_Points[i].y;
+            Silkscreen.y_min = Extended_Points.at(i).y;
         }
 
         // calculate point to line
-        A_Line.is_line = (Extended_Points[i].Next_Arc) ? false : true;
-        A_Line.x1 = Extended_Points[i].x;
-        A_Line.y1 = Extended_Points[i].y;
+        A_Line.is_line = (Extended_Points.at(i).Next_Arc) ? false : true;
+        A_Line.x1 = Extended_Points.at(i).x;
+        A_Line.y1 = Extended_Points.at(i).y;
         if (i != size - 1)
         {
-            A_Line.x2 = Extended_Points[i + 1].x;
-            A_Line.y2 = Extended_Points[i + 1].y;
+            A_Line.x2 = Extended_Points.at(i + 1).x;
+            A_Line.y2 = Extended_Points.at(i + 1).y;
         }
         else
         {
-            A_Line.x2 = Extended_Points[0].x;
-            A_Line.y2 = Extended_Points[0].y;
+            A_Line.x2 = Extended_Points.at(0).x;
+            A_Line.y2 = Extended_Points.at(0).y;
         }
         if (A_Line.is_line)
         {
@@ -525,9 +525,9 @@ Copper Copper_Point_to_Line(vector<Point> Extended_Points, vector<Segment> coppe
         {
             A_Line.slope = A_Line.y_intercept = A_Line.theta = 0;
 
-            A_Line.center_x = copper[i].center_x;
-            A_Line.center_y = copper[i].center_y;
-            A_Line.direction = copper[i].direction;
+            A_Line.center_x = copper.at(i).center_x;
+            A_Line.center_y = copper.at(i).center_y;
+            A_Line.direction = copper.at(i).direction;
 
             A_Line.theta_1 = atan2(A_Line.y1 - A_Line.center_y, A_Line.x1 - A_Line.center_x);
             A_Line.theta_2 = atan2(A_Line.y2 - A_Line.center_y, A_Line.x2 - A_Line.center_x);
@@ -551,19 +551,19 @@ bool point_in_polygon(Point t, vector<Point> Assembly_Point, vector<vector<Point
     bool c = false;
     for (int i = Assembly_size - 1, j = 0; j < Assembly_size; i = j++)
     {
-        if (Assembly_Point[i].Next_Arc)
+        if (Assembly_Point.at(i).Next_Arc)
         {
-            int Arc_point_length = Arc_Points[Arc_count].size();
+            int Arc_point_length = Arc_Points.at(Arc_count).size();
             for (int k = 0, l = 1; l < Arc_point_length; k = l++)
             {
-                if ((Arc_Points[Arc_count][k].y > t.y) != (Arc_Points[Arc_count][l].y > t.y) && t.x < interpolate_x(t.y, Arc_Points[Arc_count][k], Arc_Points[Arc_count][l]))
+                if ((Arc_Points.at(Arc_count).at(k).y > t.y) != (Arc_Points.at(Arc_count).at(l).y > t.y) && t.x < interpolate_x(t.y, Arc_Points.at(Arc_count).at(k), Arc_Points.at(Arc_count).at(l)))
                     c = !c;
             }
             Arc_count++;
         }
         else
             // 待測點在該線段的高度上下限內 且 交會點x值大於待測點x值 (射線為 + x 方向)
-            if ((Assembly_Point[i].y > t.y) != (Assembly_Point[j].y > t.y) && t.x < interpolate_x(t.y, Assembly_Point[i], Assembly_Point[j]))
+            if ((Assembly_Point.at(i).y > t.y) != (Assembly_Point.at(j).y > t.y) && t.x < interpolate_x(t.y, Assembly_Point.at(i), Assembly_Point.at(j)))
                 c = !c;
     }
     return c;
@@ -578,16 +578,16 @@ void Write_File(const vector<Segment> Silkscreen)
     const int size = Silkscreen.size();
     for (size_t i = 0; i < size; i++)
     {
-        if (i == 0 || Silkscreen[i].x1 != Silkscreen[i - 1].x2 || Silkscreen[i].y1 != Silkscreen[i - 1].y2) // 第一條線，或線段不連續
+        if (i == 0 || Silkscreen.at(i).x1 != Silkscreen.at(i - 1).x2 || Silkscreen.at(i).y1 != Silkscreen.at(i - 1).y2) // 第一條線，或線段不連續
             Output << "silkscreen" << endl;
 
-        if (Silkscreen[i].is_line)
+        if (Silkscreen.at(i).is_line)
         {
-            Output << "line," << fixed << setprecision(4) << Silkscreen[i].x1 << "," << Silkscreen[i].y1 << "," << Silkscreen[i].x2 << "," << Silkscreen[i].y2 << endl;
+            Output << "line," << fixed << setprecision(4) << Silkscreen.at(i).x1 << "," << Silkscreen.at(i).y1 << "," << Silkscreen.at(i).x2 << "," << Silkscreen.at(i).y2 << endl;
         }
         else
         {
-            Output << "arc," << fixed << setprecision(4) << Silkscreen[i].x1 << "," << Silkscreen[i].y1 << "," << Silkscreen[i].x2 << "," << Silkscreen[i].y2 << "," << Silkscreen[i].center_x << "," << Silkscreen[i].center_y << "," << (Silkscreen[i].direction ? "CCW" : "CW") << endl;
+            Output << "arc," << fixed << setprecision(4) << Silkscreen.at(i).x1 << "," << Silkscreen.at(i).y1 << "," << Silkscreen.at(i).x2 << "," << Silkscreen.at(i).y2 << "," << Silkscreen.at(i).center_x << "," << Silkscreen.at(i).center_y << "," << (Silkscreen.at(i).direction ? "CCW" : "CW") << endl;
         }
     }
 }
@@ -602,16 +602,16 @@ void Write_File(const vector<vector<Segment>> Silkscreen)
     for (size_t i = 0; i < size; i++)
     {
         Output << "silkscreen" << endl;
-        int conti_size = Silkscreen[i].size();
+        int conti_size = Silkscreen.at(i).size();
         for (int j = 0; j < conti_size; j++)
         {
-            if (Silkscreen[i][j].is_line)
+            if (Silkscreen.at(i).at(j).is_line)
             {
-                Output << "line," << fixed << setprecision(4) << Silkscreen[i][j].x1 << "," << Silkscreen[i][j].y1 << "," << Silkscreen[i][j].x2 << "," << Silkscreen[i][j].y2 << endl;
+                Output << "line," << fixed << setprecision(4) << Silkscreen.at(i).at(j).x1 << "," << Silkscreen.at(i).at(j).y1 << "," << Silkscreen.at(i).at(j).x2 << "," << Silkscreen.at(i).at(j).y2 << endl;
             }
             else
             {
-                Output << "arc," << fixed << setprecision(4) << Silkscreen[i][j].x1 << "," << Silkscreen[i][j].y1 << "," << Silkscreen[i][j].x2 << "," << Silkscreen[i][j].y2 << "," << Silkscreen[i][j].center_x << "," << Silkscreen[i][j].center_y << "," << (Silkscreen[i][j].direction ? "CCW" : "CW") << endl;
+                Output << "arc," << fixed << setprecision(4) << Silkscreen.at(i).at(j).x1 << "," << Silkscreen.at(i).at(j).y1 << "," << Silkscreen.at(i).at(j).x2 << "," << Silkscreen.at(i).at(j).y2 << "," << Silkscreen.at(i).at(j).center_x << "," << Silkscreen.at(i).at(j).center_y << "," << (Silkscreen.at(i).at(j).direction ? "CCW" : "CW") << endl;
             }
         }
     }
@@ -682,7 +682,7 @@ vector<Point> Arc_to_Poly(Segment Arc)
         count -= 1;
     }
 
-    if (Poly_out[Poly_out.size() - 1].x != Arc.x2 && Poly_out[Poly_out.size() - 1].y != Arc.y2)
+    if (Poly_out.at(Poly_out.size() - 1).x != Arc.x2 && Poly_out.at(Poly_out.size() - 1).y != Arc.y2)
     {
         part.x = Arc.x2;
         part.y = Arc.y2;
@@ -700,10 +700,10 @@ vector<vector<Point>> Arc_Optimization(vector<Segment> Assembly)
     vector<vector<Point>> vector_of_Arc;
     for (int i = 0; i < Assembly_size; i++)
     {
-        if (!Assembly[i].is_line) // the Segment is arc
+        if (!Assembly.at(i).is_line) // the Segment is arc
         {
             Dots_of_Arc.clear();
-            Dots_of_Arc = Arc_to_Poly(Assembly[i]);
+            Dots_of_Arc = Arc_to_Poly(Assembly.at(i));
             vector_of_Arc.push_back(Dots_of_Arc);
         }
     }
@@ -775,16 +775,16 @@ void Write_File_Copper(const vector<Copper> coppers)
     Output.open(OUTPUT_PATH, ios::app);
     for (int i = 0; i < size; i++)
     {
-        int copper_line = coppers[i].segment.size();
+        int copper_line = coppers.at(i).segment.size();
         for (int j = 0; j < copper_line; j++)
         {
-            if (coppers[i].segment[j].is_line)
+            if (coppers.at(i).segment.at(j).is_line)
             {
-                Output << "line," << fixed << setprecision(4) << coppers[i].segment[j].x1 << "," << coppers[i].segment[j].y1 << "," << coppers[i].segment[j].x2 << "," << coppers[i].segment[j].y2 << endl;
+                Output << "line," << fixed << setprecision(4) << coppers.at(i).segment.at(j).x1 << "," << coppers.at(i).segment.at(j).y1 << "," << coppers.at(i).segment.at(j).x2 << "," << coppers.at(i).segment.at(j).y2 << endl;
             }
             else
             {
-                Output << "arc," << fixed << setprecision(4) << coppers[i].segment[j].x1 << "," << coppers[i].segment[j].y1 << "," << coppers[i].segment[j].x2 << "," << coppers[i].segment[j].y2 << "," << coppers[i].segment[j].center_x << "," << coppers[i].segment[j].center_y << "," << (coppers[i].segment[j].direction ? "CCW" : "CW") << endl;
+                Output << "arc," << fixed << setprecision(4) << coppers.at(i).segment.at(j).x1 << "," << coppers.at(i).segment.at(j).y1 << "," << coppers.at(i).segment.at(j).x2 << "," << coppers.at(i).segment.at(j).y2 << "," << coppers.at(i).segment.at(j).center_x << "," << coppers.at(i).segment.at(j).center_y << "," << (coppers.at(i).segment.at(j).direction ? "CCW" : "CW") << endl;
             }
         }
     }
@@ -799,7 +799,7 @@ vector<Segment> Final_Silkscreen(vector<Segment> Silkscreen_Original, vector<Cop
     for (int i = 0; i < Silkscreen_Org_Size; i++)
     {
         Silkscreen_Cut_Part.clear();
-        Silkscreen_Cut_Part = Cut_Silkscreen_by_Copper(Silkscreen_Original[i], Coppers);
+        Silkscreen_Cut_Part = Cut_Silkscreen_by_Copper(Silkscreen_Original.at(i), Coppers);
         Silkscreen_Cut_Complete.insert(Silkscreen_Cut_Complete.end(), Silkscreen_Cut_Part.begin(), Silkscreen_Cut_Part.end());
     }
     return Silkscreen_Cut_Complete;
@@ -821,9 +821,9 @@ vector<Segment> Cut_Silkscreen_by_Copper(Segment Silkscreen_Piece, vector<Copper
     // Single_Silkscreen_Cut_Complete.push_back(Silkscreen_Piece);
     for (int i = 0; i < Copper_size; i++) // 每次處理一個copper
     {
-        if (x_min > Coppers[i].x_max || x_max < Coppers[i].x_min || y_min > Coppers[i].y_max || y_max < Coppers[i].y_min)
+        if (x_min > Coppers.at(i).x_max || x_max < Coppers.at(i).x_min || y_min > Coppers.at(i).y_max || y_max < Coppers.at(i).y_min)
             continue;
-        copper_cut_segments = silkscreen_cut_single_copper(Silkscreen_Piece, Coppers[i]);                                          // 絲印與單一copper的交集線段
+        copper_cut_segments = silkscreen_cut_single_copper(Silkscreen_Piece, Coppers.at(i));                                       // 絲印與單一copper的交集線段
         total_copper_cut_segments.insert(total_copper_cut_segments.end(), copper_cut_segments.begin(), copper_cut_segments.end()); // 線段之間可能有交集
     }
     total_copper_cut_segments = Segment_Sort(Silkscreen_Piece, total_copper_cut_segments);
@@ -837,12 +837,12 @@ vector<Segment> Cut_Silkscreen_by_Copper(Segment Silkscreen_Piece, vector<Copper
     }
     for (int i = 1; i < total_segment; i++)
     {
-        if (total_copper_cut_segments[i].x1 == total_copper_cut_segments[i - 1].x1 && total_copper_cut_segments[i].y1 == total_copper_cut_segments[i - 1].y2) // 共點
+        if (total_copper_cut_segments.at(i).x1 == total_copper_cut_segments.at(i - 1).x1 && total_copper_cut_segments.at(i).y1 == total_copper_cut_segments.at(i - 1).y2) // 共點
             continue;
-        A_Line.x1 = total_copper_cut_segments[i - 1].x2;
-        A_Line.y1 = total_copper_cut_segments[i - 1].y2;
-        A_Line.x2 = total_copper_cut_segments[i].x1;
-        A_Line.y2 = total_copper_cut_segments[i].y1;
+        A_Line.x1 = total_copper_cut_segments.at(i - 1).x2;
+        A_Line.y1 = total_copper_cut_segments.at(i - 1).y2;
+        A_Line.x2 = total_copper_cut_segments.at(i).x1;
+        A_Line.y2 = total_copper_cut_segments.at(i).y1;
         Single_Silkscreen_Cut_Complete.push_back(A_Line); // 最終切完的結果
     }
     return Single_Silkscreen_Cut_Complete;
@@ -873,10 +873,10 @@ vector<Segment> silkscreen_cut_single_copper(Segment Silkscreen_Piece, Copper Si
     for (int i = 0; i < Copper_Line_size; i++)
     {
         Point first_copper_point, second_copper_point;
-        first_copper_point.x = Single_Copper.segment[i].x1;
-        first_copper_point.y = Single_Copper.segment[i].y1;
-        second_copper_point.x = Single_Copper.segment[i].x2;
-        second_copper_point.y = Single_Copper.segment[i].y2;
+        first_copper_point.x = Single_Copper.segment.at(i).x1;
+        first_copper_point.y = Single_Copper.segment.at(i).y1;
+        second_copper_point.x = Single_Copper.segment.at(i).x2;
+        second_copper_point.y = Single_Copper.segment.at(i).y2;
         Point_Intersect = intersection(first_point, last_point, first_copper_point, second_copper_point); // 交會點
         if (Point_Intersect.x != INFINITY && Point_Intersect.y != INFINITY)
             Intersection_Points.push_back(Point_Intersect);
@@ -896,11 +896,11 @@ vector<Segment> silkscreen_cut_single_copper(Segment Silkscreen_Piece, Copper Si
     {
         if ((i == 0 && !first_inside) || (i == Intersection_Points_size - 1 && !last_inside))
             continue; // 兩端點在外面可以直接略過
-        A_Line.x1 = Intersection_Points[i].x;
-        A_Line.y1 = Intersection_Points[i].y;
+        A_Line.x1 = Intersection_Points.at(i).x;
+        A_Line.y1 = Intersection_Points.at(i).y;
         i++;
-        A_Line.x2 = Intersection_Points[i].x;
-        A_Line.y2 = Intersection_Points[i].y;
+        A_Line.x2 = Intersection_Points.at(i).x;
+        A_Line.y2 = Intersection_Points.at(i).y;
         Cut_Lines.push_back(A_Line);
     }
 
@@ -964,11 +964,11 @@ vector<vector<Segment>> Find_Continuous_Segment(vector<Segment> Silkscreen)
     {
         if (i == Silkscreen_size - 1)
         {
-            continue_temp.push_back(Silkscreen[i]);
+            continue_temp.push_back(Silkscreen.at(i));
 
             if ((Silkscreen.at(i).x2 == Silkscreen.at(0).x1) && (Silkscreen.at(i).y2 == Silkscreen.at(0).y1))
             {
-                continue_temp.insert(continue_temp.end(), continue_segment[0].begin(), continue_segment[0].end());
+                continue_temp.insert(continue_temp.end(), continue_segment.at(0).begin(), continue_segment.at(0).end());
                 continue_segment.erase(continue_segment.begin());
             }
             continue_segment.push_back(continue_temp);
@@ -977,11 +977,11 @@ vector<vector<Segment>> Find_Continuous_Segment(vector<Segment> Silkscreen)
         {
             if ((Silkscreen.at(i).x2 == Silkscreen.at(i + 1).x1) && (Silkscreen.at(i).y2 == Silkscreen.at(i + 1).y1))
             {
-                continue_temp.push_back(Silkscreen[i]);
+                continue_temp.push_back(Silkscreen.at(i));
             }
             else
             {
-                continue_temp.push_back(Silkscreen[i]);
+                continue_temp.push_back(Silkscreen.at(i));
                 continue_segment.push_back(continue_temp);
                 // clear the continue
                 continue_temp.clear();
@@ -999,21 +999,21 @@ vector<vector<Segment>> Delete_Short_Silkscreen(vector<Segment> Silkscreen)
     int Continue_size = All_Continuous.size();
     for (int i = 0; i < Continue_size; i++)
     {
-        int A_Continuous_Segment_size = All_Continuous[i].size();
+        int A_Continuous_Segment_size = All_Continuous.at(i).size();
         len = 0;
         for (int j = 0; j < A_Continuous_Segment_size; j++)
         {
-            if (All_Continuous[i][j].is_line)
+            if (All_Continuous.at(i).at(j).is_line)
             {
-                len += hypot(All_Continuous[i][j].x2 - All_Continuous[i][j].x1, All_Continuous[i][j].y2 - All_Continuous[i][j].y1);
+                len += hypot(All_Continuous.at(i).at(j).x2 - All_Continuous.at(i).at(j).x1, All_Continuous.at(i).at(j).y2 - All_Continuous.at(i).at(j).y1);
             }
             else // arc
             {
-                float circumference = hypot(All_Continuous[i][j].x2 - All_Continuous[i][j].center_x, All_Continuous[i][j].y2 - All_Continuous[i][j].center_y);
+                float circumference = hypot(All_Continuous.at(i).at(j).x2 - All_Continuous.at(i).at(j).center_x, All_Continuous.at(i).at(j).y2 - All_Continuous.at(i).at(j).center_y);
                 float angle_1, angle_2, angle_between;
-                angle_1 = All_Continuous[i][j].theta_1;
-                angle_2 = All_Continuous[i][j].theta_2;
-                if (All_Continuous[i][j].direction)
+                angle_1 = All_Continuous.at(i).at(j).theta_1;
+                angle_2 = All_Continuous.at(i).at(j).theta_2;
+                if (All_Continuous.at(i).at(j).direction)
                     swap(angle_1, angle_2);
                 angle_between = angle_1 - angle_2;
                 if (angle_between <= 0)
@@ -1211,11 +1211,11 @@ vector<Point> Arc_to_Line(const vector<Segment> Assembly)
     {
         Segment new_line;
         Segment first_line, second_line;
-        first_line = Assembly[i];
+        first_line = Assembly.at(i);
         if (i != size - 1)
-            second_line = Assembly[i + 1];
+            second_line = Assembly.at(i+1);
         else
-            second_line = Assembly[0];
+            second_line = Assembly.at(0);
         if(!second_line.is_line)
         {
             new_line.slope = -1/second_line.slope;
@@ -1252,15 +1252,15 @@ bool Outside_of_Assembly(const Point a, const vector<Segment> Assembly) //  使�
     int size = Assembly_Points.size();
     for (size_t i = 0; i < size; i++)
     {
-        Angle_Vector.push_back(atan2(Assembly_Points[i].y - a.y, Assembly_Points[i].x - a.x));
+        Angle_Vector.push_back(atan2(Assembly_Points.at(i).y - a.y, Assembly_Points.at(i).x - a.x));
     }
     for (size_t i = 0; i < size; i++)
     {
-        First_Angle = Angle_Vector[i];
+        First_Angle = Angle_Vector.at(i);
         if (i == size - 1)
-            Second_Angle = Angle_Vector[0];
+            Second_Angle = Angle_Vector.at(0);
         else
-            Second_Angle = Angle_Vector[i + 1];
+            Second_Angle = Angle_Vector.at(i+1);
         Angle = abs(Second_Angle - First_Angle);       // 角度差
         Angle = (Angle > PI) ? 2 * PI - Angle : Angle; // 差值永遠為正
         Total_Angle += Angle;
@@ -1319,8 +1319,8 @@ vector<Segment> Arc_to_Poly(Segment Arc)
         }
         else
         {
-            part.x1 = Poly_out[times - count - 1].x2;
-            part.y1 = Poly_out[times - count - 1].y2;
+            part.x1 = Poly_out.at(times - count - 1).x2;
+            part.y1 = Poly_out.at(times - count - 1).y2;
         }
 
         if (Arc.direction == 0) // CW
@@ -1351,10 +1351,10 @@ vector<Segment> Arc_to_Poly(Segment Arc)
         count -= 1;
     }
 
-    if (Poly_out[Poly_out.size() - 1].x2 != Arc.x2 && Poly_out[Poly_out.size() - 1].y2 != Arc.y2)
+    if (Poly_out.at(Poly_out.size() - 1).x2 != Arc.x2 && Poly_out.at(Poly_out.size() - 1).y2 != Arc.y2)
     {
-        part.x1 = Poly_out[Poly_out.size() - 1].x2;
-        part.y1 = Poly_out[Poly_out.size() - 1].y2;
+        part.x1 = Poly_out.at(Poly_out.size() - 1).x2;
+        part.y1 = Poly_out.at(Poly_out.size() - 1).y2;
         part.x2 = Arc.x2;
         part.y2 = Arc.y2;
 
