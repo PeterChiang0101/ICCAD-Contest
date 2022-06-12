@@ -1,0 +1,1 @@
+first argument is the input file name, the second is the output file name ex: ./cade0025_alpha ./PublicCase_A.txt ./PublicCase_A_Ans.txt

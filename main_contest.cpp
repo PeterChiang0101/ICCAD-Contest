@@ -14,8 +14,8 @@ using namespace std;
 #define Subtraction_Tolerance 0.00005 // float 相減誤差容許值
 #define PI 3.14159265358979323846
 #define ARC_TO_LINE_SLICE_DENSITY 1 // 切片密度(in degree)
-#define INPUT_PATH "./TestingCase/test_A.txt"
-#define OUTPUT_PATH "./TestingCase/test_A_Ans.txt"
+#define INPUT_PATH "./TestingCase/test_B.txt"
+#define OUTPUT_PATH "./TestingCase/test_B_Ans.txt"
 // assemblygap : the minimum distance between assembly and silkscreen
 // coppergap : the minimum distance between copper and silkscreen
 // silkscreenlen : the minimum length of silkscreen
@@ -102,7 +102,7 @@ vector<Segment> Final_Silkscreen(const vector<Segment>, const vector<Copper>);
 
 void Write_File(const vector<Segment>);
 
-void Write_File(const vector<vector<Segment>>);
+void Write_File(const vector<vector<Segment>>, char **);
 
 void Write_File_Copper(const vector<Copper>); // debugging function
 
@@ -127,12 +127,12 @@ vector<vector<Segment>> Find_Continuous_Segment(vector<Segment>);
 ////////////////////////////////// main functions //////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////
 
-int main()
+int main(int argc, char *argv[]) // safe
 {
     fstream file;
     string assemblygap_str, coppergap_str, silkscreenlen_str;
 
-    file.open(INPUT_PATH, ios::in);
+    file.open(argv[1], ios::in);
 
     // the first three line of the file, defines parameters for silkscreen
     file >> assemblygap_str >> coppergap_str >> silkscreenlen_str;
@@ -146,9 +146,10 @@ int main()
 
     assembly = Read_Assembly(file);
     copper = Read_Copper(file);
+    // checked
+    // cout << assembly.size() << " " << copper.size() << endl;
 
     silkscreen = Assembly_Buffer(assembly);
-
     vector<Copper> whole_copper_barrier;
     whole_copper_barrier = Copper_Buffer(copper);
 
@@ -160,7 +161,8 @@ int main()
 
     Continuous_Silkscreen = Delete_Short_Silkscreen(Silkscreen_Cut);
 
-    Write_File(Continuous_Silkscreen);
+    Write_File(Continuous_Silkscreen, argv);
+
     // Write_File(Silkscreen_Cut);
 
     // Write_File_Copper(whole_copper_barrier); // output for testing
@@ -173,14 +175,14 @@ int main()
     // output
 }
 
-float File_to_Parameter(const string str) // 讀入參數
+float File_to_Parameter(const string str) // 讀入參數 safe
 {
     string str_truncate;
     str_truncate = str.substr(str.find(',') + 1);
     return stof(str_truncate);
 }
 
-const vector<string> split(const string &str, const char &delimiter) // 拆分文字
+const vector<string> split(const string &str, const char &delimiter) // 拆分文字 safe
 {
     vector<string> result;
     stringstream ss(str);
@@ -193,7 +195,7 @@ const vector<string> split(const string &str, const char &delimiter) // 拆分�
     return result;
 }
 
-Segment String_to_Line(string line) // 讀取時建立線段
+Segment String_to_Line(string line) // 讀取時建立線段 safe
 {
     vector<string> Splited;
     Splited = split(line, ',');
@@ -250,7 +252,7 @@ Segment String_to_Line(string line) // 讀取時建立線段
     return part;
 }
 
-vector<Segment> Read_Assembly(fstream &Input_File) // 讀取assembly，轉換為vector
+vector<Segment> Read_Assembly(fstream &Input_File) // 讀取assembly，轉換為vector safe
 {
     vector<Segment> Assembly;
     Segment part;
@@ -260,9 +262,9 @@ vector<Segment> Read_Assembly(fstream &Input_File) // 讀取assembly，轉換為
 
     while (getline(Input_File, line))
     {
-        if (line == "copper")
-            return Assembly;
-        else if (line == "assembly")
+        if (line[0] == 'c')
+            break;
+        else if (line[1] == 's')
             continue;
         else
             part = String_to_Line(line);
@@ -271,7 +273,7 @@ vector<Segment> Read_Assembly(fstream &Input_File) // 讀取assembly，轉換為
     return Assembly;
 }
 
-vector<vector<Segment>> Read_Copper(fstream &Input_File) // 讀取copper，轉換為二維vector
+vector<vector<Segment>> Read_Copper(fstream &Input_File) // 讀取copper，轉換為二維vector safe
 {
     vector<Segment> copper;
     vector<vector<Segment>> copper_pack;
@@ -280,7 +282,7 @@ vector<vector<Segment>> Read_Copper(fstream &Input_File) // 讀取copper，轉�
     string line;
     while (getline(Input_File, line))
     {
-        if (line == "copper")
+        if (line[0] == 'c')
         {
             copper_pack.push_back(copper);
             copper.clear();
@@ -295,7 +297,7 @@ vector<vector<Segment>> Read_Copper(fstream &Input_File) // 讀取copper，轉�
     return copper_pack;
 }
 
-vector<Point> Line_to_Point(const vector<Segment> Assembly) // 將線段切割成點
+vector<Point> Line_to_Point(const vector<Segment> Assembly) // 將線段切割成點 assume safe
 {
     const int size = Assembly.size();
     vector<Point> Point_Vector;
@@ -327,21 +329,23 @@ vector<Point> Line_to_Point(const vector<Segment> Assembly) // 將線段切割�
     return Point_Vector;
 }
 
-vector<Segment> Assembly_Buffer(const vector<Segment> Assembly)
+vector<Segment> Assembly_Buffer(const vector<Segment> Assembly) // safe
 {
     vector<Point> Extended_Points = Point_Extension(Assembly, true);
     vector<Segment> silkscreen = Point_to_Line(Extended_Points, Assembly);
     return silkscreen;
 }
 
-vector<Copper> Copper_Buffer(const vector<vector<Segment>> coppers)
+vector<Copper> Copper_Buffer(const vector<vector<Segment>> coppers) // safe
 {
     int size = coppers.size();
     Copper Single_Copper;
     vector<Copper> Every_Copper;
+    vector<Point> Extended_Points;
     for (int i = 0; i < size; i++)
     {
-        Single_Copper = Copper_Point_to_Line(Point_Extension(coppers.at(i), false), coppers.at(i));
+        Extended_Points = Point_Extension(coppers.at(i), false);
+        Single_Copper = Copper_Point_to_Line(Extended_Points, coppers.at(i));
         Every_Copper.push_back(Single_Copper);
     }
     return Every_Copper;
@@ -350,6 +354,7 @@ vector<Copper> Copper_Buffer(const vector<vector<Segment>> coppers)
 vector<Point> Point_Extension(const vector<Segment> Assembly, const bool is_assembly) // 圖形外擴
 {
     const int size = Assembly.size();
+    // cout << size << endl;
     vector<Point> Assembly_Points;
     vector<Point> Extended_Points;
     vector<vector<Point>> Arc_Dots;
@@ -357,7 +362,8 @@ vector<Point> Point_Extension(const vector<Segment> Assembly, const bool is_asse
 
     Assembly_Points = Line_to_Point(Assembly); //線切割為點
     Arc_Dots = Arc_Optimization(Assembly);     // 將圓弧切割成多個點，以利辨識點在圖形內外
-    if (size == 1)                             // i think only happened in copper, eg: a full circle
+
+    if (size == 1) // i think only happened in copper, eg: a full circle
     {
         Point Extended_Point;
         Extended_Point.x = Assembly.at(0).x1 + coppergap * cos(Assembly.at(0).theta_1);
@@ -423,9 +429,10 @@ vector<Point> Point_Extension(const vector<Segment> Assembly, const bool is_asse
     return Extended_Points;
 }
 
-vector<Segment> Point_to_Line(vector<Point> Extended_Points, vector<Segment> Assembly)
+vector<Segment> Point_to_Line(vector<Point> Extended_Points, vector<Segment> Assembly) // assume not safe
 {
     int size = Assembly.size();
+
     Segment A_Line;
     vector<Segment> Silkscreen;
     for (size_t i = 0; i < size; i++)
@@ -465,16 +472,19 @@ vector<Segment> Point_to_Line(vector<Point> Extended_Points, vector<Segment> Ass
     return Silkscreen;
 }
 
-Copper Copper_Point_to_Line(vector<Point> Extended_Points, vector<Segment> copper)
+Copper Copper_Point_to_Line(vector<Point> Extended_Points, vector<Segment> copper) // not safe
 {
     int size = copper.size();
     Segment A_Line;
     Copper Silkscreen, Arc_Boundary;
     if (!Extended_Points.empty())
     {
-        Silkscreen.x_min = Silkscreen.x_max = Extended_Points.at(0).x; // initialize
-        Silkscreen.y_min = Silkscreen.y_max = Extended_Points.at(0).y;
+        Silkscreen.x_min = Extended_Points.at(0).x;
+        Silkscreen.x_max = Extended_Points.at(0).x; // initialize
+        Silkscreen.y_min = Extended_Points.at(0).y;
+        Silkscreen.y_max = Extended_Points.at(0).y;
     }
+
     for (size_t i = 0; i < size; i++)
     {
         // calculate boundary
@@ -537,17 +547,18 @@ Copper Copper_Point_to_Line(vector<Point> Extended_Points, vector<Segment> coppe
         }
         Silkscreen.segment.push_back(A_Line);
     }
+
     return Silkscreen;
 }
 
-float interpolate_x(float y, Point p1, Point p2) // 待測點與圖形邊界交會的x值
+float interpolate_x(float y, Point p1, Point p2) // 待測點與圖形邊界交會的x值 safe
 {
     if (p1.y == p2.y)
         return p1.x;
     return p1.x + (p2.x - p1.x) * (y - p1.y) / (p2.y - p1.y);
 }
 
-bool point_in_polygon(Point t, vector<Point> Assembly_Point, vector<vector<Point>> Arc_Points) // 運用射線法判斷點在圖形內外
+bool point_in_polygon(Point t, vector<Point> Assembly_Point, vector<vector<Point>> Arc_Points) // 運用射線法判斷點在圖形內外 assume safe
 {
     int Assembly_size = Assembly_Point.size();
     int Arc_count = 0;
@@ -572,7 +583,7 @@ bool point_in_polygon(Point t, vector<Point> Assembly_Point, vector<vector<Point
     return c;
 }
 
-void Write_File(const vector<Segment> Silkscreen)
+void Write_File(const vector<Segment> Silkscreen) // safe
 {
     fstream Output;
 
@@ -595,11 +606,11 @@ void Write_File(const vector<Segment> Silkscreen)
     }
 }
 
-void Write_File(const vector<vector<Segment>> Silkscreen)
+void Write_File(const vector<vector<Segment>> Silkscreen, char **argv) // safe
 {
     fstream Output;
 
-    Output.open(OUTPUT_PATH, ios::out);
+    Output.open(argv[2], ios::out);
 
     const int size = Silkscreen.size();
     for (size_t i = 0; i < size; i++)
@@ -620,7 +631,7 @@ void Write_File(const vector<vector<Segment>> Silkscreen)
     }
 }
 
-vector<Point> Arc_to_Poly(Segment Arc)
+vector<Point> Arc_to_Poly(Segment Arc) // not safe
 {
     vector<Point> Poly_out;
     Point part;
@@ -684,9 +695,12 @@ vector<Point> Arc_to_Poly(Segment Arc)
         Poly_out.push_back(part);
         count -= 1;
     }
+
     if (!Poly_out.empty())
     {
-        if (Poly_out.at(Poly_out.size() - 1).x != Arc.x2 && Poly_out.at(Poly_out.size() - 1).y != Arc.y2)
+        int last_element = Poly_out.size() - 1;
+
+        if (Poly_out.at(last_element).x != Arc.x2 && Poly_out.at(last_element).y != Arc.y2)
         {
             part.x = Arc.x2;
             part.y = Arc.y2;
@@ -698,7 +712,7 @@ vector<Point> Arc_to_Poly(Segment Arc)
     return Poly_out;
 }
 
-vector<vector<Point>> Arc_Optimization(vector<Segment> Assembly)
+vector<vector<Point>> Arc_Optimization(vector<Segment> Assembly) // safe
 {
     int Assembly_size = Assembly.size();
     vector<Point> Dots_of_Arc;
@@ -715,7 +729,7 @@ vector<vector<Point>> Arc_Optimization(vector<Segment> Assembly)
     return vector_of_Arc;
 }
 
-Copper Arc_Boundary_Meas(Segment Arc)
+Copper Arc_Boundary_Meas(Segment Arc) // safe
 {
     Copper A_Arc;
     float first, second;
@@ -772,7 +786,7 @@ Copper Arc_Boundary_Meas(Segment Arc)
     return A_Arc;
 }
 
-void Write_File_Copper(const vector<Copper> coppers)
+void Write_File_Copper(const vector<Copper> coppers) // no use
 {
     int size = coppers.size();
     fstream Output;
@@ -795,7 +809,7 @@ void Write_File_Copper(const vector<Copper> coppers)
     }
 }
 
-vector<Segment> Final_Silkscreen(vector<Segment> Silkscreen_Original, vector<Copper> Coppers) // 未切割的絲印 與 銅箔
+vector<Segment> Final_Silkscreen(vector<Segment> Silkscreen_Original, vector<Copper> Coppers) // 未切割的絲印 與 銅箔 safe
 {
     vector<Segment> Silkscreen_Cut_Complete; // 切割完成的完整絲印
     vector<Segment> Silkscreen_Cut_Part;     // 切割完成的一條絲印
@@ -810,7 +824,7 @@ vector<Segment> Final_Silkscreen(vector<Segment> Silkscreen_Original, vector<Cop
     return Silkscreen_Cut_Complete;
 }
 
-vector<Segment> Cut_Silkscreen_by_Copper(Segment Silkscreen_Piece, vector<Copper> Coppers)
+vector<Segment> Cut_Silkscreen_by_Copper(Segment Silkscreen_Piece, vector<Copper> Coppers) // safe
 {
     int Copper_size = Coppers.size();
     vector<Segment> Single_Silkscreen_Cut_Complete;
@@ -853,7 +867,7 @@ vector<Segment> Cut_Silkscreen_by_Copper(Segment Silkscreen_Piece, vector<Copper
     return Single_Silkscreen_Cut_Complete;
 }
 
-vector<Segment> silkscreen_cut_single_copper(Segment Silkscreen_Piece, Copper Single_Copper)
+vector<Segment> silkscreen_cut_single_copper(Segment Silkscreen_Piece, Copper Single_Copper) // safe
 {
     int Copper_Line_size = Single_Copper.segment.size();
     vector<vector<Point>> Arc_Dots;
@@ -888,9 +902,6 @@ vector<Segment> silkscreen_cut_single_copper(Segment Silkscreen_Piece, Copper Si
     }
     Intersection_Points.push_back(last_point);
 
-    // NEED SORTING!!!
-    // sort the intersection points
-    // pseudocode:Intersection_Points=sort(Intersection_Points);
     Intersection_Points = Point_Sort(Intersection_Points);
 
     vector<Segment> Cut_Lines;
@@ -913,13 +924,13 @@ vector<Segment> silkscreen_cut_single_copper(Segment Silkscreen_Piece, Copper Si
 }
 
 // 叉積運算，回傳純量（除去方向）
-float cross(Point v1, Point v2) // 向量外積
+float cross(Point v1, Point v2) // 向量外積 safe
 {
     // 沒有除法，儘量避免誤差。
     return v1.x * v2.y - v1.y * v2.x;
 }
 
-Point intersection(Point a1, Point a2, Point b1, Point b2)
+Point intersection(Point a1, Point a2, Point b1, Point b2) // safe
 {
     Point a, b, s;
     a.x = a2.x - a1.x, a.y = a2.y - a1.y;
@@ -948,7 +959,7 @@ Point intersection(Point a1, Point a2, Point b1, Point b2)
     }
 }
 
-bool In_Between_Lines(Point test, Point first, Point last)
+bool In_Between_Lines(Point test, Point first, Point last) // safe
 {
     float min_x = min(first.x, last.x);
     float max_x = max(first.x, last.x);
@@ -960,7 +971,7 @@ bool In_Between_Lines(Point test, Point first, Point last)
         return false;
 }
 
-vector<vector<Segment>> Find_Continuous_Segment(vector<Segment> Silkscreen)
+vector<vector<Segment>> Find_Continuous_Segment(vector<Segment> Silkscreen) // safe
 {
     vector<vector<Segment>> continue_segment;
     vector<Segment> continue_temp;
@@ -973,8 +984,15 @@ vector<vector<Segment>> Find_Continuous_Segment(vector<Segment> Silkscreen)
 
             if ((Silkscreen.at(i).x2 == Silkscreen.at(0).x1) && (Silkscreen.at(i).y2 == Silkscreen.at(0).y1))
             {
-                continue_temp.insert(continue_temp.end(), continue_segment.at(0).begin(), continue_segment.at(0).end());
-                continue_segment.erase(continue_segment.begin());
+                if (!continue_segment.empty())
+                {
+                    continue_temp.insert(continue_temp.end(), continue_segment.at(0).begin(), continue_segment.at(0).end());
+                    continue_segment.erase(continue_segment.begin());
+                }
+                else
+                {
+                    continue_temp.push_back(Silkscreen.at(i));
+                }
             }
             continue_segment.push_back(continue_temp);
         }
@@ -988,7 +1006,7 @@ vector<vector<Segment>> Find_Continuous_Segment(vector<Segment> Silkscreen)
             {
                 continue_temp.push_back(Silkscreen.at(i));
                 continue_segment.push_back(continue_temp);
-                // clear the continue
+                // clear the continue_temp
                 continue_temp.clear();
             }
         }
@@ -996,7 +1014,7 @@ vector<vector<Segment>> Find_Continuous_Segment(vector<Segment> Silkscreen)
     return continue_segment;
 }
 
-vector<vector<Segment>> Delete_Short_Silkscreen(vector<Segment> Silkscreen)
+vector<vector<Segment>> Delete_Short_Silkscreen(vector<Segment> Silkscreen) // safe
 {
     float len;
     vector<vector<Segment>> All_Continuous;
@@ -1043,7 +1061,7 @@ vector<vector<Segment>> Delete_Short_Silkscreen(vector<Segment> Silkscreen)
 ////////////////// sorting functions //////////////////
 ///////////////////////////////////////////////////////
 
-vector<Segment> Segment_Sort(Segment Silkscreen_Piece, vector<Segment> total_copper_cut_segments)
+vector<Segment> Segment_Sort(Segment Silkscreen_Piece, vector<Segment> total_copper_cut_segments) // safe
 {
     // 由 x1 or y1 小至大排序
     // 開頭Segment 為 Silkscreen_Piece.x1, Silkscreen_Piece.y1, Silkscreen_Piece.x1, Silkscreen_Piece.y1
@@ -1108,7 +1126,7 @@ vector<Segment> Segment_Sort(Segment Silkscreen_Piece, vector<Segment> total_cop
     return Cut_Silkscreen;
 }
 
-bool sort_increase_Segment(const Segment L1, const Segment L2)
+bool sort_increase_Segment(const Segment L1, const Segment L2) // safe
 {
     if (L1.x1 == L2.x1)
     {
@@ -1119,7 +1137,7 @@ bool sort_increase_Segment(const Segment L1, const Segment L2)
         return (L1.x1 < L2.x1);
     }
 }
-bool sort_decrease_Segment(const Segment L1, const Segment L2)
+bool sort_decrease_Segment(const Segment L1, const Segment L2) // safe
 {
     if (L1.x1 == L2.x1)
     {
@@ -1131,8 +1149,9 @@ bool sort_decrease_Segment(const Segment L1, const Segment L2)
     }
 }
 
-vector<Point> Point_Sort(vector<Point> Intersection_Points)
+vector<Point> Point_Sort(vector<Point> Intersection_Points) // safe
 {
+    // 傳進vector，最少有兩個element at() 不越界
     // Warning!! this version will modify the input array and return it back.
     // vector<Point> sorted_Points;
     size_t final_point = Intersection_Points.size() - 1;
@@ -1157,7 +1176,7 @@ vector<Point> Point_Sort(vector<Point> Intersection_Points)
     return Intersection_Points;
 }
 
-bool sort_decrease_points(const Point p1, const Point p2)
+bool sort_decrease_points(const Point p1, const Point p2) // safe
 {
     if (p1.x != p2.x)
     {
@@ -1168,7 +1187,7 @@ bool sort_decrease_points(const Point p1, const Point p2)
         return (p1.y > p2.y);
     }
 }
-bool sort_increase_points(const Point p1, const Point p2)
+bool sort_increase_points(const Point p1, const Point p2) // safe
 {
     if (p1.x != p2.x)
     {
