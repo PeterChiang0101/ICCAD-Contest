@@ -143,16 +143,15 @@ int main(int argc, char *argv[]) // safe
     vector<Segment> assembly;
     vector<vector<Segment>> copper;
     vector<Segment> silkscreen;
-
     assembly = Read_Assembly(file);
     copper = Read_Copper(file);
     // checked
     // cout << assembly.size() << " " << copper.size() << endl;
 
     silkscreen = Assembly_Buffer(assembly);
+    // checked
     vector<Copper> whole_copper_barrier;
     whole_copper_barrier = Copper_Buffer(copper);
-
     vector<Segment> Silkscreen_Cut;
 
     vector<vector<Segment>> Continuous_Silkscreen; // 連續線段在同一vector裡
@@ -163,9 +162,9 @@ int main(int argc, char *argv[]) // safe
 
     Write_File(Continuous_Silkscreen, argv);
 
-    // Write_File(Silkscreen_Cut);
+    Write_File(Silkscreen_Cut);
 
-    // Write_File_Copper(whole_copper_barrier); // output for testing
+    Write_File_Copper(whole_copper_barrier); // output for testing
 
     // calculate the silkscreen
     // ignore the arc first
@@ -345,6 +344,8 @@ vector<Copper> Copper_Buffer(const vector<vector<Segment>> coppers) // safe
     for (int i = 0; i < size; i++)
     {
         Extended_Points = Point_Extension(coppers.at(i), false);
+        // problem!!!!!!
+        //cout<<Extended_Points.size()<<" "<<Extended_Points<<endl;
         Single_Copper = Copper_Point_to_Line(Extended_Points, coppers.at(i));
         Every_Copper.push_back(Single_Copper);
     }
@@ -354,7 +355,7 @@ vector<Copper> Copper_Buffer(const vector<vector<Segment>> coppers) // safe
 vector<Point> Point_Extension(const vector<Segment> Assembly, const bool is_assembly) // 圖形外擴
 {
     const int size = Assembly.size();
-    // cout << size << endl;
+    //cout << size << endl;
     vector<Point> Assembly_Points;
     vector<Point> Extended_Points;
     vector<vector<Point>> Arc_Dots;
@@ -362,7 +363,7 @@ vector<Point> Point_Extension(const vector<Segment> Assembly, const bool is_asse
 
     Assembly_Points = Line_to_Point(Assembly); //線切割為點
     Arc_Dots = Arc_Optimization(Assembly);     // 將圓弧切割成多個點，以利辨識點在圖形內外
-
+    //cout<<Arc_Dots<<endl;
     if (size == 1) // i think only happened in copper, eg: a full circle
     {
         Point Extended_Point;
@@ -884,7 +885,7 @@ vector<Segment> silkscreen_cut_single_copper(Segment Silkscreen_Piece, Copper Si
 
     Copper_Points = Line_to_Point(Single_Copper.segment);
     Arc_Dots = Arc_Optimization(Single_Copper.segment);
-
+    //cout<<Arc_Dots.size()<<endl;
     first_inside = point_in_polygon(first_point, Copper_Points, Arc_Dots);
     last_inside = point_in_polygon(last_point, Copper_Points, Arc_Dots);
 
