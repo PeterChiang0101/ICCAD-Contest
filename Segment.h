@@ -11,7 +11,10 @@ class Segment
 {
 public:
     Segment();
-    Segment String_to_Line(string);
+    void String_to_Line(string);
+
+private:
+    vector<string> split(const string &, const char &);
     bool is_line; // 0 = arc, 1 = line
     float x1;
     float y1;
@@ -26,8 +29,6 @@ public:
     bool direction; // 0 = ClockWise(CW), 1 = ConterClockwise(CCW)
     double theta_1; // 圓心到點一角度
     double theta_2; // 圓心到點二角度
-private:
-    vector<string> split(const string &, const char &);
 };
 
 #endif

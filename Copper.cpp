@@ -10,8 +10,6 @@ Copper::Copper()
 
 vector<vector<Segment>> Copper::Read_Copper(fstream &Input_File)
 {
-    vector<Segment> copper;
-    vector<vector<Segment>> copper_pack;
     Segment part;
     vector<string> split_return;
     string line;
@@ -19,16 +17,16 @@ vector<vector<Segment>> Copper::Read_Copper(fstream &Input_File)
     {
         if (line == "copper")
         {
-            copper_pack.push_back(copper);
-            copper.clear();
+            copper_pack.push_back(segment);
+            segment.clear();
         }
         else
         {
             part.String_to_Line(line);
-            copper.push_back(part);
+            segment.push_back(part);
         }
     }
-    copper_pack.push_back(copper);
+    copper_pack.push_back(segment);
     return copper_pack;
 }
 
@@ -60,6 +58,7 @@ Copper Copper_Point_to_Line(vector<Point> Extended_Points, vector<Segment> coppe
         // calculate boundary
         if (!copper.at(i).is_line)
         {
+
             Arc_Boundary = Arc_Boundary_Meas(copper.at(i));
             Silkscreen.x_min = min(Silkscreen.x_min, Arc_Boundary.x_min);
             Silkscreen.x_max = max(Silkscreen.x_max, Arc_Boundary.x_max);

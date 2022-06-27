@@ -14,8 +14,8 @@ using namespace std;
 #define Subtraction_Tolerance 0.00005 // float 相減誤差容許值
 #define PI 3.14159265358979323846
 #define ARC_TO_LINE_SLICE_DENSITY 1 // 切片密度(in degree)
-#define INPUT_PATH "./TestingCase/test_A.txt"
-#define OUTPUT_PATH "./TestingCase/test_A_Ans.txt"
+#define INPUT_PATH "./TestingCase/test_C.txt"
+#define OUTPUT_PATH "./TestingCase/test_C_Ans.txt"
 // assemblygap : the minimum distance between assembly and silkscreen
 // coppergap : the minimum distance between copper and silkscreen
 // silkscreenlen : the minimum length of silkscreen
@@ -116,6 +116,12 @@ float cross(Point, Point);
 
 Point intersection(Point, Point, Point, Point);
 
+vector<Point> intersection_between_line_and_arc(Segment, Point, Point);
+
+vector<Point> intersection_between_arc_and_arc(Segment, Segment);
+
+bool Point_Inside_Arc(float, float, float);
+
 bool In_Between_Lines(Point, Point, Point);
 
 vector<vector<Segment>> Delete_Short_Silkscreen(vector<Segment>);
@@ -197,7 +203,7 @@ Segment String_to_Line(string line) // 讀取時建立線段
 {
     vector<string> Splited;
     Splited = split(line, ',');
-    int vector_size = Splited.size();
+    size_t vector_size = Splited.size();
     Segment part;
 
     for (size_t i = 1; i < vector_size; i++)
@@ -297,7 +303,7 @@ vector<vector<Segment>> Read_Copper(fstream &Input_File) // 讀取copper，轉�
 
 vector<Point> Line_to_Point(const vector<Segment> Assembly) // 將線段切割成點
 {
-    const int size = Assembly.size();
+    const size_t size = Assembly.size();
     vector<Point> Point_Vector;
     Segment first_line, second_line;
     Point Point_Overlap; //兩線段交點
@@ -349,7 +355,7 @@ vector<Copper> Copper_Buffer(const vector<vector<Segment>> coppers)
 
 vector<Point> Point_Extension(const vector<Segment> Assembly, const bool is_assembly) // 圖形外擴
 {
-    const int size = Assembly.size();
+    const size_t size = Assembly.size();
     vector<Point> Assembly_Points;
     vector<Point> Extended_Points;
     vector<vector<Point>> Arc_Dots;
@@ -395,8 +401,8 @@ vector<Point> Point_Extension(const vector<Segment> Assembly, const bool is_asse
                 second_angle += 2 * PI;
         }
         double Angle_Divided = (first_angle + second_angle) / 2; //角平分線的角度
-        float Bisector_Slope = tan(Angle_Divided);               //角平分線
-        double Point_Extend_Range;                               //點外擴距離
+        // float Bisector_Slope = tan(Angle_Divided);               //角平分線
+        double Point_Extend_Range; //點外擴距離
         if (is_assembly)
             Point_Extend_Range = assemblygap / sin(Angle_Divided - first_angle);
         else
@@ -425,7 +431,7 @@ vector<Point> Point_Extension(const vector<Segment> Assembly, const bool is_asse
 
 vector<Segment> Point_to_Line(vector<Point> Extended_Points, vector<Segment> Assembly)
 {
-    int size = Assembly.size();
+    size_t size = Assembly.size();
     Segment A_Line;
     vector<Segment> Silkscreen;
     for (size_t i = 0; i < size; i++)
@@ -467,7 +473,7 @@ vector<Segment> Point_to_Line(vector<Point> Extended_Points, vector<Segment> Ass
 
 Copper Copper_Point_to_Line(vector<Point> Extended_Points, vector<Segment> copper)
 {
-    int size = copper.size();
+    size_t size = copper.size();
     Segment A_Line;
     Copper Silkscreen, Arc_Boundary;
     if (!Extended_Points.empty())
@@ -578,7 +584,7 @@ void Write_File(const vector<Segment> Silkscreen)
 
     Output.open(OUTPUT_PATH, ios::out);
     // Output << "silkscreen" << endl;
-    const int size = Silkscreen.size();
+    const size_t size = Silkscreen.size();
     for (size_t i = 0; i < size; i++)
     {
         if (i == 0 || Silkscreen.at(i).x1 != Silkscreen.at(i - 1).x2 || Silkscreen.at(i).y1 != Silkscreen.at(i - 1).y2) // 第一條線，或線段不連續
@@ -601,7 +607,7 @@ void Write_File(const vector<vector<Segment>> Silkscreen)
 
     Output.open(OUTPUT_PATH, ios::out);
 
-    const int size = Silkscreen.size();
+    const size_t size = Silkscreen.size();
     for (size_t i = 0; i < size; i++)
     {
         Output << "silkscreen" << endl;
@@ -826,12 +832,12 @@ vector<Segment> Cut_Silkscreen_by_Copper(Segment Silkscreen_Piece, vector<Copper
     // Single_Silkscreen_Cut_Complete.push_back(Silkscreen_Piece);
     for (int i = 0; i < Copper_size; i++) // 每次處理一個copper
     {
-        if (x_min > Coppers.at(i).x_max || x_max < Coppers.at(i).x_min || y_min > Coppers.at(i).y_max || y_max < Coppers.at(i).y_min)
+        if (x_min > Coppers.at(i).x_max || x_max < Coppers.at(i).x_min || y_min > Coppers.at(i).y_max || y_max < Coppers.at(i).y_min) // 如果這條絲印不在這個copper的區域內
             continue;
         copper_cut_segments = silkscreen_cut_single_copper(Silkscreen_Piece, Coppers.at(i));                                       // 絲印與單一copper的交集線段
         total_copper_cut_segments.insert(total_copper_cut_segments.end(), copper_cut_segments.begin(), copper_cut_segments.end()); // 線段之間可能有交集
     }
-    total_copper_cut_segments = Segment_Sort(Silkscreen_Piece, total_copper_cut_segments);
+    total_copper_cut_segments = Segment_Sort(Silkscreen_Piece, total_copper_cut_segments); // 將線段排序
 
     int total_segment = total_copper_cut_segments.size(); // 聯集完
 
@@ -850,10 +856,10 @@ vector<Segment> Cut_Silkscreen_by_Copper(Segment Silkscreen_Piece, vector<Copper
         A_Line.y2 = total_copper_cut_segments.at(i).y1;
         Single_Silkscreen_Cut_Complete.push_back(A_Line); // 最終切完的結果
     }
-    return Single_Silkscreen_Cut_Complete;
+    return Single_Silkscreen_Cut_Complete; // 回傳切割完的結果
 }
 
-vector<Segment> silkscreen_cut_single_copper(Segment Silkscreen_Piece, Copper Single_Copper)
+vector<Segment> silkscreen_cut_single_copper(Segment Silkscreen_Piece, Copper Single_Copper) // 切割與單一銅箔交會的絲印
 {
     int Copper_Line_size = Single_Copper.segment.size();
     vector<vector<Point>> Arc_Dots;
@@ -878,24 +884,42 @@ vector<Segment> silkscreen_cut_single_copper(Segment Silkscreen_Piece, Copper Si
     for (int i = 0; i < Copper_Line_size; i++)
     {
         Point first_copper_point, second_copper_point;
+        vector<Point> Intersection_Points_temp;
         first_copper_point.x = Single_Copper.segment.at(i).x1;
         first_copper_point.y = Single_Copper.segment.at(i).y1;
         second_copper_point.x = Single_Copper.segment.at(i).x2;
         second_copper_point.y = Single_Copper.segment.at(i).y2;
-        Point_Intersect = intersection(first_point, last_point, first_copper_point, second_copper_point); // 交會點
-        if (Point_Intersect.x != INFINITY && Point_Intersect.y != INFINITY)
-            Intersection_Points.push_back(Point_Intersect);
+        if (Silkscreen_Piece.is_line && Single_Copper.segment.at(i).is_line) // 如果絲印是線段，銅箔也是線段
+        {
+            Point_Intersect = intersection(first_point, last_point, first_copper_point, second_copper_point); // 線與線交會點
+            if (Point_Intersect.x != INFINITY && Point_Intersect.y != INFINITY)
+                Intersection_Points.push_back(Point_Intersect);
+        }
+        else if (Silkscreen_Piece.is_line && !Single_Copper.segment.at(i).is_line) // 如果絲印是線段，銅箔是圓弧
+        {
+            // 計算線與圓弧的交會點
+            Intersection_Points_temp = intersection_between_line_and_arc(Single_Copper.segment.at(i), first_point, last_point);
+            Intersection_Points.insert(Intersection_Points.end(), Intersection_Points_temp.begin(), Intersection_Points_temp.end());
+        }
+        else if (!Silkscreen_Piece.is_line && Single_Copper.segment.at(i).is_line) // 如果絲印是圓弧，銅箔是線段
+        {
+            // 計算線與圓弧的交會點
+            Intersection_Points_temp = intersection_between_line_and_arc(Silkscreen_Piece, first_copper_point, second_copper_point);
+            Intersection_Points.insert(Intersection_Points.end(), Intersection_Points_temp.begin(), Intersection_Points_temp.end());
+        }
+        else if (!Silkscreen_Piece.is_line && !Single_Copper.segment.at(i).is_line) // 如果絲印是圓弧，銅箔也是圓弧
+        {
+            Intersection_Points_temp = intersection_between_arc_and_arc(Silkscreen_Piece, Single_Copper.segment.at(i));
+            Intersection_Points.insert(Intersection_Points.end(), Intersection_Points_temp.begin(), Intersection_Points_temp.end());
+        }
     }
     Intersection_Points.push_back(last_point);
 
-    // NEED SORTING!!!
-    // sort the intersection points
-    // pseudocode:Intersection_Points=sort(Intersection_Points);
     Intersection_Points = Point_Sort(Intersection_Points);
 
     vector<Segment> Cut_Lines;
     Segment A_Line;
-    int Intersection_Points_size = Intersection_Points.size();
+    size_t Intersection_Points_size = Intersection_Points.size();
 
     for (size_t i = 0; i < Intersection_Points_size; i++) // 量出需要被切割的線段
     {
@@ -917,6 +941,11 @@ float cross(Point v1, Point v2) // 向量外積
 {
     // 沒有除法，儘量避免誤差。
     return v1.x * v2.y - v1.y * v2.x;
+}
+
+float dot(Point v1, Point v2) // 向量積
+{
+    return v1.x * v2.x + v1.y * v2.y;
 }
 
 Point intersection(Point a1, Point a2, Point b1, Point b2)
@@ -945,6 +974,150 @@ Point intersection(Point a1, Point a2, Point b1, Point b2)
     {
         s.x = s.y = INFINITY;
         return s;
+    }
+}
+
+vector<Point> intersection_between_line_and_arc(Segment Arc, Point Line_First_Point, Point Line_Second_Point)
+{
+    // 圓公式 (x-x0)^2 + (y-y0)^2 = r^2
+    // 直線公式 ax + by + c = 0
+    // 交會點公式 (a^2 + b^2)x^2 + 2(-x0 * b^2 + a * c + y0 * a * b)x + ((x0^2 + y0^2 + r^2) * b^2 + c^2 - 2 * y0 * b * c) = 0
+    vector<Point> Intersection_Points;
+
+    Point d; // 直線向量
+    d.x = Line_First_Point.x - Line_Second_Point.x;
+    d.y = Line_First_Point.y - Line_Second_Point.y;
+    Point f; // 圓至線段起點的向量
+    f.x = Line_First_Point.x - Arc.center_x;
+    f.y = Line_First_Point.y - Arc.center_y;
+    float r = hypot(Arc.x2 - Arc.center_x, Arc.y2 - Arc.center_y); // 圓半徑
+
+    float a = dot(d, d);
+    float b = 2 * dot(f, d);
+    float c = dot(f, f) - r * r;
+
+    float discriminant = b * b - 4 * a * c;
+    if (discriminant < 0)
+    {
+        // no intersection
+        return vector<Point>();
+    }
+    else
+    {
+        // ray didn't totally miss sphere,
+        // so there is a solution to
+        // the equation.
+
+        discriminant = sqrt(discriminant);
+
+        // either solution may be on or off the ray so need to test both
+        // t1 is always the smaller value, because BOTH discriminant and
+        // a are nonnegative.
+        float t1 = (-b - discriminant) / (2 * a); // 方程式的兩個解
+        float t2 = (-b + discriminant) / (2 * a);
+
+        // 3x HIT cases:
+        //          -o->             --|-->  |            |  --|->
+        // Impale(t1 hit,t2 hit), Poke(t1 hit,t2>1), ExitWound(t1<0, t2 hit),
+
+        // 3x MISS cases:
+        //       ->  o                     o ->              | -> |
+        // FallShort (t1>1,t2>1), Past (t1<0,t2<0), CompletelyInside(t1<0, t2>1)
+
+        // P = E + t * d
+        if (t1 >= 0 && t1 <= 1)
+        {
+            // t1 is the intersection, and it's closer than t2
+            // (since t1 uses -b - discriminant)
+            // Impale, Poke
+            Point P1;
+            P1.x = Line_First_Point.x + t1 * d.x;
+            P1.y = Line_First_Point.y + t1 * d.y;
+            float Point_Theta;
+            Point_Theta = atan2(P1.y - Arc.center_y, P1.x - Arc.center_x);
+            if (Point_Inside_Arc(Point_Theta, Arc.theta_1, Arc.theta_2))
+                Intersection_Points.push_back(P1);
+        }
+
+        // here t1 didn't intersect so we are either started
+        // inside the sphere or completely past it
+        if (t2 >= 0 && t2 <= 1)
+        {
+            // ExitWound
+            Point P2;
+            P2.x = Line_First_Point.x + t2 * d.x;
+            P2.y = Line_First_Point.y + t2 * d.y;
+            float Point_Theta;
+            Point_Theta = atan2(P2.y - Arc.center_y, P2.x - Arc.center_x);
+            if (Point_Inside_Arc(Point_Theta, Arc.theta_1, Arc.theta_2))
+                Intersection_Points.push_back(P2);
+        }
+        return Intersection_Points;
+    }
+    return vector<Point>();
+}
+
+vector<Point> intersection_between_arc_and_arc(Segment Arc1, Segment Arc2)
+{
+    float d = hypot(Arc1.center_x - Arc2.center_x, Arc1.center_y - Arc2.center_y); // 兩圓中心距離
+    float r1 = hypot(Arc1.x2 - Arc1.center_x, Arc1.y2 - Arc1.center_y);            // 圓1半徑
+    float r2 = hypot(Arc2.x2 - Arc2.center_x, Arc2.y2 - Arc2.center_y);            // 圓2半徑
+
+    if (d > r1 + r2) // 兩圓相距太遠，沒有交點
+        return vector<Point>();
+    if (d < abs(r1 - r2)) // 兩圓相距太近，沒有交點
+        return vector<Point>();
+    if (d == 0 && r1 != r2) // 同心圓，沒有交點
+        return vector<Point>();
+    if (d == 0 && r1 == r2) // 圓完全重疊，需判斷
+    {
+    }
+    else
+    {
+        float a = (r1 * r1 - r2 * r2 + d * d) / (2 * d);
+        float h = sqrt(r1 * r1 - a * a);
+        float x0 = Arc1.center_x + a * (Arc2.center_x - Arc1.center_x) / d;
+        float y0 = Arc1.center_y + a * (Arc2.center_y - Arc1.center_y) / d;
+        float x1 = x0 + h * (Arc2.center_y - Arc1.center_y) / d;
+        float y1 = y0 - h * (Arc2.center_x - Arc1.center_x) / d;
+        float x2 = x0 - h * (Arc2.center_y - Arc1.center_y) / d;
+        float y2 = y0 + h * (Arc2.center_x - Arc1.center_x) / d;
+        Point P1;
+        P1.x = x1;
+        P1.y = y1;
+        Point P2;
+        P2.x = x2;
+        P2.y = y2;
+        vector<Point> Intersection_Points;
+        if (P1.x == P2.x && P1.y == P2.y) // 兩圓交點重疊，只有一個交點，不要回傳
+        {
+        }
+        else
+        {
+            Intersection_Points.push_back(P1);
+            Intersection_Points.push_back(P2);
+            // 需判斷點是否在圓弧，用 Point_Inside_Arc 函式
+        }
+        return Intersection_Points;
+    }
+    return vector<Point>();
+}
+
+bool Point_Inside_Arc(float Point_Theta, float Arc_Theta1, float Arc_Theta2) // conterclockwise
+{
+    if (Arc_Theta1 > Arc_Theta2)
+    {
+        if (Point_Theta >= Arc_Theta1 || Point_Theta <= Arc_Theta2)
+            return true;
+        else
+            return false;
+    }
+    else
+    {
+        if (Point_Theta >= Arc_Theta1 && Point_Theta <= Arc_Theta2)
+            return true;
+        else
+            return false;
     }
 }
 

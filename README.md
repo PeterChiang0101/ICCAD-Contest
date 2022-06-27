@@ -2,24 +2,22 @@
 
 ## !!!TODO(NOT_DONE)
 
-```text
-
-BUGsss
-
-copper 外擴 與 絲印交點 arc & line, arc & arc intersection points 
-
-(DONE) copper 切割絲印，再與silkscreeen相減 (差point的sorting, main.cpp:827)
-
-(DONE) 圓與直線交點斜率
-
-(DONE) 外擴圓心
+- [ ] BUGsss
+- [ ] copper 外擴 與 絲印交點 arc & line, arc & arc intersection points
+- [x] copper 切割絲印，再與silkscreeen相減 (差point的sorting, main.cpp:827)
+- [x] 圓與直線交點斜率
+- [x] 外擴圓心
 
 low priority:
 
-Find_Continuous_Segment 可記錄連續線段的開頭位置，節省資料用量
-
-vector [i] 可用 .at(i)
-```
+- [ ] Find_Continuous_Segment 可記錄連續線段的開頭位置，節省資料用量
+- [x] vector [i] 可用 .at(i)
+- [ ] 絲印與銅箔焦點 圓弧對直線 圓弧對圓弧
+- [ ] 評分器
+- [ ] 優化圓弧外擴
+- [ ] 自主產生題目程式
+- [ ] 分class
+- [ ] vector 換成 list
 
 ## I/O
 
@@ -182,6 +180,22 @@ int main(); // 主程式
 ```
 
 ## Algorithms
+
+2022/6/28
+
+debug, case c still has bugs
+
+new functions
+
+```text
+vector<Point> intersection_between_line_and_arc(Segment, Point, Point);
+
+vector<Point> intersection_between_arc_and_arc(Segment, Segment);
+
+bool Point_Inside_Arc(float, float, float);
+```
+
+Peter Macoto Gray Raymond
 
 2022/6/11
 
