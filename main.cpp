@@ -810,6 +810,10 @@ vector<Segment> Final_Silkscreen(vector<Segment> Silkscreen_Original, vector<Cop
     for (int i = 0; i < Silkscreen_Org_Size; i++)
     {
         Silkscreen_Cut_Part.clear();
+        if (i == 54)
+        {
+            int a = 0;
+        }
         Silkscreen_Cut_Part = Cut_Silkscreen_by_Copper(Silkscreen_Original.at(i), Coppers);
         Silkscreen_Cut_Complete.insert(Silkscreen_Cut_Complete.end(), Silkscreen_Cut_Part.begin(), Silkscreen_Cut_Part.end());
     }
@@ -985,8 +989,8 @@ vector<Point> intersection_between_line_and_arc(Segment Arc, Point Line_First_Po
     vector<Point> Intersection_Points;
 
     Point d; // 直線向量
-    d.x = Line_First_Point.x - Line_Second_Point.x;
-    d.y = Line_First_Point.y - Line_Second_Point.y;
+    d.x = Line_Second_Point.x - Line_First_Point.x;
+    d.y = Line_Second_Point.y - Line_First_Point.y;
     Point f; // 圓至線段起點的向量
     f.x = Line_First_Point.x - Arc.center_x;
     f.y = Line_First_Point.y - Arc.center_y;
@@ -1088,14 +1092,20 @@ vector<Point> intersection_between_arc_and_arc(Segment Arc1, Segment Arc2)
         Point P2;
         P2.x = x2;
         P2.y = y2;
+        int P1_Arc1_Theta = atan2(P1.y - Arc1.center_y, P1.x - Arc1.center_x);
+        int P1_Arc2_Theta = atan2(P1.y - Arc2.center_y, P1.x - Arc2.center_x);
+        int P2_Arc1_Theta = atan2(P2.y - Arc1.center_y, P2.x - Arc1.center_x);
+        int P2_Arc2_Theta = atan2(P2.y - Arc2.center_y, P2.x - Arc2.center_x);
         vector<Point> Intersection_Points;
         if (P1.x == P2.x && P1.y == P2.y) // 兩圓交點重疊，只有一個交點，不要回傳
         {
         }
         else
         {
-            Intersection_Points.push_back(P1);
-            Intersection_Points.push_back(P2);
+            if (Point_Inside_Arc(P1_Arc1_Theta, Arc1.theta_1, Arc1.theta_2) && Point_Inside_Arc(P1_Arc2_Theta, Arc2.theta_1, Arc2.theta_2))
+                Intersection_Points.push_back(P1);
+            if (Point_Inside_Arc(P2_Arc1_Theta, Arc1.theta_1, Arc1.theta_2) && Point_Inside_Arc(P2_Arc2_Theta, Arc2.theta_1, Arc2.theta_2))
+                Intersection_Points.push_back(P2);
             // 需判斷點是否在圓弧，用 Point_Inside_Arc 函式
         }
         return Intersection_Points;
@@ -1103,8 +1113,10 @@ vector<Point> intersection_between_arc_and_arc(Segment Arc1, Segment Arc2)
     return vector<Point>();
 }
 
-bool Point_Inside_Arc(float Point_Theta, float Arc_Theta1, float Arc_Theta2) // conterclockwise
+bool Point_Inside_Arc(float Point_Theta, float Arc_Theta1, float Arc_Theta2) // 確認點是否在圓弧內，已確認在該圓弧所屬的園內 (counterclockwise)
 {
+    if (Arc_Theta1 == Arc_Theta2) // 完整的圓，一定是在圓弧內
+        return true;
     if (Arc_Theta1 > Arc_Theta2)
     {
         if (Point_Theta >= Arc_Theta1 || Point_Theta <= Arc_Theta2)

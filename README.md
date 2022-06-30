@@ -2,8 +2,8 @@
 
 ## !!!TODO(NOT_DONE)
 
-- [ ] BUGsss
-- [ ] copper 外擴 與 絲印交點 arc & line, arc & arc intersection points
+- [ ] BUGsss (Known: 左中絲印與銅箔計算時會發生錯誤)
+- [x] copper 外擴 與 絲印交點 arc & line, arc & arc intersection points
 - [x] copper 切割絲印，再與silkscreeen相減 (差point的sorting, main.cpp:827)
 - [x] 圓與直線交點斜率
 - [x] 外擴圓心
@@ -181,6 +181,20 @@ int main(); // 主程式
 
 ## Algorithms
 
+2022/6/30
+
+debug
+
+add detail in intersection_between_arc_and_arc(), Point_Inside_Arc()
+
+revise intersection_between_arc_and_arc()
+
+***note: still can not run Case C***
+
+---
+
+Peter
+
 2022/6/28
 
 debug, case c still has bugs
@@ -196,6 +210,8 @@ bool Point_Inside_Arc(float, float, float);
 ```
 
 Peter Macoto Gray Raymond
+
+---
 
 2022/6/11
 
