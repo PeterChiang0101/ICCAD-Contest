@@ -862,7 +862,7 @@ vector<Segment> Cut_Silkscreen_by_Copper(Segment Silkscreen_Piece, vector<Copper
 
     for (int i = 1; i < total_segment; i++)
     {
-        if (total_copper_cut_segments.at(i).x1 == total_copper_cut_segments.at(i - 1).x1 && total_copper_cut_segments.at(i).y1 == total_copper_cut_segments.at(i - 1).y2) // 共點
+        if (total_copper_cut_segments.at(i).x1 == total_copper_cut_segments.at(i - 1).x2 && total_copper_cut_segments.at(i).y1 == total_copper_cut_segments.at(i - 1).y2) // 共點
             continue;
 
         A_Line.x1 = total_copper_cut_segments.at(i - 1).x2;

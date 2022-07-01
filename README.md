@@ -5,7 +5,7 @@
 BUGsss
 
 - [x] 左中絲印與銅箔計算時會發生錯誤
-- [ ] 多出多餘的絲印，右上一線段未切割
+- [ ] 多出多餘的絲印，右上兩線段未切割
 
 ---
 
@@ -18,7 +18,7 @@ BUGsss
 low priority:
 
 - [ ] Find_Continuous_Segment 可記錄連續線段的開頭位置，節省資料用量
-- [x] vector [i] 可用 .at(i)
+- [x] vector[i] 可用 .at(i)
 - [ ] 評分器
 - [ ] 優化圓弧外擴
 - [ ] 自主產生題目程式
@@ -194,6 +194,10 @@ debug
 generate case c pic success
 
 still have some small bugs
+
+21:00
+
+fix one bug (left-middle excess arc)
 
 Peter
 
