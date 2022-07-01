@@ -2,7 +2,14 @@
 
 ## !!!TODO(NOT_DONE)
 
-- [ ] BUGsss (Known: 左中絲印與銅箔計算時會發生錯誤)
+BUGsss
+
+- [x] 左中絲印與銅箔計算時會發生錯誤
+- [ ] 多出多餘的絲印，右上一線段未切割
+
+---
+
+- [x] 絲印與銅箔焦點 圓弧對直線 圓弧對圓弧
 - [x] copper 外擴 與 絲印交點 arc & line, arc & arc intersection points
 - [x] copper 切割絲印，再與silkscreeen相減 (差point的sorting, main.cpp:827)
 - [x] 圓與直線交點斜率
@@ -12,7 +19,6 @@ low priority:
 
 - [ ] Find_Continuous_Segment 可記錄連續線段的開頭位置，節省資料用量
 - [x] vector [i] 可用 .at(i)
-- [ ] 絲印與銅箔焦點 圓弧對直線 圓弧對圓弧
 - [ ] 評分器
 - [ ] 優化圓弧外擴
 - [ ] 自主產生題目程式
@@ -181,6 +187,18 @@ int main(); // 主程式
 
 ## Algorithms
 
+2022/7/1
+
+debug
+
+generate case c pic success
+
+still have some small bugs
+
+Peter
+
+---
+
 2022/6/30
 
 debug
@@ -208,6 +226,14 @@ vector<Point> intersection_between_arc_and_arc(Segment, Segment);
 
 bool Point_Inside_Arc(float, float, float);
 ```
+
+copyright:
+
+intersection_between_line_and_arc()
+<https://stackoverflow.com/questions/1073336/circle-line-segment-collision-detection-algorithm>
+
+intersection_between_arc_and_arc()
+<https://stackoverflow.com/questions/3349125/circle-circle-intersection-points>
 
 Peter Macoto Gray Raymond
 
