@@ -28,10 +28,14 @@ struct Segment
     float y1;
     float x2;
     float y2;
+    float x_min, x_max, y_min, y_max; // the bounding box of the segment
+
+    // below are only used when is_line = 1
     float slope;       //斜率
     float y_intercept; //截距
     double theta;      // the angle reference to positive x axis
-    // below is needed by arc, when deals with line set all to 0
+
+    // below are only used when is_line = 0
     float center_x;
     float center_y;
     bool direction; // 0 = ClockWise(CW), 1 = ConterClockwise(CCW)
@@ -111,6 +115,8 @@ vector<Point> Arc_to_Poly(Segment);
 vector<vector<Point>> Arc_Optimization(const vector<Segment>);
 
 Copper Arc_Boundary_Meas(Segment);
+
+Segment Arc_Boundary_Meas_for_Assembly(Segment);
 
 float cross(Point, Point);
 
@@ -429,7 +435,7 @@ vector<Point> Point_Extension(const vector<Segment> Assembly, const bool is_asse
     return Extended_Points;
 }
 
-vector<Segment> Point_to_Line(vector<Point> Extended_Points, vector<Segment> Assembly)
+vector<Segment> Point_to_Line(vector<Point> Extended_Points, vector<Segment> Assembly) // assembly 專屬
 {
     size_t size = Assembly.size();
     Segment A_Line;
@@ -466,6 +472,18 @@ vector<Segment> Point_to_Line(vector<Point> Extended_Points, vector<Segment> Ass
             A_Line.theta_1 = atan2(A_Line.y1 - A_Line.center_y, A_Line.x1 - A_Line.center_x);
             A_Line.theta_2 = atan2(A_Line.y2 - A_Line.center_y, A_Line.x2 - A_Line.center_x);
         }
+        if (A_Line.is_line)
+        {
+            A_Line.x_min = min(A_Line.x1, A_Line.x2);
+            A_Line.x_max = max(A_Line.x1, A_Line.x2);
+            A_Line.y_min = min(A_Line.y1, A_Line.y2);
+            A_Line.y_max = max(A_Line.y1, A_Line.y2);
+        }
+        else
+        {
+            A_Line = Arc_Boundary_Meas_for_Assembly(A_Line);
+        }
+
         Silkscreen.push_back(A_Line);
     }
     return Silkscreen;
@@ -778,6 +796,64 @@ Copper Arc_Boundary_Meas(Segment Arc)
     return A_Arc;
 }
 
+Segment Arc_Boundary_Meas_for_Assembly(Segment Arc)
+{
+    Segment A_Arc;
+    A_Arc = Arc;
+    float first_angle, second_angle;
+    float radius = hypot(Arc.x1 - Arc.center_x, Arc.y1 - Arc.center_y);
+    first_angle = Arc.theta_1;
+    second_angle = Arc.theta_2;
+    if (first_angle == second_angle)
+    {
+        A_Arc.x_min = Arc.center_x - radius;
+        A_Arc.x_max = Arc.center_x + radius;
+        A_Arc.y_min = Arc.center_y - radius;
+        A_Arc.y_max = Arc.center_y + radius;
+        return A_Arc;
+    }
+
+    if (Arc.direction)
+    {
+        swap(first_angle, second_angle);
+    }
+    if (first_angle > second_angle)
+    {
+        A_Arc.x_max = (first_angle >= 0 && second_angle <= 0) ? Arc.center_x + radius : max(max(Arc.x1, Arc.x2), Arc.center_x);
+        A_Arc.x_min = min(min(Arc.x1, Arc.x2), Arc.center_x);
+        A_Arc.y_max = (first_angle >= PI / 2 && second_angle <= PI / 2) ? Arc.center_y + radius : max(max(Arc.y1, Arc.y2), Arc.center_y);
+        A_Arc.y_min = (first_angle >= -PI / 2 && second_angle <= -PI / 2) ? Arc.center_y - radius : min(min(Arc.y1, Arc.y2), Arc.center_y);
+    }
+    else if (second_angle < 0) // first < second < 0
+    {
+        A_Arc.x_max = Arc.center_x + radius;
+        A_Arc.x_min = Arc.center_x - radius;
+        A_Arc.y_max = Arc.center_y + radius;
+        A_Arc.y_min = (first_angle >= -PI / 2 || second_angle <= -PI / 2) ? Arc.center_y - radius : min(min(Arc.y1, Arc.y2), Arc.center_y);
+    }
+    else if (first_angle >= 0) // 0 <= first < second
+    {
+        A_Arc.x_max = Arc.center_x + radius;
+        A_Arc.x_min = Arc.center_x - radius;
+        A_Arc.y_max = (first_angle >= PI / 2 || second_angle <= PI / 2) ? Arc.center_y + radius : max(max(Arc.y1, Arc.y2), Arc.center_y);
+        A_Arc.y_min = Arc.center_y - radius;
+    }
+    else // first < 0 < second
+    {
+        A_Arc.x_max = max(max(Arc.x1, Arc.x2), Arc.center_x);
+        A_Arc.x_min = Arc.center_x - radius;
+        A_Arc.y_max = (second_angle <= PI / 2) ? Arc.center_y + radius : max(max(Arc.y1, Arc.y2), Arc.center_y);
+        A_Arc.y_min = (first_angle >= -PI / 2) ? Arc.center_y - radius : min(min(Arc.y1, Arc.y2), Arc.center_y);
+    }
+
+    /*A_Arc.x_max = (first >= 0 && second <= 0) ? Arc.center_x + radius : max(max(Arc.x1, Arc.x2), Arc.center_x);
+    A_Arc.x_min = (first >= PI && second <= PI) ? Arc.center_x - radius : min(min(Arc.x1, Arc.x2), Arc.center_x);
+    A_Arc.y_max = (first >= PI / 2 && second <= PI / 2) ? Arc.center_y + radius : max(max(Arc.y1, Arc.y2), Arc.center_y);
+    A_Arc.y_min = (first >= -PI / 2 && second <= -PI / 2) ? Arc.center_y - radius : min(min(Arc.y1, Arc.y2), Arc.center_y);*/
+
+    return A_Arc;
+}
+
 void Write_File_Copper(const vector<Copper> coppers)
 {
     int size = coppers.size();
@@ -810,7 +886,7 @@ vector<Segment> Final_Silkscreen(vector<Segment> Silkscreen_Original, vector<Cop
     for (int i = 0; i < Silkscreen_Org_Size; i++)
     {
         Silkscreen_Cut_Part.clear();
-        if (i == 5)
+        if (i == 15)
         {
             int a = 0;
         }
@@ -828,15 +904,12 @@ vector<Segment> Cut_Silkscreen_by_Copper(Segment Silkscreen_Piece, vector<Copper
     vector<Segment> copper_cut_segments;       // 一個copper所遮住這條絲印的部分
     Segment A_Line;
 
-    float x_min = min(Silkscreen_Piece.x1, Silkscreen_Piece.x2);
-    float x_max = max(Silkscreen_Piece.x1, Silkscreen_Piece.x2);
-    float y_min = min(Silkscreen_Piece.y1, Silkscreen_Piece.y2);
-    float y_max = max(Silkscreen_Piece.y1, Silkscreen_Piece.y2);
+    // 僅處理直線極值，需增加圓弧極值
 
     // Single_Silkscreen_Cut_Complete.push_back(Silkscreen_Piece);
     for (int i = 0; i < Copper_size; i++) // 每次處理一個copper
     {
-        if (x_min > Coppers.at(i).x_max || x_max < Coppers.at(i).x_min || y_min > Coppers.at(i).y_max || y_max < Coppers.at(i).y_min) // 如果這條絲印不在這個copper的區域內
+        if (Silkscreen_Piece.x_min > Coppers.at(i).x_max || Silkscreen_Piece.x_max < Coppers.at(i).x_min || Silkscreen_Piece.y_min > Coppers.at(i).y_max || Silkscreen_Piece.y_max < Coppers.at(i).y_min) // 如果這條絲印不在這個copper的區域內
             continue;
         copper_cut_segments = silkscreen_cut_single_copper(Silkscreen_Piece, Coppers.at(i));                                       // 絲印與單一copper的交集線段
         total_copper_cut_segments.insert(total_copper_cut_segments.end(), copper_cut_segments.begin(), copper_cut_segments.end()); // 線段之間可能有交集
