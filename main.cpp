@@ -810,7 +810,7 @@ vector<Segment> Final_Silkscreen(vector<Segment> Silkscreen_Original, vector<Cop
     for (int i = 0; i < Silkscreen_Org_Size; i++)
     {
         Silkscreen_Cut_Part.clear();
-        if (i == 55)
+        if (i == 5)
         {
             int a = 0;
         }
@@ -979,12 +979,12 @@ Point intersection(Point a1, Point a2, Point b1, Point b2)
     }
 
     // 計算交點
+    Point intersect;
+    intersect.x = a1.x + a.x * (cross(s, b) / cross(a, b));
+    intersect.y = a1.y + a.y * (cross(s, b) / cross(a, b));
 
-    a.x = a1.x + a.x * (cross(s, b) / cross(a, b));
-    a.y = a1.y + a.y * (cross(s, b) / cross(a, b));
-
-    if (In_Between_Lines(a, a1, a2) && In_Between_Lines(a, b1, b2))
-        return a;
+    if (In_Between_Lines(intersect, a1, a2) && In_Between_Lines(intersect, b1, b2))
+        return intersect;
     else
     {
         s.x = s.y = INFINITY;

@@ -105,6 +105,13 @@ flowchart LR
         d1([Point_Extension])
         d2([Copper_Point_to_Line])
         end
+
+        subgraph cut_assembly
+        e1([Segment_Intersection_Points])
+        e2([Point_to_Segment])
+        e3([Segment_Overlapping])
+        e4([Delete_Short_Silkscreen])
+        end
     end
     
     a0 --> a1
@@ -113,10 +120,6 @@ flowchart LR
     a1 --> b1
     a1 --> b2
     a1 --> b3
-
-    a4 --> a6
-    a5 --> a6
-    b3 --> a6
 
     a2 --> c1
     c1 --> c2
@@ -128,6 +131,15 @@ flowchart LR
 
     b1 --> c1
     b2 --> d1 
+
+    a4 --> e1
+    a5 --> e1
+    e1 --> e2
+    e2 --> e3
+    e3 --> e4
+    b3 --> e4
+
+    e4 --> a6
 ```
 
 ```C++
@@ -186,6 +198,18 @@ int main(); // 主程式
 ```
 
 ## Algorithms
+
+2022/7/2
+
+debug
+
+upper two lines correction, see comparison in discord
+
+one arc error left
+
+Peter
+
+---
 
 2022/7/1
 
