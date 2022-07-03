@@ -96,7 +96,11 @@ bool sort_decrease_Segment(const Segment, const Segment);
 
 bool sort_increase_Segment(const Segment, const Segment);
 
-vector<Point> Point_Sort(vector<Point>);
+bool sort_decrease_Arc(const Segment, const Segment);
+
+bool sort_increase_Arc(const Segment, const Segment);
+
+vector<Point> Point_Sort(const Segment, vector<Point>);
 
 bool sort_decrease_points(const Point, const Point);
 
@@ -1003,7 +1007,7 @@ vector<Segment> silkscreen_cut_single_copper(Segment Silkscreen_Piece, Copper Si
     }
     Intersection_Points.push_back(last_point);
 
-    Intersection_Points = Point_Sort(Intersection_Points);
+    Intersection_Points = Point_Sort(Silkscreen_Piece,Intersection_Points);
 
     vector<Segment> Cut_Lines;
     Segment A_Line;
@@ -1346,7 +1350,7 @@ vector<Segment> Segment_Sort(Segment Silkscreen_Piece, vector<Segment> total_cop
         }
         else 
         {//clockwise
-            if(Silkscreen_Piece.theta_1 - Silkscreen_Piece.theta_2 <= PI/2)//not between PI/2 and -PI/2
+            if(Silkscreen_Piece.theta_1 - Silkscreen_Piece.theta_2 <= (double)PI/2)//not between PI/2 and -PI/2
             {Sort_Line = true;}
             else if((Silkscreen_Piece.theta_2 >= 3*PI/2)&&(Silkscreen_Piece.theta_1 <= (-3*PI/2)))
             {Sort_Line = true;}
@@ -1400,6 +1404,53 @@ vector<Segment> Segment_Sort(Segment Silkscreen_Piece, vector<Segment> total_cop
     }
     else 
     {
+        size_t three_four_dime = 0;
+        if(Silkscreen_Piece.direction)
+        {//counterclockwise
+            if(Silkscreen_Piece.theta_1 >= 0 && Silkscreen_Piece.theta_2 <= 0)
+            {//special case: Segment across the PI/2
+                for(size_t i = 0; i < total_copper_cut_segments.size(); i++)
+                {
+                    if(total_copper_cut_segments.at(i).theta_1 < 0)
+                    {
+                        three_four_dime = i;
+                        break;
+                    }
+                }
+                //sort upper half circle
+                sort(total_copper_cut_segments.begin(), total_copper_cut_segments.begin()+three_four_dime,sort_decrease_Arc);
+                //sort lower half circle
+                sort(total_copper_cut_segments.begin()+three_four_dime, total_copper_cut_segments.end(), sort_increase_Arc);
+            }
+            else
+            {//Sort by Increase theta_1 
+                sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(),sort_increase_Arc);
+            }
+        }
+        else
+        {//clockwise
+            if(Silkscreen_Piece.theta_1 <= 0 && Silkscreen_Piece.theta_2 >= 0)
+            {//special case: Segment across the PI/2
+                for(size_t i = 0; i < total_copper_cut_segments.size(); i++)
+                {
+                    if(total_copper_cut_segments.at(i).theta_1 > 0)
+                    {
+                        three_four_dime = i;
+                        break;
+                    }
+                }
+                //sort lower half circle
+                sort(total_copper_cut_segments.begin(), total_copper_cut_segments.begin()+three_four_dime,sort_decrease_Arc);
+                //sort upper half circle
+                sort(total_copper_cut_segments.begin()+three_four_dime, total_copper_cut_segments.end(),sort_increase_Arc);
+
+            }
+            else 
+            {//Sort by Decrease theta_1
+                sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_decrease_Arc);
+            }
+
+        }
     }
     Cut_Silkscreen.insert(Cut_Silkscreen.end(), total_copper_cut_segments.begin(), total_copper_cut_segments.end());
     Cut_Silkscreen.push_back(End_point);
@@ -1409,6 +1460,7 @@ vector<Segment> Segment_Sort(Segment Silkscreen_Piece, vector<Segment> total_cop
 
 bool sort_increase_Segment(const Segment L1, const Segment L2)
 {
+
     if (L1.x1 == L2.x1)
     {
         return (L1.y1 < L2.y1);
@@ -1417,9 +1469,11 @@ bool sort_increase_Segment(const Segment L1, const Segment L2)
     {
         return (L1.x1 < L2.x1);
     }
+ 
 }
 bool sort_decrease_Segment(const Segment L1, const Segment L2)
 {
+    
     if (L1.x1 == L2.x1)
     {
         return (L1.y1 > L2.y1);
@@ -1427,10 +1481,18 @@ bool sort_decrease_Segment(const Segment L1, const Segment L2)
     else
     {
         return (L1.x1 > L2.x1);
-    }
+    }    
 }
 
-vector<Point> Point_Sort(vector<Point> Intersection_Points)
+bool sort_decrease_Arc (const Segment L1, const Segment L2){
+    return(L1.theta_1 < L2.theta_1);
+}
+
+bool sort_increase_Arc (const Segment L1, const Segment L2){
+    return(L1.theta_1 > L2.theta_1);
+}
+
+vector<Point> Point_Sort(const Segment Silkscreen_Piece, vector<Point> Intersection_Points)
 {
     // Warning!! this version will modify the input array and return it back.
     // vector<Point> sorted_Points;
