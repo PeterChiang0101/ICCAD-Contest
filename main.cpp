@@ -493,7 +493,7 @@ Copper Copper_Point_to_Line(vector<Point> Extended_Points, vector<Segment> coppe
 {
     size_t size = copper.size();
     Segment A_Line;
-    Copper Silkscreen, Arc_Boundary;
+    Copper Silkscreen;
     if (!Extended_Points.empty())
     {
         Silkscreen.x_min = Silkscreen.x_max = Extended_Points.at(0).x; // initialize
@@ -502,6 +502,7 @@ Copper Copper_Point_to_Line(vector<Point> Extended_Points, vector<Segment> coppe
     for (size_t i = 0; i < size; i++)
     {
         // calculate boundary
+        /*
         if (!copper.at(i).is_line)
         {
             Arc_Boundary = Arc_Boundary_Meas(copper.at(i));
@@ -527,6 +528,7 @@ Copper Copper_Point_to_Line(vector<Point> Extended_Points, vector<Segment> coppe
         {
             Silkscreen.y_min = Extended_Points.at(i).y;
         }
+        */
 
         // calculate point to line
         A_Line.is_line = (Extended_Points.at(i).Next_Arc) ? false : true;
@@ -559,6 +561,35 @@ Copper Copper_Point_to_Line(vector<Point> Extended_Points, vector<Segment> coppe
             A_Line.theta_1 = atan2(A_Line.y1 - A_Line.center_y, A_Line.x1 - A_Line.center_x);
             A_Line.theta_2 = atan2(A_Line.y2 - A_Line.center_y, A_Line.x2 - A_Line.center_x);
         }
+        if (!A_Line.is_line) // arc
+        {
+            A_Line = Arc_Boundary_Meas_for_Assembly(A_Line);
+        }
+        else // line
+        {
+            A_Line.x_min = min(A_Line.x1, A_Line.x2);
+            A_Line.x_max = max(A_Line.x1, A_Line.x2);
+            A_Line.y_min = min(A_Line.y1, A_Line.y2);
+            A_Line.y_max = max(A_Line.y1, A_Line.y2);
+        }
+
+        if (A_Line.x_max > Silkscreen.x_max)
+        {
+            Silkscreen.x_max = A_Line.x_max;
+        }
+        if (A_Line.x_min < Silkscreen.x_min)
+        {
+            Silkscreen.x_min = A_Line.x_min;
+        }
+        if (A_Line.y_max > Silkscreen.y_max)
+        {
+            Silkscreen.y_max = A_Line.y_max;
+        }
+        if (A_Line.y_min < Silkscreen.y_min)
+        {
+            Silkscreen.y_min = A_Line.y_min;
+        }
+
         Silkscreen.segment.push_back(A_Line);
     }
     return Silkscreen;
@@ -886,7 +917,7 @@ vector<Segment> Final_Silkscreen(vector<Segment> Silkscreen_Original, vector<Cop
     for (int i = 0; i < Silkscreen_Org_Size; i++)
     {
         Silkscreen_Cut_Part.clear();
-        if (i == 15)
+        if (i == 16)
         {
             int a = 0;
         }
@@ -1374,6 +1405,27 @@ vector<Segment> Segment_Sort(Segment Silkscreen_Piece, vector<Segment> total_cop
     }
     else
     {
+        if (Silkscreen_Piece.x1 < Silkscreen_Piece.x2)
+        {
+            sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_increase_Segment);
+        }
+        else if (Silkscreen_Piece.x1 > Silkscreen_Piece.x2)
+        {
+            sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_decrease_Segment);
+        }
+        else if (Silkscreen_Piece.y1 < Silkscreen_Piece.y2)
+        {
+            sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_increase_Segment);
+        }
+        else if (Silkscreen_Piece.y1 > Silkscreen_Piece.y2)
+        {
+            sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_decrease_Segment);
+        }
+        else
+        { // ERROR STATUS X1=X2, Y1=Y2;sort_increase_Segment
+            sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_increase_Segment);
+            cerr << "ERROR STATUS points are the same" << endl;
+        }
     }
     Cut_Silkscreen.insert(Cut_Silkscreen.end(), total_copper_cut_segments.begin(), total_copper_cut_segments.end());
     Cut_Silkscreen.push_back(End_point);

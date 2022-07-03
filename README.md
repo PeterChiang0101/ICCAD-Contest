@@ -5,7 +5,7 @@
 BUGsss
 
 - [x] 左中絲印與銅箔計算時會發生錯誤
-- [ ] 多出多餘的絲印，右上兩線段未切割 (剩餘一圓弧)
+- [x] 多出多餘的絲印，右上兩線段未切割 (剩餘一圓弧)
 
 ---
 
@@ -198,6 +198,20 @@ int main(); // 主程式
 ```
 
 ## Algorithms
+
+2022/7/3
+
+debug
+
+the last arc error fixed (reason: Segment_Sort() didn't sort out arc by default)
+
+the pic is almost correct
+
+remain: the boarder of the assembly needs to be cover by silkscreen. (see PublicCase_C_output_new.txt bottom-left)
+
+Peter
+
+---
 
 2022/7/2
 
