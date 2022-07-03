@@ -1359,7 +1359,9 @@ vector<Segment> Segment_Sort(Segment Silkscreen_Piece, vector<Segment> total_cop
     // 結尾Segment 為 Silkscreen_Piece.x2, Silkscreen_Piece.y2, Silkscreen_Piece.x2, Silkscreen_Piece.y2
     vector<Segment> Cut_Silkscreen;
     Segment Start_point, End_point;
-    bool Sort_Line = false;//Determine whether can use line sorting case or not.
+    bool Sort_as_Line = false;//Determine whether can use line sorting case or not.
+    bool Seperate_x_dir = true;
+
     Start_point.x1 = Start_point.x2 = Silkscreen_Piece.x1;
     Start_point.y1 = Start_point.y2 = Silkscreen_Piece.y1;
 
@@ -1367,31 +1369,24 @@ vector<Segment> Segment_Sort(Segment Silkscreen_Piece, vector<Segment> total_cop
     End_point.y1 = End_point.y2 = Silkscreen_Piece.y2;
     Cut_Silkscreen.push_back(Start_point);
     //Not verified feature for Arc
-    if(Silkscreen_Piece.is_line)
-    {Sort_Line = true;}
+    if(Silkscreen_Piece.is_line){
+        Sort_as_Line = true;
+    }
     else{
-        if(Silkscreen_Piece.direction)
-        {//counterclockwise 
-            if(Silkscreen_Piece.theta_2 - Silkscreen_Piece.theta_1 <= PI/2)//not between PI/2 and -PI/2
-            {Sort_Line = true;}
-            else if((Silkscreen_Piece.theta_1 >= 3*PI/2)&&(Silkscreen_Piece.theta_2 <= (-3*PI/2)))
-            {Sort_Line = true;}
-            else
-            {Sort_Line = false;}
+        if((Silkscreen_Piece.theta_1 >= 0 && Silkscreen_Piece.theta_2 < PI)||(Silkscreen_Piece.theta_1 > -PI && Silkscreen_Piece.theta_2 <= 0))
+        {//Segment Arc is either in upper semicircle or upper semicircle -> determine by X1 and X2.
+            Sort_as_Line = true;
+        } 
+        else if(Silkscreen_Piece.theta_1 > 0 && Silkscreen_Piece.theta_2 < 0){
+            Seperate_x_dir = true;//Seperate by 0 (rad)
         }
-        else 
-        {//clockwise
-            if(Silkscreen_Piece.theta_1 - Silkscreen_Piece.theta_2 <= (double)PI/2)//not between PI/2 and -PI/2
-            {Sort_Line = true;}
-            else if((Silkscreen_Piece.theta_2 >= 3*PI/2)&&(Silkscreen_Piece.theta_1 <= (-3*PI/2)))
-            {Sort_Line = true;}
-            else
-            {Sort_Line = false;}
-        }
+        else{
+            Seperate_x_dir = false;//Seperate by PI (rad)
+        }  
     }
     //end of new feature
 
-    if (Sort_Line)
+    if (Sort_as_Line)
     {
         if (Silkscreen_Piece.x1 < Silkscreen_Piece.x2)
         {
@@ -1410,7 +1405,7 @@ vector<Segment> Segment_Sort(Segment Silkscreen_Piece, vector<Segment> total_cop
             sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_decrease_Segment);
         }
         else
-        { // ERROR STATUS X1=X2, Y1=Y2;sort_increase_Segment
+        { // ERROR STATUS: X1=X2, Y1=Y2;Action: sort_increase_Segment
             sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_increase_Segment);
             cerr << "ERROR STATUS points are the same" << endl;
         }
@@ -1435,7 +1430,16 @@ vector<Segment> Segment_Sort(Segment Silkscreen_Piece, vector<Segment> total_cop
     }
     else 
     {
-        size_t three_four_dime = 0;
+        size_t three_four_dime = 0;//find the cloest point of X-asix
+        /* new feature 
+        for(size_t i = 0 ; i < total_copper_cut_segments.size(); i++)
+        {
+            
+
+        }
+        */
+
+
         if(Silkscreen_Piece.direction)
         {//counterclockwise
             if(Silkscreen_Piece.theta_1 >= 0 && Silkscreen_Piece.theta_2 <= 0)
@@ -1526,26 +1530,38 @@ bool sort_increase_Arc (const Segment L1, const Segment L2){
 vector<Point> Point_Sort(const Segment Silkscreen_Piece, vector<Point> Intersection_Points)
 {
     // Warning!! this version will modify the input array and return it back.
-    // vector<Point> sorted_Points;
     size_t final_point = Intersection_Points.size() - 1;
-
-    if ((Intersection_Points.at(0).x) > (Intersection_Points.at(final_point).x))
-    {
-        sort(Intersection_Points.begin(), Intersection_Points.end(), sort_decrease_points);
+    bool Sort_as_Line = false;
+    
+    if(Silkscreen_Piece.is_line){
+        Sort_as_Line = true;
     }
-    else if ((Intersection_Points.at(0).x) < (Intersection_Points.at(final_point).x))
-    {
-        sort(Intersection_Points.begin(), Intersection_Points.end(), sort_increase_points);
-    }
-    else if ((Intersection_Points.at(0).y) < (Intersection_Points.at(final_point).y))
-    {
-        sort(Intersection_Points.begin(), Intersection_Points.end(), sort_increase_points);
-    }
-    else
-    {
-        sort(Intersection_Points.begin(), Intersection_Points.end(), sort_decrease_points);
+    else{
+        if((Silkscreen_Piece.theta_1 >= 0 && Silkscreen_Piece.theta_2 < PI)||(Silkscreen_Piece.theta_1 > -PI && Silkscreen_Piece.theta_2 <= 0))
+        {
+            Sort_as_Line = true;
+        }
     }
 
+    
+    if(Sort_as_Line){
+        if ((Intersection_Points.at(0).x) > (Intersection_Points.at(final_point).x))
+        {
+            sort(Intersection_Points.begin(), Intersection_Points.end(), sort_decrease_points);
+        }
+        else if ((Intersection_Points.at(0).x) < (Intersection_Points.at(final_point).x))
+        {
+            sort(Intersection_Points.begin(), Intersection_Points.end(), sort_increase_points);
+        }
+        else if ((Intersection_Points.at(0).y) < (Intersection_Points.at(final_point).y))
+        {
+            sort(Intersection_Points.begin(), Intersection_Points.end(), sort_increase_points);
+        }
+        else
+        {
+            sort(Intersection_Points.begin(), Intersection_Points.end(), sort_decrease_points);
+        }
+    }
     return Intersection_Points;
 }
 
