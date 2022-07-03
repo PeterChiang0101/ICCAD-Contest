@@ -14,6 +14,7 @@ BUGsss
 - [x] copper 切割絲印，再與silkscreeen相減 (差point的sorting, main.cpp:827)
 - [x] 圓與直線交點斜率
 - [x] 外擴圓心
+- [ ] 大於180度之Segment尚未完成
 
 low priority:
 
@@ -198,6 +199,14 @@ int main(); // 主程式
 ```
 
 ## Algorithms
+
+2022/7/4
+
+add Arc features for Sorting, still not finished.
+
+Gray 
+
+---
 
 2022/7/2
 
