@@ -1324,13 +1324,39 @@ vector<Segment> Segment_Sort(Segment Silkscreen_Piece, vector<Segment> total_cop
     // 結尾Segment 為 Silkscreen_Piece.x2, Silkscreen_Piece.y2, Silkscreen_Piece.x2, Silkscreen_Piece.y2
     vector<Segment> Cut_Silkscreen;
     Segment Start_point, End_point;
+    bool Sort_Line = false;//Determine whether can use line sorting case or not.
     Start_point.x1 = Start_point.x2 = Silkscreen_Piece.x1;
     Start_point.y1 = Start_point.y2 = Silkscreen_Piece.y1;
 
     End_point.x1 = End_point.x2 = Silkscreen_Piece.x2;
     End_point.y1 = End_point.y2 = Silkscreen_Piece.y2;
     Cut_Silkscreen.push_back(Start_point);
-    if (Silkscreen_Piece.is_line)
+    //Not verified feature for Arc
+    if(Silkscreen_Piece.is_line)
+    {Sort_Line = true;}
+    else{
+        if(Silkscreen_Piece.direction)
+        {//counterclockwise 
+            if(Silkscreen_Piece.theta_2 - Silkscreen_Piece.theta_1 <= PI/2)//not between PI/2 and -PI/2
+            {Sort_Line = true;}
+            else if((Silkscreen_Piece.theta_1 >= 3*PI/2)&&(Silkscreen_Piece.theta_2 <= (-3*PI/2)))
+            {Sort_Line = true;}
+            else
+            {Sort_Line = false;}
+        }
+        else 
+        {//clockwise
+            if(Silkscreen_Piece.theta_1 - Silkscreen_Piece.theta_2 <= PI/2)//not between PI/2 and -PI/2
+            {Sort_Line = true;}
+            else if((Silkscreen_Piece.theta_2 >= 3*PI/2)&&(Silkscreen_Piece.theta_1 <= (-3*PI/2)))
+            {Sort_Line = true;}
+            else
+            {Sort_Line = false;}
+        }
+    }
+    //end of new feature
+
+    if (Sort_Line)
     {
         if (Silkscreen_Piece.x1 < Silkscreen_Piece.x2)
         {
@@ -1372,7 +1398,7 @@ vector<Segment> Segment_Sort(Segment Silkscreen_Piece, vector<Segment> total_cop
         }
         ****************************************************************/
     }
-    else
+    else 
     {
     }
     Cut_Silkscreen.insert(Cut_Silkscreen.end(), total_copper_cut_segments.begin(), total_copper_cut_segments.end());
