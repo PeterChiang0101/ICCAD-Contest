@@ -1053,6 +1053,15 @@ vector<Segment> silkscreen_cut_single_copper(Segment Silkscreen_Piece, Copper Si
         i++;
         A_Line.x2 = Intersection_Points.at(i).x;
         A_Line.y2 = Intersection_Points.at(i).y;
+        //for Arc 
+        if(!Silkscreen_Piece.is_line){
+            A_Line.is_line = false;
+            A_Line.center_x = Silkscreen_Piece.center_x;
+            A_Line.center_y = Silkscreen_Piece.center_y;
+            A_Line.theta_1 = atan2(A_Line.y1 - A_Line.center_y, A_Line.x1 - A_Line.center_x);
+            A_Line.theta_2 = atan2(A_Line.y2 - A_Line.center_y, A_Line.x2 - A_Line.center_x);
+            A_Line.direction = Silkscreen_Piece.direction;
+        }
         Cut_Lines.push_back(A_Line);
     }
 
