@@ -638,3 +638,5 @@ assembly : vector<segment>, store the assembly details
 Peter
 
 ## Optimization
+
+
