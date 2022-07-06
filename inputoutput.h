@@ -40,12 +40,14 @@ class Input_Output{
         vector<vector<Segment>> Read_Copper(fstream &);
         Segment String_to_Line(string);
         const vector<string> split(const string &, const char &);
-        vector<Segment> Input_Output::Assembly_Buffer(const vector<Segment>);
+        vector<Segment> Input_Output::Assembly_Buffer(const vector<Segment>, float, float);
     private:
-       vector<Point> Point_Extension(const vector<Segment>, const bool);
+       vector<Point> Point_Extension(const vector<Segment>, const bool, float, float);
        vector<Segment> Point_to_Line(vector<Point> , vector<Segment>); // assembly 專屬
        vector<Point> Line_to_Point(const vector<Segment>); // 將線段切割成點
-       vector<vector<Point>> Input_Output::Arc_Optimization(vector<Segment>);
+       vector<vector<Point>> Input_Output::Arc_Optimization(vector<Segment> );
+       bool point_in_polygon(Point t, vector<Point>, vector<vector<Point>> ); // 運用射線法判斷點在圖形內外
+       vector<Point> Arc_to_Poly(Segment );
 };
 
 #endif

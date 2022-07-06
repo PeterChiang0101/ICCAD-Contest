@@ -638,3 +638,14 @@ assembly : vector<segment>, store the assembly details
 Peter
 
 ## Optimization
+
+2022/07/05
+
+Start coding scorer, first quarter
+
+using Shoelace formula to solve area 
+reference : <https://en.m.wikipedia.org/wiki/Shoelace_formula>, 
+            <https://www.geeksforgeeks.org/area-of-a-polygon-with-given-n-ordered-vertices/> 
+
+create inputoutput.h, containing some fuctions in main.cpp, for scorer.
+

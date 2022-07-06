@@ -4,6 +4,15 @@
 
 using namespace std;
 
+#define PI 3.14159265358979323846
+#define ARC_TO_LINE_SLICE_DENSITY 1 // 切片密度(in degree)
+
+struct Copper // 外擴Copper
+{
+    float x_min, x_max, y_min, y_max;
+    vector<Segment> segment;
+};
+
 float Input_Output::File_to_Parameter(const string str) // 讀入參數
 {
     string str_truncate;
@@ -126,14 +135,14 @@ Segment Input_Output::String_to_Line(string line) // 讀取時建立線段
     return part;
 }
 
-vector<Segment> Input_Output::Assembly_Buffer(const vector<Segment> Assembly)
+vector<Segment> Input_Output::Assembly_Buffer(const vector<Segment> Assembly, float coppergap, float assemblygap)
 {
-    vector<Point> Extended_Points = Point_Extension(Assembly, true);
+    vector<Point> Extended_Points = Point_Extension(Assembly, true, coppergap, assemblygap);
     vector<Segment> silkscreen = Point_to_Line(Extended_Points, Assembly);
     return silkscreen;
 }
 
-vector<Point> Input_Output::Point_Extension(const vector<Segment> Assembly, const bool is_assembly) // 圖形外擴
+vector<Point> Input_Output::Point_Extension(const vector<Segment> Assembly, const bool is_assembly, float coppergap, float assemblygap) // 圖形外擴
 {
     const size_t size = Assembly.size();
     vector<Point> Assembly_Points;
@@ -209,6 +218,38 @@ vector<Point> Input_Output::Point_Extension(const vector<Segment> Assembly, cons
     return Extended_Points;
 }
 
+bool Input_Output::point_in_polygon(Point t, vector<Point> Assembly_Point, vector<vector<Point>> Arc_Points) // 運用射線法判斷點在圖形內外
+{
+    int Assembly_size = Assembly_Point.size();
+    int Arc_count = 0;
+    bool c = false;
+    for (int i = Assembly_size - 1, j = 0; j < Assembly_size; i = j++)
+    {
+        if (Assembly_Point.at(i).Next_Arc)
+        {
+            int Arc_point_length = Arc_Points.at(Arc_count).size();
+            for (int k = 0, l = 1; l < Arc_point_length; k = l++)
+            {
+                if ((Arc_Points.at(Arc_count).at(k).y > t.y) != (Arc_Points.at(Arc_count).at(l).y > t.y) && t.x < interpolate_x(t.y, Arc_Points.at(Arc_count).at(k), Arc_Points.at(Arc_count).at(l)))
+                    c = !c;
+            }
+            Arc_count++;
+        }
+        else
+            // 待測點在該線段的高度上下限內 且 交會點x值大於待測點x值 (射線為 + x 方向)
+            if ((Assembly_Point.at(i).y > t.y) != (Assembly_Point.at(j).y > t.y) && t.x < interpolate_x(t.y, Assembly_Point.at(i), Assembly_Point.at(j)))
+                c = !c;
+    }
+    return c;
+}
+
+float interpolate_x(float y, Point p1, Point p2) // 待測點與圖形邊界交會的x值
+{
+    if (p1.y == p2.y)
+        return p1.x;
+    return p1.x + (p2.x - p1.x) * (y - p1.y) / (p2.y - p1.y);
+}
+
 vector<Point> Input_Output::Line_to_Point(const vector<Segment> Assembly) // 將線段切割成點
 {
     const size_t size = Assembly.size();
@@ -256,6 +297,84 @@ vector<vector<Point>> Input_Output::Arc_Optimization(vector<Segment> Assembly)
         }
     }
     return vector_of_Arc;
+}
+
+vector<Point> Input_Output::Arc_to_Poly(Segment Arc)
+{
+    vector<Point> Poly_out;
+    Point part;
+
+    double theta_ref;
+    double theta_in;
+    double theta_div;
+    double radius;
+    int times;
+    int count;
+
+    theta_ref = Arc.theta_1;
+    theta_div = 2 * PI / (360 / ARC_TO_LINE_SLICE_DENSITY); // div/degree
+    radius = hypot(Arc.x1 - Arc.center_x, Arc.y1 - Arc.center_y);
+    // radius = sqrt((Arc.x1 - Arc.center_x) * (Arc.x1 - Arc.center_x) + (Arc.y1 - Arc.center_y) * (Arc.y1 - Arc.center_y));
+
+    if (Arc.direction == 0) // CW
+    {
+        if (Arc.theta_1 - Arc.theta_2 <= 0)
+            theta_in = Arc.theta_1 - Arc.theta_2 + 2 * PI;
+        else
+            theta_in = Arc.theta_1 - Arc.theta_2;
+    }
+    else
+    {
+        if (Arc.theta_2 - Arc.theta_1 <= 0)
+            theta_in = Arc.theta_2 - Arc.theta_1 + 2 * PI;
+        else
+            theta_in = Arc.theta_2 - Arc.theta_1;
+    }
+
+    times = (int)(theta_in / (2 * PI) * (360 / ARC_TO_LINE_SLICE_DENSITY));
+    count = times;
+
+    while (count > 0)
+    {
+        if (count == times)
+        {
+            part.x = Arc.x1;
+            part.y = Arc.y1;
+        }
+        else
+        {
+            part.x = Arc.center_x + radius * cos(theta_ref);
+            part.y = Arc.center_y + radius * sin(theta_ref);
+        }
+
+        if (Arc.direction == 0) // CW
+        {
+            theta_ref -= theta_div;
+            if (theta_ref < -PI)
+                theta_ref += 2 * PI;
+        }
+        else
+        {
+            theta_ref += theta_div;
+            if (theta_ref > PI)
+                theta_ref -= 2 * PI;
+        }
+        part.Next_Arc = false;
+        Poly_out.push_back(part);
+        count -= 1;
+    }
+    if (!Poly_out.empty())
+    {
+        if (Poly_out.at(Poly_out.size() - 1).x != Arc.x2 && Poly_out.at(Poly_out.size() - 1).y != Arc.y2)
+        {
+            part.x = Arc.x2;
+            part.y = Arc.y2;
+            part.Next_Arc = false;
+            Poly_out.push_back(part);
+        }
+    }
+
+    return Poly_out;
 }
 
 vector<Segment> Input_Output::Point_to_Line(vector<Point> Extended_Points, vector<Segment> Assembly) // assembly 專屬
@@ -310,4 +429,119 @@ vector<Segment> Input_Output::Point_to_Line(vector<Point> Extended_Points, vecto
         Silkscreen.push_back(A_Line);
     }
     return Silkscreen;
+}
+
+Copper Arc_Boundary_Meas(Segment Arc)
+{
+    Copper A_Arc;
+    float first, second;
+    float radius = hypot(Arc.x1 - Arc.center_x, Arc.y1 - Arc.center_y);
+    first = Arc.theta_1;
+    second = Arc.theta_2;
+    if (first == second)
+    {
+        A_Arc.x_min = Arc.center_x - radius;
+        A_Arc.x_max = Arc.center_x + radius;
+        A_Arc.y_min = Arc.center_y - radius;
+        A_Arc.y_max = Arc.center_y + radius;
+        return A_Arc;
+    }
+
+    if (Arc.direction)
+    {
+        swap(first, second);
+    }
+    if (first > second)
+    {
+        A_Arc.x_max = (first >= 0 && second <= 0) ? Arc.center_x + radius : max(max(Arc.x1, Arc.x2), Arc.center_x);
+        A_Arc.x_min = min(min(Arc.x1, Arc.x2), Arc.center_x);
+        A_Arc.y_max = (first >= PI / 2 && second <= PI / 2) ? Arc.center_y + radius : max(max(Arc.y1, Arc.y2), Arc.center_y);
+        A_Arc.y_min = (first >= -PI / 2 && second <= -PI / 2) ? Arc.center_y - radius : min(min(Arc.y1, Arc.y2), Arc.center_y);
+    }
+    else if (second < 0) // first < second < 0
+    {
+        A_Arc.x_max = Arc.center_x + radius;
+        A_Arc.x_min = Arc.center_x - radius;
+        A_Arc.y_max = Arc.center_y + radius;
+        A_Arc.y_min = (first >= -PI / 2 || second <= -PI / 2) ? Arc.center_y - radius : min(min(Arc.y1, Arc.y2), Arc.center_y);
+    }
+    else if (first >= 0) // 0 <= first < second
+    {
+        A_Arc.x_max = Arc.center_x + radius;
+        A_Arc.x_min = Arc.center_x - radius;
+        A_Arc.y_max = (first >= PI / 2 || second <= PI / 2) ? Arc.center_y + radius : max(max(Arc.y1, Arc.y2), Arc.center_y);
+        A_Arc.y_min = Arc.center_y - radius;
+    }
+    else // first < 0 < second
+    {
+        A_Arc.x_max = max(max(Arc.x1, Arc.x2), Arc.center_x);
+        A_Arc.x_min = Arc.center_x - radius;
+        A_Arc.y_max = (second <= PI / 2) ? Arc.center_y + radius : max(max(Arc.y1, Arc.y2), Arc.center_y);
+        A_Arc.y_min = (first >= -PI / 2) ? Arc.center_y - radius : min(min(Arc.y1, Arc.y2), Arc.center_y);
+    }
+
+    /*A_Arc.x_max = (first >= 0 && second <= 0) ? Arc.center_x + radius : max(max(Arc.x1, Arc.x2), Arc.center_x);
+    A_Arc.x_min = (first >= PI && second <= PI) ? Arc.center_x - radius : min(min(Arc.x1, Arc.x2), Arc.center_x);
+    A_Arc.y_max = (first >= PI / 2 && second <= PI / 2) ? Arc.center_y + radius : max(max(Arc.y1, Arc.y2), Arc.center_y);
+    A_Arc.y_min = (first >= -PI / 2 && second <= -PI / 2) ? Arc.center_y - radius : min(min(Arc.y1, Arc.y2), Arc.center_y);*/
+
+    return A_Arc;
+}
+
+Segment Arc_Boundary_Meas_for_Assembly(Segment Arc)
+{
+    Segment A_Arc;
+    A_Arc = Arc;
+    float first_angle, second_angle;
+    float radius = hypot(Arc.x1 - Arc.center_x, Arc.y1 - Arc.center_y);
+    first_angle = Arc.theta_1;
+    second_angle = Arc.theta_2;
+    if (first_angle == second_angle)
+    {
+        A_Arc.x_min = Arc.center_x - radius;
+        A_Arc.x_max = Arc.center_x + radius;
+        A_Arc.y_min = Arc.center_y - radius;
+        A_Arc.y_max = Arc.center_y + radius;
+        return A_Arc;
+    }
+
+    if (Arc.direction)
+    {
+        swap(first_angle, second_angle);
+    }
+    if (first_angle > second_angle)
+    {
+        A_Arc.x_max = (first_angle >= 0 && second_angle <= 0) ? Arc.center_x + radius : max(max(Arc.x1, Arc.x2), Arc.center_x);
+        A_Arc.x_min = min(min(Arc.x1, Arc.x2), Arc.center_x);
+        A_Arc.y_max = (first_angle >= PI / 2 && second_angle <= PI / 2) ? Arc.center_y + radius : max(max(Arc.y1, Arc.y2), Arc.center_y);
+        A_Arc.y_min = (first_angle >= -PI / 2 && second_angle <= -PI / 2) ? Arc.center_y - radius : min(min(Arc.y1, Arc.y2), Arc.center_y);
+    }
+    else if (second_angle < 0) // first < second < 0
+    {
+        A_Arc.x_max = Arc.center_x + radius;
+        A_Arc.x_min = Arc.center_x - radius;
+        A_Arc.y_max = Arc.center_y + radius;
+        A_Arc.y_min = (first_angle >= -PI / 2 || second_angle <= -PI / 2) ? Arc.center_y - radius : min(min(Arc.y1, Arc.y2), Arc.center_y);
+    }
+    else if (first_angle >= 0) // 0 <= first < second
+    {
+        A_Arc.x_max = Arc.center_x + radius;
+        A_Arc.x_min = Arc.center_x - radius;
+        A_Arc.y_max = (first_angle >= PI / 2 || second_angle <= PI / 2) ? Arc.center_y + radius : max(max(Arc.y1, Arc.y2), Arc.center_y);
+        A_Arc.y_min = Arc.center_y - radius;
+    }
+    else // first < 0 < second
+    {
+        A_Arc.x_max = max(max(Arc.x1, Arc.x2), Arc.center_x);
+        A_Arc.x_min = Arc.center_x - radius;
+        A_Arc.y_max = (second_angle <= PI / 2) ? Arc.center_y + radius : max(max(Arc.y1, Arc.y2), Arc.center_y);
+        A_Arc.y_min = (first_angle >= -PI / 2) ? Arc.center_y - radius : min(min(Arc.y1, Arc.y2), Arc.center_y);
+    }
+
+    /*A_Arc.x_max = (first >= 0 && second <= 0) ? Arc.center_x + radius : max(max(Arc.x1, Arc.x2), Arc.center_x);
+    A_Arc.x_min = (first >= PI && second <= PI) ? Arc.center_x - radius : min(min(Arc.x1, Arc.x2), Arc.center_x);
+    A_Arc.y_max = (first >= PI / 2 && second <= PI / 2) ? Arc.center_y + radius : max(max(Arc.y1, Arc.y2), Arc.center_y);
+    A_Arc.y_min = (first >= -PI / 2 && second <= -PI / 2) ? Arc.center_y - radius : min(min(Arc.y1, Arc.y2), Arc.center_y);*/
+
+    return A_Arc;
 }

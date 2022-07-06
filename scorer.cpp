@@ -31,7 +31,7 @@ void Scorer::open_file()
     silkscreen = Read_Silkscreen(A_file);
 }
 
-int first_quarter(const vector<Segment> Assembly, const vector<Segment> silkscreen)
+int Scorer::first_quarter(const vector<Segment> Assembly, const vector<Segment> silkscreen)
 {
     Input_Output A;
     float Rectangular_area;           // 絲印標示之座標極限值所構成之矩形面積
@@ -39,7 +39,9 @@ int first_quarter(const vector<Segment> Assembly, const vector<Segment> silkscre
 
     float Y_area; // 零件外觀向外等比拓展Y之面積範圍
     vector<Segment> Assembly_push_out;
+    
     float Answer_1;
+
     /* calculate Rectangular_area */
     X_max = silkscreen[0].x1;
     X_min = silkscreen[0].x2;
@@ -69,7 +71,27 @@ int first_quarter(const vector<Segment> Assembly, const vector<Segment> silkscre
     Rectangular_area = abs((X_max - X_min) * (Y_max - Y_min));
 
     /* calculate Y_area*/
-    Assembly_push_out = A.Assembly_Buffer(Assembly);
+    Assembly_push_out = A.Assembly_Buffer(Assembly, coppergap, assemblygap);
+
+    float total_area = 0;
+    int i;
+    int j = i -1;
+    for(i = 0; i <= Assembly_push_out.size(); i++)
+    {
+        if(i == 0) j = Assembly_push_out.size() - 1;
+        else j = i - 1;
+        total_area += (Assembly_push_out[j].x1 + Assembly_push_out[i].x1)*(Assembly_push_out[j].y1 - Assembly_push_out[i].y1);
+    }
+    /*
+    for(i = 0; i <= Assembly_push_out.size(); i++)
+    {
+        if(!is_line)
+        {
+
+        }
+        // undone //
+    }
+    */
 
     Answer_1 = (2 - Rectangular_area / Y_area) * 0.25;
 }
