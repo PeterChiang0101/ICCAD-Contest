@@ -5,7 +5,7 @@ using namespace std;
 #ifndef SCORER_H
 #define SCORER_H
 
-struct Segment
+/*struct Segment
 {
     bool is_line; // 0 = arc, 1 = line
     float x1;
@@ -25,30 +25,26 @@ struct Segment
     bool direction; // 0 = ClockWise(CW), 1 = ConterClockwise(CCW)
     double theta_1; // 圓心到點一角度
     double theta_2; // 圓心到點二角度
-};
+};*/
 
 class Scorer
 {
-    public:
-        void open_file(); 
-        int first_quarter();
-        int second_quarter();
-        int third_quarter();
-        int fourth_quarter();
-    private:
-        Segment S1;
-        fstream Q_file; // 題目
-        fstream A_file; // 答案
-        float assemblygap, coppergap, silkscreenlen;
-        vector<Segment> assembly;
-        vector<vector<Segment>> copper;
-        vector<Segment> silkscreen;
-        vector<Segment> Read_Silkscreen(fstream &);
-    
+public:
+    void open_file();
+    int first_quarter();
+    int second_quarter();
+    int third_quarter();
+    double fourth_quarter(const vector<Segment>, const vector<Segment>);
+
+private:
+    Segment S1;
+    fstream Q_file; // 題目
+    fstream A_file; // 答案
+    float assemblygap, coppergap, silkscreenlen;
+    vector<Segment> assembly;
+    vector<vector<Segment>> copper;
+    vector<Segment> silkscreen;
+    vector<Segment> Read_Silkscreen(fstream &);
 };
-
-
-
-
 
 #endif
