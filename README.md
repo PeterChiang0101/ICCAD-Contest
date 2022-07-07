@@ -649,3 +649,11 @@ reference : <https://en.m.wikipedia.org/wiki/Shoelace_formula>,
 
 create inputoutput.h, containing some fuctions in main.cpp, for scorer.
 
+Raymond
+
+2022/07/05
+
+finish first quarter, using law of cosine and heron formula, untesting
+
+Raymond
+

@@ -545,3 +545,28 @@ Segment Arc_Boundary_Meas_for_Assembly(Segment Arc)
 
     return A_Arc;
 }
+
+bool Input_Output::point_in_polygon(Point t, vector<Point> Assembly_Point, vector<vector<Point>> Arc_Points) // 運用射線法判斷點在圖形內外
+{
+    int Assembly_size = Assembly_Point.size();
+    int Arc_count = 0;
+    bool c = false;
+    for (int i = Assembly_size - 1, j = 0; j < Assembly_size; i = j++)
+    {
+        if (Assembly_Point.at(i).Next_Arc)
+        {
+            int Arc_point_length = Arc_Points.at(Arc_count).size();
+            for (int k = 0, l = 1; l < Arc_point_length; k = l++)
+            {
+                if ((Arc_Points.at(Arc_count).at(k).y > t.y) != (Arc_Points.at(Arc_count).at(l).y > t.y) && t.x < interpolate_x(t.y, Arc_Points.at(Arc_count).at(k), Arc_Points.at(Arc_count).at(l)))
+                    c = !c;
+            }
+            Arc_count++;
+        }
+        else
+            // 待測點在該線段的高度上下限內 且 交會點x值大於待測點x值 (射線為 + x 方向)
+            if ((Assembly_Point.at(i).y > t.y) != (Assembly_Point.at(j).y > t.y) && t.x < interpolate_x(t.y, Assembly_Point.at(i), Assembly_Point.at(j)))
+                c = !c;
+    }
+    return c;
+}
