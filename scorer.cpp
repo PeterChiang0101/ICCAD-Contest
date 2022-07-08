@@ -227,11 +227,11 @@ double Scorer::fourth_quarter(const vector<Segment> Assembly, const vector<Segme
             }
             else if (silkscreen[i].is_line == 1 && Assembly[j].is_line == 0)
             {
-                min_distance = min(disMin(A1, A2, B1), disMin(A1, A2, B2), (disMin(A1, A2, circle_center_B) - rB));
+                min_distance = min(min(disMin(A1, A2, B1), disMin(A1, A2, B2)), (disMin(A1, A2, circle_center_B) - rB));
             }
             else if (silkscreen[i].is_line == 0 && Assembly[j].is_line == 1)
             {
-                min_distance = min(disMin(B1, B2, A1), disMin(B1, B2, A2), (disMin(B1, B2, circle_center_A) - rA));
+                min_distance = min(min(disMin(B1, B2, A1), disMin(B1, B2, A2)), (disMin(B1, B2, circle_center_A) - rA));
             }
             else if (silkscreen[i].is_line == 0 && Assembly[j].is_line == 0)
             {
