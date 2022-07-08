@@ -25,6 +25,7 @@ low priority:
 - [ ] 自主產生題目程式
 - [ ] 分class
 - [ ] vector 換成 list
+- [x] makefile
 
 ## I/O
 
@@ -32,6 +33,8 @@ low priority:
 i/o file location: TestingCase folder
 
 naming rule:    test_"NAME".txt    test_"NAME"_Ans.txt
+
+execution: use "make"
 ```
 
 ## Outline
@@ -518,6 +521,14 @@ Peter
 ---
 
 ## File Processing
+
+2022/7/9
+
+makefile generated
+
+can process multiple testcase
+
+Peter
 
 2022/6/1
 
