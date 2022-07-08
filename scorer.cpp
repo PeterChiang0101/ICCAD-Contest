@@ -33,7 +33,7 @@ void Scorer::open_file()
 }
 
 // untest 2022/7/7
-int Scorer::first_quarter(const vector<Segment> Assembly, const vector<Segment> silkscreen)
+double Scorer::first_quarter(const vector<Segment> Assembly, const vector<Segment> silkscreen)
 {
     Input_Output A;
     float Rectangular_area = 0;           // 絲印標示之座標極限值所構成之矩形面積
@@ -50,7 +50,7 @@ int Scorer::first_quarter(const vector<Segment> Assembly, const vector<Segment> 
     Y_max = silkscreen[0].y1;
     Y_min = silkscreen[0].y2;
 
-    for (int i = 0; i <= silkscreen.size(); i++)
+    for (int i = 0; i < silkscreen.size(); i++)
     {
         if (silkscreen[i].x2 > X_max)
             X_max = silkscreen[i].x2;
@@ -82,7 +82,7 @@ int Scorer::first_quarter(const vector<Segment> Assembly, const vector<Segment> 
     float total_area = 0;
     int i;
     int j = i -1;
-    for(i = 0; i <= Assembly_push_out.size(); i++)
+    for(i = 0; i < Assembly_push_out.size(); i++)
     {
         if(i == 0) j = Assembly_push_out.size() - 1;
         else j = i - 1;
@@ -101,7 +101,7 @@ int Scorer::first_quarter(const vector<Segment> Assembly, const vector<Segment> 
     
     float cut_area;
 
-    for(i = 0; i <= Assembly_push_out.size(); i++)
+    for(i = 0; i < Assembly_push_out.size(); i++)
     {
         if(!Assembly_push_out.at(i).is_line)
         {
@@ -135,14 +135,14 @@ int Scorer::first_quarter(const vector<Segment> Assembly, const vector<Segment> 
     cout << "Answer_1:" << Answer_1 <<endl;
 }
 
-double Scorer::fourth_quarter(const vector<Segment> Assembly, const vector<Segment> silkscreen)
+double Scorer::third_quarter(const vector<vector<Segment>> copper, const vector<Segment> silkscreen)
 {
-    // Input_Output A;
-    float L_outline = assemblygap;
+     // Input_Output A;
+    float L_copper = assemblygap;
     double min_distance;
     double min_distance_sum;
-    double T_outline;
-    double Fourth_Score;
+    double T_copper;
+    double Third_Score;
     Point A1, A2, B1, B2; // A,B兩線段
 
     min_distance_sum = 0;
@@ -153,12 +153,71 @@ double Scorer::fourth_quarter(const vector<Segment> Assembly, const vector<Segme
         A1.y = silkscreen[i].y1;
         A2.x = silkscreen[i].x2;
         A2.y = silkscreen[i].y2;
+        for (int j = 0; j < copper.size(); j++)
+        {
+            for (int k = 0; k < copper.at(j).size(); k++)
+            {
+                B1.x = copper.at(j).at(k).x1;
+                B1.y = copper.at(j).at(k).y1;
+                B2.x = copper.at(j).at(k).x2;
+                B2.y = copper.at(j).at(k).y1;
+                if (silkscreen[i].is_line == 1 && copper.at(j).at(k).is_line == 1)
+                {
+                    if (dir(A1, A2, B1) * dir(A1, A2, B2) <= 0 && dir(B1, B2, A1) * dir(B1, B2, A2) <= 0) //兩線段相交, 距離為0
+                        min_distance = 0;
+                    else //如不相交, 最短距離為四個端點中到另一條線段距離的最小值
+                        min_distance = min(min(min(disMin(A1, A2, B1), disMin(A1, A2, B2)), disMin(B1, B2, A1)), disMin(B1, B2, A2));
+                }
+                else if (silkscreen[i].is_line == 1 && copper.at(j).at(k).is_line == 0)
+                {
+                }
+                else if (silkscreen[i].is_line == 0 && copper.at(j).at(k).is_line == 1)
+                {
+                }
+                else if (silkscreen[i].is_line == 0 && copper.at(j).at(k).is_line == 0)
+                {
+                }
+            }
+        }
+        min_distance_sum += min_distance;
+    }
+    T_copper = min_distance_sum / silkscreen.size();
+    Third_Score = (1 - (T_copper - L_copper) * 10 / L_copper) * 0.25;
+    return Third_Score;
+}
+
+double Scorer::fourth_quarter(const vector<Segment> Assembly, const vector<Segment> silkscreen)
+{
+    // Input_Output A;
+    float L_outline = assemblygap;
+    double min_distance;
+    double min_distance_sum;
+    double T_outline;
+    double Fourth_Score;
+    Point A1, A2, B1, B2; // A,B兩線段
+    double rA = 0;
+    double rB = 0;
+    Point circle_center_A, circle_center_B;
+    min_distance_sum = 0;
+
+    for (int i = 0; i < silkscreen.size(); i++)
+    {
+        A1.x = silkscreen[i].x1;
+        A1.y = silkscreen[i].y1;
+        A2.x = silkscreen[i].x2;
+        A2.y = silkscreen[i].y2;
+        circle_center_A.x = silkscreen[i].center_x;
+        circle_center_A.y = silkscreen[i].center_y;
+        rA = dis2(A1, circle_center_A);
         for (int j = 0; j < Assembly.size(); j++)
         {
             B1.x = Assembly[i].x1;
             B1.y = Assembly[i].y1;
             B2.x = Assembly[i].x2;
             B2.y = Assembly[i].y2;
+            circle_center_B.x = Assembly[i].center_x;
+            circle_center_B.y = Assembly[i].center_y;
+            rB = dis2(B1, circle_center_B);
             if (silkscreen[i].is_line == 1 && Assembly[j].is_line == 1)
             {
                 if (dir(A1, A2, B1) * dir(A1, A2, B2) <= 0 && dir(B1, B2, A1) * dir(B1, B2, A2) <= 0) //兩線段相交, 距離為0
@@ -168,9 +227,11 @@ double Scorer::fourth_quarter(const vector<Segment> Assembly, const vector<Segme
             }
             else if (silkscreen[i].is_line == 1 && Assembly[j].is_line == 0)
             {
+                min_distance = min(disMin(A1, A2, B1), disMin(A1, A2, B2), (disMin(A1, A2, circle_center_B) - rB));
             }
             else if (silkscreen[i].is_line == 0 && Assembly[j].is_line == 1)
             {
+                min_distance = min(disMin(B1, B2, A1), disMin(B1, B2, A2), (disMin(B1, B2, circle_center_A) - rA));
             }
             else if (silkscreen[i].is_line == 0 && Assembly[j].is_line == 0)
             {
