@@ -110,7 +110,7 @@ vector<Segment> Final_Silkscreen(const vector<Segment>, const vector<Copper>);
 
 void Write_File(const vector<Segment>);
 
-void Write_File(const vector<vector<Segment>>);
+void Write_File(const vector<vector<Segment>>, char **argv);
 
 void Write_File_Copper(const vector<Copper>); // debugging function
 
@@ -143,12 +143,12 @@ vector<vector<Segment>> Find_Continuous_Segment(vector<Segment>);
 ////////////////////////////////// main functions //////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////
 
-int main()
+int main(int argc, char **argv)
 {
     fstream file;
     string assemblygap_str, coppergap_str, silkscreenlen_str;
 
-    file.open(INPUT_PATH, ios::in);
+    file.open(argv[1], ios::in);
 
     // the first three line of the file, defines parameters for silkscreen
     file >> assemblygap_str >> coppergap_str >> silkscreenlen_str;
@@ -176,7 +176,7 @@ int main()
 
     Continuous_Silkscreen = Delete_Short_Silkscreen(Silkscreen_Cut);
 
-    Write_File(Continuous_Silkscreen);
+    Write_File(Continuous_Silkscreen, argv);
     // Write_File(Silkscreen_Cut);
 
     // Write_File_Copper(whole_copper_barrier); // output for testing
@@ -654,11 +654,11 @@ void Write_File(const vector<Segment> Silkscreen)
     }
 }
 
-void Write_File(const vector<vector<Segment>> Silkscreen)
+void Write_File(const vector<vector<Segment>> Silkscreen, char **argv)
 {
     fstream Output;
 
-    Output.open(OUTPUT_PATH, ios::out);
+    Output.open(argv[2], ios::out);
 
     const size_t size = Silkscreen.size();
     for (size_t i = 0; i < size; i++)
@@ -1060,7 +1060,7 @@ vector<Segment> silkscreen_cut_single_copper(Segment Silkscreen_Piece, Copper Si
             A_Line.center_x = Silkscreen_Piece.center_x;
             A_Line.center_y = Silkscreen_Piece.center_y;
             A_Line.theta_1 = atan2(A_Line.y1 - A_Line.center_y, A_Line.x1 - A_Line.center_x);
-            A_Line.theta_2 = -5 ;//simplied,set to unreachable number.
+            A_Line.theta_2 = -5; // simplied,set to unreachable number.
             A_Line.direction = Silkscreen_Piece.direction;
         }
         else
