@@ -1038,7 +1038,7 @@ vector<Segment> silkscreen_cut_single_copper(Segment Silkscreen_Piece, Copper Si
     }
     Intersection_Points.push_back(last_point);
 
-    Intersection_Points = Point_Sort(Silkscreen_Piece,Intersection_Points);
+    Intersection_Points = Point_Sort(Silkscreen_Piece, Intersection_Points);
 
     vector<Segment> Cut_Lines;
     Segment A_Line;
@@ -1053,14 +1053,19 @@ vector<Segment> silkscreen_cut_single_copper(Segment Silkscreen_Piece, Copper Si
         i++;
         A_Line.x2 = Intersection_Points.at(i).x;
         A_Line.y2 = Intersection_Points.at(i).y;
-        //for Arc 
-        if(!Silkscreen_Piece.is_line){
+        // for Arc
+        if (!Silkscreen_Piece.is_line)
+        {
             A_Line.is_line = false;
             A_Line.center_x = Silkscreen_Piece.center_x;
             A_Line.center_y = Silkscreen_Piece.center_y;
             A_Line.theta_1 = atan2(A_Line.y1 - A_Line.center_y, A_Line.x1 - A_Line.center_x);
-            A_Line.theta_2 = atan2(A_Line.y2 - A_Line.center_y, A_Line.x2 - A_Line.center_x);
+            A_Line.theta_2 = -5 ;//simplied,set to unreachable number.
             A_Line.direction = Silkscreen_Piece.direction;
+        }
+        else
+        {
+            A_Line.is_line = true;
         }
         Cut_Lines.push_back(A_Line);
     }
@@ -1377,7 +1382,7 @@ vector<Segment> Segment_Sort(Segment Silkscreen_Piece, vector<Segment> total_cop
     End_point.x1 = End_point.x2 = Silkscreen_Piece.x2;
     End_point.y1 = End_point.y2 = Silkscreen_Piece.y2;
     Cut_Silkscreen.push_back(Start_point);
-    //Determine whether can be sorted as line segments.
+    // Determine whether can be sorted as line segments.
     if (Silkscreen_Piece.is_line)
     {
         Sort_as_Line = true;
@@ -1418,11 +1423,11 @@ vector<Segment> Segment_Sort(Segment Silkscreen_Piece, vector<Segment> total_cop
     {
         size_t across_neg_x = 0; // find the cloest point of X-axis
         // Sort Segment by direction, regradless the Segment across the x-axis
-        if (Silkscreen_Piece.direction)//CCW
+        if (Silkscreen_Piece.direction) // CCW
         {
             sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_increase_Arc);
         }
-        else//CW
+        else // CW
         {
             sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_decrease_Arc);
         }
@@ -1454,7 +1459,7 @@ vector<Segment> Segment_Sort(Segment Silkscreen_Piece, vector<Segment> total_cop
         { // ERROR STATUS
             cerr << "ERROR STATUS:Initialize may required to identify the \'theta\'." << endl;
         }
- 
+
         if (Seperate_x_dir)
         { // find the first segment across the negative x direction
             for (size_t i = 0; i < total_copper_cut_segments.size(); i++)
@@ -1472,9 +1477,9 @@ vector<Segment> Segment_Sort(Segment Silkscreen_Piece, vector<Segment> total_cop
                 }
             }
             if (Seperate_x_dir > 0)
-            { //rearrange the segments for those that across the negative x-asix
-                total_copper_cut_segments.insert(total_copper_cut_segments.end(), total_copper_cut_segments.begin(), total_copper_cut_segments.begin()+across_neg_x);
-                total_copper_cut_segments.erase(total_copper_cut_segments.begin(), total_copper_cut_segments.begin()+ across_neg_x);
+            { // rearrange the segments for those that across the negative x-asix
+                total_copper_cut_segments.insert(total_copper_cut_segments.end(), total_copper_cut_segments.begin(), total_copper_cut_segments.begin() + across_neg_x);
+                total_copper_cut_segments.erase(total_copper_cut_segments.begin(), total_copper_cut_segments.begin() + across_neg_x);
             }
         }
     }
@@ -1495,11 +1500,10 @@ bool sort_increase_Segment(const Segment L1, const Segment L2)
     {
         return (L1.x1 < L2.x1);
     }
- 
 }
 bool sort_decrease_Segment(const Segment L1, const Segment L2)
 {
-    
+
     if (L1.x1 == L2.x1)
     {
         return (L1.y1 > L2.y1);
@@ -1507,15 +1511,17 @@ bool sort_decrease_Segment(const Segment L1, const Segment L2)
     else
     {
         return (L1.x1 > L2.x1);
-    }    
+    }
 }
 
-bool sort_decrease_Arc (const Segment L1, const Segment L2){
-    return(L1.theta_1 < L2.theta_1);
+bool sort_decrease_Arc(const Segment L1, const Segment L2)
+{
+    return (L1.theta_1 < L2.theta_1);
 }
 
-bool sort_increase_Arc (const Segment L1, const Segment L2){
-    return(L1.theta_1 > L2.theta_1);
+bool sort_increase_Arc(const Segment L1, const Segment L2)
+{
+    return (L1.theta_1 > L2.theta_1);
 }
 
 vector<Point> Point_Sort(const Segment Silkscreen_Piece, vector<Point> Intersection_Points)
@@ -1523,18 +1529,21 @@ vector<Point> Point_Sort(const Segment Silkscreen_Piece, vector<Point> Intersect
     // Warning!! this version will modify the input array and return it back.
     size_t final_point = Intersection_Points.size() - 1;
     bool Sort_as_Line = false;
-    
-    if(Silkscreen_Piece.is_line){
+
+    if (Silkscreen_Piece.is_line)
+    {
         Sort_as_Line = true;
     }
-    else{
-        if((Silkscreen_Piece.theta_1 >= 0 && Silkscreen_Piece.theta_2 >=0 )||(Silkscreen_Piece.theta_1 <= 0  && Silkscreen_Piece.theta_2 <= 0))
+    else
+    {
+        if ((Silkscreen_Piece.theta_1 >= 0 && Silkscreen_Piece.theta_2 >= 0) || (Silkscreen_Piece.theta_1 <= 0 && Silkscreen_Piece.theta_2 <= 0))
         {
             Sort_as_Line = true;
         }
     }
 
-    if(Sort_as_Line){
+    if (Sort_as_Line)
+    {
         if ((Intersection_Points.at(0).x) > (Intersection_Points.at(final_point).x))
         {
             sort(Intersection_Points.begin(), Intersection_Points.end(), sort_decrease_points);
@@ -1552,41 +1561,46 @@ vector<Point> Point_Sort(const Segment Silkscreen_Piece, vector<Point> Intersect
             sort(Intersection_Points.begin(), Intersection_Points.end(), sort_decrease_points);
         }
     }
-    else{
-        //find the X-axis 
+    else
+    {
+        // find the X-axis
         double X_axis = Silkscreen_Piece.center_y;
-        vector<Point>upper_points,lower_points;
-        //Seperate points into upper and lower semicircle
-        for(size_t i = 0; i < Intersection_Points.size();i++){
-            if(Intersection_Points[i].y > X_axis){
+        vector<Point> upper_points, lower_points;
+        // Seperate points into upper and lower semicircle
+        for (size_t i = 0; i < Intersection_Points.size(); i++)
+        {
+            if (Intersection_Points[i].y > X_axis)
+            {
                 upper_points.push_back(Intersection_Points[i]);
             }
-            else{
+            else
+            {
                 lower_points.push_back(Intersection_Points[i]);
             }
         }
 
-        if (Silkscreen_Piece.direction)//CCW
+        if (Silkscreen_Piece.direction) // CCW
         {
-            sort(upper_points.begin(), upper_points.end(), sort_decrease_points);//upper
-            sort(lower_points.begin(), lower_points.end(), sort_increase_points);//lower
+            sort(upper_points.begin(), upper_points.end(), sort_decrease_points); // upper
+            sort(lower_points.begin(), lower_points.end(), sort_increase_points); // lower
         }
-        else//CW
+        else // CW
         {
-            sort(upper_points.begin(), upper_points.end(), sort_increase_points);//upper
-            sort(lower_points.begin(), lower_points.end(), sort_decrease_points);//lower
+            sort(upper_points.begin(), upper_points.end(), sort_increase_points); // upper
+            sort(lower_points.begin(), lower_points.end(), sort_decrease_points); // lower
         }
 
         Intersection_Points.clear();
-        if(Silkscreen_Piece.theta_1 > 0 && Silkscreen_Piece.theta_2 < 0){
+        if (Silkscreen_Piece.theta_1 > 0 && Silkscreen_Piece.theta_2 < 0)
+        {
             Intersection_Points = upper_points;
-            Intersection_Points.insert(Intersection_Points.end(),lower_points.begin(),lower_points.end());
+            Intersection_Points.insert(Intersection_Points.end(), lower_points.begin(), lower_points.end());
         }
-        else{
+        else
+        {
             Intersection_Points = lower_points;
-            Intersection_Points.insert(Intersection_Points.end(),upper_points.begin(),upper_points.end());
+            Intersection_Points.insert(Intersection_Points.end(), upper_points.begin(), upper_points.end());
         }
-
     }
     return Intersection_Points;
 }
