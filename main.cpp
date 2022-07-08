@@ -1368,7 +1368,7 @@ vector<Segment> Segment_Sort(Segment Silkscreen_Piece, vector<Segment> total_cop
     // 結尾Segment 為 Silkscreen_Piece.x2, Silkscreen_Piece.y2, Silkscreen_Piece.x2, Silkscreen_Piece.y2
     vector<Segment> Cut_Silkscreen;
     Segment Start_point, End_point;
-    bool Sort_as_Line = false;//Determine whether can use line sorting case or not.
+    bool Sort_as_Line = false; // Determine whether can use line sorting case or not.
     bool Seperate_x_dir = true;
 
     Start_point.x1 = Start_point.x2 = Silkscreen_Piece.x1;
@@ -1377,23 +1377,18 @@ vector<Segment> Segment_Sort(Segment Silkscreen_Piece, vector<Segment> total_cop
     End_point.x1 = End_point.x2 = Silkscreen_Piece.x2;
     End_point.y1 = End_point.y2 = Silkscreen_Piece.y2;
     Cut_Silkscreen.push_back(Start_point);
-    //Not verified feature for Arc
-    if(Silkscreen_Piece.is_line){
+    //Determine whether can be sorted as line segments.
+    if (Silkscreen_Piece.is_line)
+    {
         Sort_as_Line = true;
     }
-    else{
-        if((Silkscreen_Piece.theta_1 >= 0 && Silkscreen_Piece.theta_2 < PI)||(Silkscreen_Piece.theta_1 > -PI && Silkscreen_Piece.theta_2 <= 0))
-        {//Segment Arc is either in upper semicircle or upper semicircle -> determine by X1 and X2.
+    else
+    {
+        if ((Silkscreen_Piece.theta_1 >= 0 && Silkscreen_Piece.theta_2 >= 0) || (Silkscreen_Piece.theta_1 <= 0 && Silkscreen_Piece.theta_2 <= 0))
+        { // Segment Arc is either in upper semicircle or upper semicircle -> determine by X1 and X2.
             Sort_as_Line = true;
-        } 
-        else if(Silkscreen_Piece.theta_1 > 0 && Silkscreen_Piece.theta_2 < 0){
-            Seperate_x_dir = true;//Seperate by 0 (rad)
         }
-        else{
-            Seperate_x_dir = false;//Seperate by PI (rad)
-        }  
     }
-    //end of new feature
 
     if (Sort_as_Line)
     {
@@ -1416,84 +1411,71 @@ vector<Segment> Segment_Sort(Segment Silkscreen_Piece, vector<Segment> total_cop
         else
         { // ERROR STATUS: X1=X2, Y1=Y2;Action: sort_increase_Segment
             sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_increase_Segment);
-            cerr << "ERROR STATUS points are the same" << endl;
+            cerr << "ERROR STATUS:Silkscreen_Piece points are the same." << endl;
         }
-        /*---------------------------------------abandon decision function-------------------------
-        if ((Silkscreen_Piece.theta >= 0 && Silkscreen_Piece.theta < PI / 2) || (Silkscreen_Piece.theta < 3 * PI / 2 && Silkscreen_Piece.theta > PI))
-        { // SORT BY X1,increase
-            sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_increase_Segement);
-        }
-        else if ((Silkscreen_Piece.theta > PI / 2 && Silkscreen_Piece.theta <= PI) || (Silkscreen_Piece.theta > 3 * PI / 2 && Silkscreen_Piece.theta < 2 * PI))
-        { // SORT BY X1,decrease
-            sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_decrease_Segment);
-        }
-        else if (Silkscreen_Piece.theta == PI / 2)
-        {
-            sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_increase_Segement);
-        }
-        else
-        {
-            sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_decrease_Segment);
-        }
-        ****************************************************************/
     }
-    else 
+    else
     {
-        size_t three_four_dime = 0;//find the cloest point of X-asix
-        /* new feature 
-        for(size_t i = 0 ; i < total_copper_cut_segments.size(); i++)
+        size_t across_neg_x = 0; // find the cloest point of X-axis
+        // Sort Segment by direction, regradless the Segment across the x-axis
+        if (Silkscreen_Piece.direction)//CCW
         {
-            
-
+            sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_increase_Arc);
         }
-        */
+        else//CW
+        {
+            sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_decrease_Arc);
+        }
 
-
-        if(Silkscreen_Piece.direction)
-        {//counterclockwise
-            if(Silkscreen_Piece.theta_1 >= 0 && Silkscreen_Piece.theta_2 <= 0)
-            {//special case: Segment across the PI/2
-                for(size_t i = 0; i < total_copper_cut_segments.size(); i++)
-                {
-                    if(total_copper_cut_segments.at(i).theta_1 < 0)
-                    {
-                        three_four_dime = i;
-                        break;
-                    }
-                }
-                //sort upper half circle
-                sort(total_copper_cut_segments.begin(), total_copper_cut_segments.begin()+three_four_dime,sort_decrease_Arc);
-                //sort lower half circle
-                sort(total_copper_cut_segments.begin()+three_four_dime, total_copper_cut_segments.end(), sort_increase_Arc);
+        // Use theta and direction to determine across the negative x-asix
+        if ((Silkscreen_Piece.theta_1 > 0) && (Silkscreen_Piece.theta_2 < 0))
+        {
+            if (Silkscreen_Piece.direction)
+            {
+                Seperate_x_dir = true; // Seperate by PI (rad)
             }
             else
-            {//Sort by Increase theta_1 
-                sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(),sort_increase_Arc);
+            {
+                Seperate_x_dir = false; // Seperate by 0 (rad)
+            }
+        }
+        else if ((Silkscreen_Piece.theta_2 > 0) && (Silkscreen_Piece.theta_1 < 0))
+        {
+            if (Silkscreen_Piece.direction)
+            {
+                Seperate_x_dir = false; // Seperate by 0 (rad)
+            }
+            else
+            {
+                Seperate_x_dir = true; // Seperate by PI (rad)
             }
         }
         else
-        {//clockwise
-            if(Silkscreen_Piece.theta_1 <= 0 && Silkscreen_Piece.theta_2 >= 0)
-            {//special case: Segment across the PI/2
-                for(size_t i = 0; i < total_copper_cut_segments.size(); i++)
+        { // ERROR STATUS
+            cerr << "ERROR STATUS:Initialize may required to identify the \'theta\'." << endl;
+        }
+ 
+        if (Seperate_x_dir)
+        { // find the first segment across the negative x direction
+            for (size_t i = 0; i < total_copper_cut_segments.size(); i++)
+            {
+
+                if (Silkscreen_Piece.direction && total_copper_cut_segments.at(i).theta_1 > 0)
                 {
-                    if(total_copper_cut_segments.at(i).theta_1 > 0)
-                    {
-                        three_four_dime = i;
-                        break;
-                    }
+                    across_neg_x = i;
+                    break;
                 }
-                //sort lower half circle
-                sort(total_copper_cut_segments.begin(), total_copper_cut_segments.begin()+three_four_dime,sort_decrease_Arc);
-                //sort upper half circle
-                sort(total_copper_cut_segments.begin()+three_four_dime, total_copper_cut_segments.end(),sort_increase_Arc);
-
+                else if (!Silkscreen_Piece.direction && total_copper_cut_segments.at(i).theta_1 < 0)
+                {
+                    across_neg_x = i;
+                    break;
+                }
             }
-            else 
-            {//Sort by Decrease theta_1
-                sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_decrease_Arc);
+            if (Seperate_x_dir > 0)
+            { //rearrange the segments for those that across the negative x-asix
+                total_copper_cut_segments.insert(total_copper_cut_segments.end(), total_copper_cut_segments.begin(), total_copper_cut_segments.begin()+across_neg_x);
+                total_copper_cut_segments.erase(total_copper_cut_segments.begin(), total_copper_cut_segments.begin()+ across_neg_x);
             }
-
         }
     }
     Cut_Silkscreen.insert(Cut_Silkscreen.end(), total_copper_cut_segments.begin(), total_copper_cut_segments.end());
@@ -1546,13 +1528,12 @@ vector<Point> Point_Sort(const Segment Silkscreen_Piece, vector<Point> Intersect
         Sort_as_Line = true;
     }
     else{
-        if((Silkscreen_Piece.theta_1 >= 0 && Silkscreen_Piece.theta_2 < PI)||(Silkscreen_Piece.theta_1 > -PI && Silkscreen_Piece.theta_2 <= 0))
+        if((Silkscreen_Piece.theta_1 >= 0 && Silkscreen_Piece.theta_2 >=0 )||(Silkscreen_Piece.theta_1 <= 0  && Silkscreen_Piece.theta_2 <= 0))
         {
             Sort_as_Line = true;
         }
     }
 
-    
     if(Sort_as_Line){
         if ((Intersection_Points.at(0).x) > (Intersection_Points.at(final_point).x))
         {
@@ -1570,6 +1551,42 @@ vector<Point> Point_Sort(const Segment Silkscreen_Piece, vector<Point> Intersect
         {
             sort(Intersection_Points.begin(), Intersection_Points.end(), sort_decrease_points);
         }
+    }
+    else{
+        //find the X-axis 
+        double X_axis = Silkscreen_Piece.center_y;
+        vector<Point>upper_points,lower_points;
+        //Seperate points into upper and lower semicircle
+        for(size_t i = 0; i < Intersection_Points.size();i++){
+            if(Intersection_Points[i].y > X_axis){
+                upper_points.push_back(Intersection_Points[i]);
+            }
+            else{
+                lower_points.push_back(Intersection_Points[i]);
+            }
+        }
+
+        if (Silkscreen_Piece.direction)//CCW
+        {
+            sort(upper_points.begin(), upper_points.end(), sort_decrease_points);//upper
+            sort(lower_points.begin(), lower_points.end(), sort_increase_points);//lower
+        }
+        else//CW
+        {
+            sort(upper_points.begin(), upper_points.end(), sort_increase_points);//upper
+            sort(lower_points.begin(), lower_points.end(), sort_decrease_points);//lower
+        }
+
+        Intersection_Points.clear();
+        if(Silkscreen_Piece.theta_1 > 0 && Silkscreen_Piece.theta_2 < 0){
+            Intersection_Points = upper_points;
+            Intersection_Points.insert(Intersection_Points.end(),lower_points.begin(),lower_points.end());
+        }
+        else{
+            Intersection_Points = lower_points;
+            Intersection_Points.insert(Intersection_Points.end(),upper_points.begin(),upper_points.end());
+        }
+
     }
     return Intersection_Points;
 }
