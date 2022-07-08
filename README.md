@@ -656,3 +656,11 @@ Raymond
 finish first quarter, using law of cosine and heron formula, untesting
 
 Raymond
+
+2022/07/09
+
+finish fourth quarter second and third part, fourth part ongoing
+
+create third quarter
+
+Raymond
