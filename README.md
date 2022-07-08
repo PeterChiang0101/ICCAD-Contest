@@ -34,7 +34,7 @@ i/o file location: TestingCase folder
 
 naming rule:    test_"NAME".txt    test_"NAME"_Ans.txt
 
-execution: use "make"
+execution: use "make", regenerate file use "make clean"
 ```
 
 ## Outline
