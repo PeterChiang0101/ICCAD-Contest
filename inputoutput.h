@@ -41,12 +41,12 @@ class Input_Output{
         Segment String_to_Line(string);
         const vector<string> split(const string &, const char &);
         vector<Segment> Input_Output::Assembly_Buffer(const vector<Segment>, float, float);
+        bool point_in_polygon(Point , vector<Point>, vector<vector<Point>> );
+        vector<vector<Point>> Input_Output::Arc_Optimization(vector<Segment> );
+        vector<Point> Line_to_Point(const vector<Segment>); // 將線段切割成點
     private:
        vector<Point> Point_Extension(const vector<Segment>, const bool, float, float);
        vector<Segment> Point_to_Line(vector<Point> , vector<Segment>); // assembly 專屬
-       vector<Point> Line_to_Point(const vector<Segment>); // 將線段切割成點
-       vector<vector<Point>> Input_Output::Arc_Optimization(vector<Segment> );
-       bool point_in_polygon(Point t, vector<Point>, vector<vector<Point>> ); // 運用射線法判斷點在圖形內外
        vector<Point> Arc_to_Poly(Segment );
 };
 

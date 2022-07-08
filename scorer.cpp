@@ -6,6 +6,7 @@
 
 using namespace std;
 
+#define PI 3.14159265358979323846
 #define INPUT_PATH "./TestingCase/test_B.txt"
 #define OUTPUT_PATH "./TestingCase/test_B_Ans.txt"
 
@@ -31,13 +32,14 @@ void Scorer::open_file()
     silkscreen = Read_Silkscreen(A_file);
 }
 
+// untest 2022/7/7
 int Scorer::first_quarter(const vector<Segment> Assembly, const vector<Segment> silkscreen)
 {
     Input_Output A;
-    float Rectangular_area;           // 絲印標示之座標極限值所構成之矩形面積
+    float Rectangular_area = 0;           // 絲印標示之座標極限值所構成之矩形面積
     float X_max, Y_max, X_min, Y_min; //絲印座標極限值
 
-    float Y_area; // 零件外觀向外等比拓展Y之面積範圍
+    float Y_area = 0; // 零件外觀向外等比拓展Y之面積範圍
     vector<Segment> Assembly_push_out;
     
     float Answer_1;
@@ -71,7 +73,11 @@ int Scorer::first_quarter(const vector<Segment> Assembly, const vector<Segment> 
     Rectangular_area = abs((X_max - X_min) * (Y_max - Y_min));
 
     /* calculate Y_area*/
+    vector<Point> Assembly_push_out_points;
+    vector<vector<Point>> Arc_Dots;
     Assembly_push_out = A.Assembly_Buffer(Assembly, coppergap, assemblygap);
+    Assembly_push_out_points = A.Line_to_Point(Assembly_push_out);
+    Arc_Dots = A.Arc_Optimization(Assembly_push_out);
 
     float total_area = 0;
     int i;
@@ -82,18 +88,51 @@ int Scorer::first_quarter(const vector<Segment> Assembly, const vector<Segment> 
         else j = i - 1;
         total_area += (Assembly_push_out[j].x1 + Assembly_push_out[i].x1)*(Assembly_push_out[j].y1 - Assembly_push_out[i].y1);
     }
-    /*
+    // Law of cosines
+    Point center_of_circle;
+    Point point_1;
+    Point point_2;
+    bool outside;
+    float radius = 0; // Law of cosines
+    float c = 0; // Law of cosines
+    double theta; // Law of cosines
+    
+    float s; //heron formula
+    
+    float cut_area;
+
     for(i = 0; i <= Assembly_push_out.size(); i++)
     {
-        if(!is_line)
+        if(!Assembly_push_out.at(i).is_line)
         {
+            center_of_circle.x = Assembly_push_out.at(i).center_x;
+            center_of_circle.y = Assembly_push_out.at(i).center_y;
+            point_1.x = Assembly_push_out.at(i).x1;
+            point_1.y = Assembly_push_out.at(i).y1;
+            point_2.x = Assembly_push_out.at(i).x2;
+            point_2.y = Assembly_push_out.at(i).y2;
 
+            radius = dis2(center_of_circle, point_1);
+            c = dis2(point_1, point_2);
+            s = (radius + radius + c)/2;
+            theta = acos((2 * ( radius * radius) - c*c )/(2 * radius * c)); // Law of cosines
+            
+            cut_area = radius*radius*theta/2 - sqrt(s*(s-radius)*(s-radius)*(s-c)); //last part is heron formula
+            
+            outside = !A.point_in_polygon(center_of_circle, Assembly_push_out_points, Arc_Dots);
+            if(outside) 
+                total_area -= cut_area; 
+            else 
+                total_area += cut_area;
         }
-        // undone //
+        
     }
-    */
+    
 
     Answer_1 = (2 - Rectangular_area / Y_area) * 0.25;
+    cout << "Rectangular_area:" << Rectangular_area << endl;
+    cout << "Y_area:" << Y_area << endl;
+    cout << "Answer_1:" << Answer_1 <<endl;
 }
 
 double Scorer::fourth_quarter(const vector<Segment> Assembly, const vector<Segment> silkscreen)
@@ -171,7 +210,7 @@ double cross(Point A, Point B, Point P) // 向量外積
     return AB.x * AP.y - AB.y * AP.x;
 }
 
-double dot(Point A, Point B, Point P) // 向量積
+double dot(Point A, Point B, Point P) // 向量內積
 {
     Point AB = {B.x - A.x, B.y - A.y};
     Point AP = {P.x - A.x, P.y - A.y};

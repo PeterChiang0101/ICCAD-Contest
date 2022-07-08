@@ -31,7 +31,7 @@ class Scorer
 {
 public:
     void open_file();
-    int first_quarter();
+    int first_quarter(const vector<Segment>, const vector<Segment>);
     int second_quarter();
     int third_quarter();
     double fourth_quarter(const vector<Segment>, const vector<Segment>);
