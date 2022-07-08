@@ -33,21 +33,22 @@ struct Point
     bool Next_Arc; // if the point connected to arc
 };
 
-class Input_Output{
-    public:
-        float File_to_Parameter(const string); // 讀入參數
-        vector<Segment> Read_Assembly(fstream &);
-        vector<vector<Segment>> Read_Copper(fstream &);
-        Segment String_to_Line(string);
-        const vector<string> split(const string &, const char &);
-        vector<Segment> Input_Output::Assembly_Buffer(const vector<Segment>, float, float);
-        bool point_in_polygon(Point , vector<Point>, vector<vector<Point>> );
-        vector<vector<Point>> Input_Output::Arc_Optimization(vector<Segment> );
-        vector<Point> Line_to_Point(const vector<Segment>); // 將線段切割成點
-    private:
-       vector<Point> Point_Extension(const vector<Segment>, const bool, float, float);
-       vector<Segment> Point_to_Line(vector<Point> , vector<Segment>); // assembly 專屬
-       vector<Point> Arc_to_Poly(Segment );
+class Input_Output
+{
+public:
+    float File_to_Parameter(const string); // 讀入參數
+    vector<Segment> Read_Assembly(fstream &);
+    vector<vector<Segment>> Read_Copper(fstream &);
+    Segment String_to_Line(string);
+    const vector<string> split(const string &, const char &);
+    vector<Segment> Assembly_Buffer(const vector<Segment>, float, float);
+    bool point_in_polygon(Point, vector<Point>, vector<vector<Point>>);
+    vector<vector<Point>> Arc_Optimization(vector<Segment>);
+    vector<Point> Line_to_Point(const vector<Segment>); // 將線段切割成點
+private:
+    vector<Point> Point_Extension(const vector<Segment>, const bool, float, float);
+    vector<Segment> Point_to_Line(vector<Point>, vector<Segment>); // assembly 專屬
+    vector<Point> Arc_to_Poly(Segment);
 };
 
 #endif
