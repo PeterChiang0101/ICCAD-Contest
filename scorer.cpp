@@ -25,8 +25,14 @@ double Point_to_Arc_MinDist(Point, Segment);
 bool Line_intersect(Segment , Segment);
 bool On_Arc(Segment, Point);
 
+
 void Scorer::open_file()
 {
+    //to-do 
+    //for the "main" to specify the input file.
+
+    //add the overide of assembly and silkscreen
+    
     Input_Output A;
 
     Q_file.open(INPUT_PATH, ios::in);
@@ -145,38 +151,75 @@ double Scorer::first_quarter(const vector<Segment> Assembly, const vector<Segmen
     return Answer_1;
 }
 
+//not finish verification, done on 2022/7/9
 double Scorer::second_quarter(const vector<Segment>Assembly, const vector<Segment> silkscreen)
 {
     Input_Output Case2;
     vector<Segment>Assembly_push_out;
-    double Answer_2{0},total_perimeter{0};
-    //First Part 
-    //calculate the Perimeter of assembly
-    Assembly_push_out = Case2.Assembly_Buffer(Assembly,this->coppergap,this->assemblygap);
 
-    double length{0}, length_x, length_y;
+    double part_1{0},part_2{0},Second_Score{0},total_perimeter{0},total_silkscreen{0};
+    int assembly_line{0},assembly_arc{0},silk_line{0},silk_arc{0};
+    size_t number_diff{0};
+    //First Part 
+    //find the buffer of the assembly, not sure it is as same as description. 
+    Assembly_push_out = Case2.Assembly_Buffer(Assembly,this->coppergap,this->assemblygap);
+    //calculate the Perimeter of assembly
+    double length{0},length_x{0}, length_y{0},radius{0};
     for(size_t i=0; i < Assembly_push_out.size(); i++){
+        length = 0;
         if(Assembly_push_out[i].is_line){
             length_x = Assembly_push_out[i].x2-Assembly_push_out[i].x1;
             length_y = Assembly_push_out[i].y2-Assembly_push_out[i].y1;
-            length = sqrt(length_x^2 + length_y^2);
+            length = sqrt((length_x*length_x) + (length_y*length_y));
+            
         }
         else{
-            length_y = Assembly_push_out[i].center_y - Assembly_push_out[i].y1;
             length_x = Assembly_push_out[i].center_x - Assembly_push_out[i].x1;
-            radius = sqrt(length_x*length_x + length_y*length_y);
-            length =  radius*(Assembly_push_out[i].theta_2 - Assembly_push_out[i].theta_1);
+            length_y = Assembly_push_out[i].center_y - Assembly_push_out[i].y1;
+            radius = sqrt((length_x*length_x) + (length_y*length_y));
+            length = radius*(Assembly_push_out[i].theta_2 - Assembly_push_out[i].theta_1);
+            
         }
         total_perimeter += length;
     }
-    //read the Answer Sillscreen 
+    //read the Answer Silkscreen and count the number of Line and Arc.
     for(size_t i = 0; i < this->silkscreen.size(); i++){
-        
+        length = 0;
+        if(this->silkscreen[i].is_line){
+            length_x = this->silkscreen[i].x2-this->silkscreen[i].x1;
+            length_y = this->silkscreen[i].y2-this->silkscreen[i].y1;
+            length = sqrt((length_x*length_x) + (length_y*length_y));
+            silk_line += 1;
+        }
+        else{
+            length_x = this->silkscreen[i].center_x - this->silkscreen[i].x1;
+            length_y = this->silkscreen[i].center_y - this->silkscreen[i].y1;
+            radius = sqrt((length_x*length_x) + (length_y*length_y));
+            length =  radius*(Assembly_push_out[i].theta_2 - Assembly_push_out[i].theta_1);
+            silk_arc += 1;
+        }
+        total_silkscreen += length;
     }
-    this->silkscreen
     //Second_part
+     //count the number of assembly Line and Arc
+     for(size_t i = 0; i < this->assembly.size() ;i++){
+        if(this->assembly[i].is_line){
+            assembly_line += 1;
+        }
+        else{
+            assembly_arc += 1;
+        }
+     }
 
-    return Answer_2;
+    number_diff = (size_t)(abs((assembly_arc - silk_arc)) + abs((assembly_line - assembly_arc)));
+    part_1 = (2 - (total_silkscreen / total_perimeter));
+    part_2 = (1 - (number_diff)/(Assembly.size() + this->copper.size()));
+    Second_Score = part_1*0.15 + part_2*0.10 ;
+    //print the result of second quarter
+    cout << "Part_1 score: " << part_1 << ',' << "Part_2 Score: " << part_2 <<endl;
+    cout << "Total Score" << Second_Score << endl;
+
+    return Second_Score;
 }
 
 double Scorer::third_quarter(const vector<vector<Segment>> copper, const vector<Segment> silkscreen)
