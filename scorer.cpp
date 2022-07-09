@@ -17,7 +17,7 @@ double dis2(Point, Point);
 double dist(Point, Point);
 int dir(Point, Point, Point);
 double disMin(Point, Point, Point);
-Point operator - (Point, Point);
+Point operator-(Point, Point);
 double Point_to_Arc_MinDist(Point, Segment);
 
 void Scorer::open_file()
@@ -40,12 +40,12 @@ void Scorer::open_file()
 double Scorer::first_quarter(const vector<Segment> Assembly, const vector<Segment> silkscreen)
 {
     Input_Output A;
-    float Rectangular_area = 0;           // 絲印標示之座標極限值所構成之矩形面積
+    float Rectangular_area = 0;       // 絲印標示之座標極限值所構成之矩形面積
     float X_max, Y_max, X_min, Y_min; //絲印座標極限值
 
     float Y_area = 0; // 零件外觀向外等比拓展Y之面積範圍
     vector<Segment> Assembly_push_out;
-    
+
     float Answer_1;
 
     /* calculate Rectangular_area */
@@ -84,13 +84,15 @@ double Scorer::first_quarter(const vector<Segment> Assembly, const vector<Segmen
     Arc_Dots = A.Arc_Optimization(Assembly_push_out);
 
     float total_area = 0;
-    int i;
-    int j = i -1;
-    for(i = 0; i < Assembly_push_out.size(); i++)
+    size_t i;
+    size_t j = i - 1;
+    for (i = 0; i < Assembly_push_out.size(); i++)
     {
-        if(i == 0) j = Assembly_push_out.size() - 1;
-        else j = i - 1;
-        total_area += (Assembly_push_out[j].x1 + Assembly_push_out[i].x1)*(Assembly_push_out[j].y1 - Assembly_push_out[i].y1);
+        if (i == 0)
+            j = Assembly_push_out.size() - 1;
+        else
+            j = i - 1;
+        total_area += (Assembly_push_out[j].x1 + Assembly_push_out[i].x1) * (Assembly_push_out[j].y1 - Assembly_push_out[i].y1);
     }
     // Law of cosines
     Point center_of_circle;
@@ -98,16 +100,16 @@ double Scorer::first_quarter(const vector<Segment> Assembly, const vector<Segmen
     Point point_2;
     bool outside;
     float radius = 0; // Law of cosines
-    float c = 0; // Law of cosines
-    double theta; // Law of cosines
-    
-    float s; //heron formula
-    
+    float c = 0;      // Law of cosines
+    double theta;     // Law of cosines
+
+    float s; // heron formula
+
     float cut_area;
 
-    for(i = 0; i < Assembly_push_out.size(); i++)
+    for (i = 0; i < Assembly_push_out.size(); i++)
     {
-        if(!Assembly_push_out.at(i).is_line)
+        if (!Assembly_push_out.at(i).is_line)
         {
             center_of_circle.x = Assembly_push_out.at(i).center_x;
             center_of_circle.y = Assembly_push_out.at(i).center_y;
@@ -118,30 +120,62 @@ double Scorer::first_quarter(const vector<Segment> Assembly, const vector<Segmen
 
             radius = dis2(center_of_circle, point_1);
             c = dis2(point_1, point_2);
-            s = (radius + radius + c)/2;
-            theta = acos((2 * ( radius * radius) - c*c )/(2 * radius * c)); // Law of cosines
-            
-            cut_area = radius*radius*theta/2 - sqrt(s*(s-radius)*(s-radius)*(s-c)); //last part is heron formula
-            
+            s = (radius + radius + c) / 2;
+            theta = acos((2 * (radius * radius) - c * c) / (2 * radius * c)); // Law of cosines
+
+            cut_area = radius * radius * theta / 2 - sqrt(s * (s - radius) * (s - radius) * (s - c)); // last part is heron formula
+
             outside = !A.point_in_polygon(center_of_circle, Assembly_push_out_points, Arc_Dots);
-            if(outside) 
-                total_area -= cut_area; 
-            else 
+            if (outside)
+                total_area -= cut_area;
+            else
                 total_area += cut_area;
         }
-        
     }
-    
 
     Answer_1 = (2 - Rectangular_area / Y_area) * 0.25;
     cout << "Rectangular_area:" << Rectangular_area << endl;
     cout << "Y_area:" << Y_area << endl;
-    cout << "Answer_1:" << Answer_1 <<endl;
+    cout << "Answer_1:" << Answer_1 << endl;
+}
+
+double Scorer::second_quarter(const vector<Segment>Assembly, const vector<Segment> silkscreen)
+{
+    Input_Output Case2;
+    vector<Segment>Assembly_push_out;
+    double Answer_2{0},total_perimeter{0};
+    //First Part 
+    //calculate the Perimeter of assembly
+    Assembly_push_out = Case2.Assembly_Buffer(Assembly,this->coppergap,this->assemblygap);
+
+    double length{0}, length_x, length_y;
+    for(size_t i=0; i < Assembly_push_out.size(); i++){
+        if(Assembly_push_out[i].is_line){
+            length_x = Assembly_push_out[i].x2-Assembly_push_out[i].x1;
+            length_y = Assembly_push_out[i].y2-Assembly_push_out[i].y1;
+            length = sqrt(length_x^2 + length_y^2);
+        }
+        else{
+            length_y = Assembly_push_out[i].center_y - Assembly_push_out[i].y1;
+            length_x = Assembly_push_out[i].center_x - Assembly_push_out[i].x1;
+            radius = sqrt(length_x*length_x + length_y*length_y);
+            length =  radius*(Assembly_push_out[i].theta_2 - Assembly_push_out[i].theta_1);
+        }
+        total_perimeter += length;
+    }
+    //read the Answer Sillscreen 
+    for(size_t i = 0; i < this->silkscreen.size(); i++){
+        
+    }
+    this->silkscreen
+    //Second_part
+
+    return Answer_2;
 }
 
 double Scorer::third_quarter(const vector<vector<Segment>> copper, const vector<Segment> silkscreen)
 {
-     // Input_Output A;
+    // Input_Output A;
     float L_copper = assemblygap;
     double min_distance;
     double min_distance_sum;
@@ -253,7 +287,7 @@ vector<Segment> Scorer::Read_Silkscreen(fstream &Input_File)
     Input_Output A;
     vector<Segment> Assembly;
     Segment part;
-    vector<string> split_return;
+    //vector<string> split_return;
     string line;
     getline(Input_File, line);
 
@@ -322,7 +356,7 @@ double disMin(Point A, Point B, Point P) //點P到線段AB的最短距離
     }
 }
 
-Point operator - (Point a, Point b)
+Point operator-(Point a, Point b)
 {
     Point v;
     v.x = a.x - b.x;
@@ -345,30 +379,33 @@ double Point_to_Arc_MinDist(Point pp, Segment Arc)
     v2 = p2 - pc;
     v3 = pp - pc;
 
-    
-    if (Arc.direction == 0)  //如果是順時針，把p1和p2點互換
+    if (Arc.direction == 0) //如果是順時針，把p1和p2點互換
     {
         Point t = p1;
         p1 = p2;
         p2 = t;
     }
-    
-    double cosA = dot(v1, v2) / (dist(p1, pc) * dist(p2, pc)); //Arc cos(v1與v2的夾角)
-    if (fabs(cosA) > 1)    //if fabs(cosA)>1, then acos(cosA) error
+
+    double cosA = dot(v1, v2) / (dist(p1, pc) * dist(p2, pc)); // Arc cos(v1與v2的夾角)
+    if (fabs(cosA) > 1)                                        // if fabs(cosA)>1, then acos(cosA) error
     {
-        if (cosA < 0) cosA += eps;
-        else cosA -= eps;
+        if (cosA < 0)
+            cosA += eps;
+        else
+            cosA -= eps;
     }
-    double maxd = acos(cosA); //v1與v2的夾角
+    double maxd = acos(cosA); // v1與v2的夾角
     if (cross(v1, v2) < 0 && fabs(cross(v1, v2)) > eps)
         maxd = 2 * PI - maxd;
     double cosB = dot(v1, v3) / (dist(p1, pc) * dist(pp, pc));
     if (fabs(cosB) > 1)
     {
-        if (cosB < 0) cosB += eps;
-        else cosB -= eps;
+        if (cosB < 0)
+            cosB += eps;
+        else
+            cosB -= eps;
     }
-    double degree = acos(cosB);   //v1與v3的夾角
+    double degree = acos(cosB); // v1與v3的夾角
 
     if (cross(v1, v3) < 0 && fabs(cross(v1, v3)) > eps)
         degree = 2 * PI - degree;
