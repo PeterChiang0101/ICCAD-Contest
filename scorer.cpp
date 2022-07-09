@@ -18,7 +18,12 @@ double dist(Point, Point);
 int dir(Point, Point, Point);
 double disMin(Point, Point, Point);
 Point operator - (Point, Point);
+Point operator + (Point, Point);
+Point operator * (const int, Point);
+Point operator / (Point, const int);
 double Point_to_Arc_MinDist(Point, Segment);
+bool Line_intersect(Segment , Segment);
+bool On_Arc(Segment, Point);
 
 void Scorer::open_file()
 {
@@ -137,6 +142,7 @@ double Scorer::first_quarter(const vector<Segment> Assembly, const vector<Segmen
     cout << "Rectangular_area:" << Rectangular_area << endl;
     cout << "Y_area:" << Y_area << endl;
     cout << "Answer_1:" << Answer_1 <<endl;
+    return Answer_1;
 }
 
 double Scorer::third_quarter(const vector<vector<Segment>> copper, const vector<Segment> silkscreen)
@@ -268,6 +274,11 @@ vector<Segment> Scorer::Read_Silkscreen(fstream &Input_File)
     return Assembly;
 }
 
+double cross1(Point o, Point a, Point b)
+{
+    return (a.x-o.x) * (b.y-o.y) - (a.y-o.y) * (b.x-o.x);
+}
+
 double cross(Point v1, Point v2) // 向量外積
 {
     return v1.x * v2.y - v1.y * v2.x;
@@ -330,6 +341,30 @@ Point operator - (Point a, Point b)
     return v;
 }
 
+Point operator + (Point a, Point b)
+{
+    Point v;
+    v.x = a.x + b.x;
+    v.y = a.y + b.y;
+    return v;
+}
+
+Point operator * (const int c, Point a)
+{
+    Point v;
+    v.x = c*a.x;
+    v.y = c*a.y;
+    return v;
+}
+
+Point operator / (Point a, const int c)
+{
+    Point v;
+    v.x = a.x/c;
+    v.y = a.y/c;
+    return v;
+}
+
 double Point_to_Arc_MinDist(Point pp, Segment Arc)
 {
     Point p1, p2, pc;
@@ -377,6 +412,116 @@ double Point_to_Arc_MinDist(Point pp, Segment Arc)
     else
         return min(dist(pp, p1), dist(pp, p2));
 }
+
+vector<Point> intersection_between_CentersLine_and_Arc(Segment Arc, Point Center) //the other arc's center
+{
+    Point centerpoint, A;
+    Point v1, v2; 
+    Point tmp;
+    vector<Point> intersect;
+    double radius;
+    double theta;
+    
+    A.x = Arc.x1;
+    A.y = Arc.y1;
+    centerpoint.x = Arc.center_x;
+    centerpoint.y = Arc.center_y;
+    radius = dist(A, centerpoint);
+
+    theta = atan2(centerpoint.y - Center.y, centerpoint.x + Center.x);
+    v1 = Center - centerpoint;
+    tmp.x = centerpoint.x + radius*cos(theta);
+    tmp.y = centerpoint.y + radius*sin(theta);
+
+    if(On_Arc(Arc, tmp))
+    {
+        intersect.push_back(tmp);
+    }
+
+    v2 = centerpoint - tmp;
+    tmp = tmp + 2*v2;
+
+    if(On_Arc(Arc, tmp))
+    {
+        intersect.push_back(tmp);
+    }
+    return intersect;
+} 
+
+Point find_arbitary_point_on_arc(Segment Arc){
+
+    Point middlepoint; //A,B中點
+    Point centerpoint, A, B;
+    Point v1, v2;
+    double radius;
+    
+    A.x = Arc.x1;
+    A.y = Arc.y1;
+    B.x = Arc.x2;
+    B.y = Arc.y2;
+    radius = dist(A,centerpoint);
+    middlepoint = (A + B) / 2;
+    centerpoint.x = Arc.center_x;
+    centerpoint.y = Arc.center_y;
+    
+    v1 = centerpoint - middlepoint;
+    v2 = B - A; 
+
+    if((cross(v2, v1) > 0 && Arc.direction == 1) || (cross(v2, v1) < 0 && Arc.direction == 0))
+        return middlepoint + (radius - dist(middlepoint,centerpoint))/dist(middlepoint,centerpoint)*(-1*v1);
+    else
+        return middlepoint + (dist(middlepoint,centerpoint) + radius)/dist(middlepoint,centerpoint)*v1;
+}
+
+bool On_Arc(Segment Arc, Point p)
+{
+    Segment AB, BC, OP;
+    Point ar_p;
+    ar_p = find_arbitary_point_on_arc(Arc);
+    AB.x1 = Arc.x1;
+    AB.y1 = Arc.y1;
+    AB.x2 = ar_p.x = BC.x1;
+    AB.y2 = ar_p.y = BC.y1;
+    BC.x2 = Arc.x2;
+    BC.y2 = Arc.y2;
+
+    OP.x1 = Arc.center_x;
+    OP.y1 = Arc.center_y;
+    OP.x2 = ar_p.x;
+    OP.y2 = ar_p.y;
+
+    if(Line_intersect(AB, OP) || Line_intersect(BC, OP))
+        return true;
+    else
+        return false;
+}
+
+bool Line_intersect(Segment S1, Segment S2)
+{
+    Point a1, a2, b1, b2;
+    a1.x = S1.x1;
+    a1.y = S1.y1;
+    a2.x = S1.x2;
+    a2.y = S1.y2;
+    b1.x = S2.x1;
+    b1.y = S2.y1;
+    b2.x = S2.x2;
+    b2.y = S2.y2;
+    double c1 = cross1(a1, a2, b1);
+    double c2 = cross1(a1, a2, b2);
+    double c3 = cross1(b1, b2, a1);
+    double c4 = cross1(b1, b2, a2);
+
+    // 端點不共線
+    if (c1 * c2 < 0 && c3 * c4 < 0) return true;
+    // 端點共線
+    /*if (c1 == 0 && Line_intersect(a1, a2, b1)) return true;
+    if (c2 == 0 && Line_intersect(a1, a2, b2)) return true;
+    if (c3 == 0 && Line_intersect(b1, b2, a1)) return true;
+    if (c4 == 0 && Line_intersect(b1, b2, a2)) return true;*/
+    return false;
+}
+
 
 /*struct boarder
 {
