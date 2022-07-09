@@ -145,6 +145,40 @@ double Scorer::first_quarter(const vector<Segment> Assembly, const vector<Segmen
     return Answer_1;
 }
 
+double Scorer::second_quarter(const vector<Segment>Assembly, const vector<Segment> silkscreen)
+{
+    Input_Output Case2;
+    vector<Segment>Assembly_push_out;
+    double Answer_2{0},total_perimeter{0};
+    //First Part 
+    //calculate the Perimeter of assembly
+    Assembly_push_out = Case2.Assembly_Buffer(Assembly,this->coppergap,this->assemblygap);
+
+    double length{0}, length_x, length_y;
+    for(size_t i=0; i < Assembly_push_out.size(); i++){
+        if(Assembly_push_out[i].is_line){
+            length_x = Assembly_push_out[i].x2-Assembly_push_out[i].x1;
+            length_y = Assembly_push_out[i].y2-Assembly_push_out[i].y1;
+            length = sqrt(length_x^2 + length_y^2);
+        }
+        else{
+            length_y = Assembly_push_out[i].center_y - Assembly_push_out[i].y1;
+            length_x = Assembly_push_out[i].center_x - Assembly_push_out[i].x1;
+            radius = sqrt(length_x*length_x + length_y*length_y);
+            length =  radius*(Assembly_push_out[i].theta_2 - Assembly_push_out[i].theta_1);
+        }
+        total_perimeter += length;
+    }
+    //read the Answer Sillscreen 
+    for(size_t i = 0; i < this->silkscreen.size(); i++){
+        
+    }
+    this->silkscreen
+    //Second_part
+
+    return Answer_2;
+}
+
 double Scorer::third_quarter(const vector<vector<Segment>> copper, const vector<Segment> silkscreen)
 {
     // Input_Output A;
