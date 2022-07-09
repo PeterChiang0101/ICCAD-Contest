@@ -7,14 +7,18 @@
 using namespace std;
 
 #define PI 3.14159265358979323846
+#define eps 1e-8
 #define INPUT_PATH "./TestingCase/test_B.txt"
 #define OUTPUT_PATH "./TestingCase/test_B_Ans.txt"
 
-double cross(Point, Point, Point);
-double dot(Point, Point, Point);
+double cross(Point, Point);
+double dot(Point, Point);
 double dis2(Point, Point);
+double dist(Point, Point);
 int dir(Point, Point, Point);
 double disMin(Point, Point, Point);
+Point operator - (Point, Point);
+double Point_to_Arc_MinDist(Point, Segment);
 
 void Scorer::open_file()
 {
@@ -264,33 +268,38 @@ vector<Segment> Scorer::Read_Silkscreen(fstream &Input_File)
     return Assembly;
 }
 
-double cross(Point A, Point B, Point P) // 向量外積
+double cross(Point v1, Point v2) // 向量外積
 {
-    Point AB = {B.x - A.x, B.y - A.y};
-    Point AP = {P.x - A.x, P.y - A.y};
-    return AB.x * AP.y - AB.y * AP.x;
+    return v1.x * v2.y - v1.y * v2.x;
 }
 
-double dot(Point A, Point B, Point P) // 向量內積
+double dot(Point v1, Point v2) // 向量內積
 {
-    Point AB = {B.x - A.x, B.y - A.y};
-    Point AP = {P.x - A.x, P.y - A.y};
-    return AB.x * AP.x + AB.y * AP.y;
+    return v1.x * v2.x + v1.y * v2.y;
 }
 
 double dis2(Point A, Point B) //點A、B距離的平方
 {
     return (A.x - B.x) * (A.x - B.x) + (A.y - B.y) * (A.y - B.y);
 }
+
+double dist(Point A, Point B) //點A、B距離
+{
+    return sqrt((A.x - B.x) * (A.x - B.x) + (A.y - B.y) * (A.y - B.y));
+}
+
 int dir(Point A, Point B, Point P) //點P與線段AB位置關係
 {
-    if (cross(A, B, P) < 0)
+    Point v1, v2;
+    v1 = B - A;
+    v2 = P - A;
+    if (cross(v1, v2) < 0)
         return -1; //逆時針
-    else if (cross(A, B, P) > 0)
+    else if (cross(v1, v2) > 0)
         return 1; //順時針
-    else if (dot(A, B, P) < 0)
+    else if (dot(v1, v2) < 0)
         return -2; //反延長線
-    else if (dot(A, B, P) >= 0 && dis2(A, B) >= dis2(A, P))
+    else if (dot(v1, v2) >= 0 && dis2(A, B) >= dis2(A, P))
     {
         if (dis2(A, B) < dis2(A, P))
             return 2; //延長線
@@ -298,6 +307,7 @@ int dir(Point A, Point B, Point P) //點P與線段AB位置關係
     }
     return -100;
 }
+
 double disMin(Point A, Point B, Point P) //點P到線段AB的最短距離
 {
     double r = ((P.x - A.x) * (B.x - A.x) + (P.y - A.y) * (B.y - A.y)) / dis2(A, B);
@@ -310,6 +320,62 @@ double disMin(Point A, Point B, Point P) //點P到線段AB的最短距離
         double AC = r * sqrt(dis2(A, B));
         return sqrt(dis2(A, P) - AC * AC);
     }
+}
+
+Point operator - (Point a, Point b)
+{
+    Point v;
+    v.x = a.x - b.x;
+    v.y = a.y - b.y;
+    return v;
+}
+
+double Point_to_Arc_MinDist(Point pp, Segment Arc)
+{
+    Point p1, p2, pc;
+    p1.x = Arc.x1;
+    p1.y = Arc.y1;
+    p2.x = Arc.x2;
+    p2.y = Arc.y2;
+    pc.x = Arc.center_x;
+    pc.y = Arc.center_y;
+
+    Point v1, v2, v3;
+    v1 = p1 - pc;
+    v2 = p2 - pc;
+    v3 = pp - pc;
+
+    
+    if (Arc.direction == 0)  //如果是順時針，把p1和p2點互換
+    {
+        Point t = p1;
+        p1 = p2;
+        p2 = t;
+    }
+    
+    double cosA = dot(v1, v2) / (dist(p1, pc) * dist(p2, pc)); //Arc cos(v1與v2的夾角)
+    if (fabs(cosA) > 1)    //if fabs(cosA)>1, then acos(cosA) error
+    {
+        if (cosA < 0) cosA += eps;
+        else cosA -= eps;
+    }
+    double maxd = acos(cosA); //v1與v2的夾角
+    if (cross(v1, v2) < 0 && fabs(cross(v1, v2)) > eps)
+        maxd = 2 * PI - maxd;
+    double cosB = dot(v1, v3) / (dist(p1, pc) * dist(pp, pc));
+    if (fabs(cosB) > 1)
+    {
+        if (cosB < 0) cosB += eps;
+        else cosB -= eps;
+    }
+    double degree = acos(cosB);   //v1與v3的夾角
+
+    if (cross(v1, v3) < 0 && fabs(cross(v1, v3)) > eps)
+        degree = 2 * PI - degree;
+    if (degree < maxd)
+        return fabs(dist(pp, pc) - dist(p1, pc));
+    else
+        return min(dist(pp, p1), dist(pp, p2));
 }
 
 /*struct boarder
