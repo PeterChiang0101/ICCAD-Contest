@@ -26,18 +26,25 @@ vector<Point> intersection_between_CentersLine_and_Arc(Segment, Point);
 bool Line_intersect(Segment , Segment);
 bool On_Arc(Segment, Point);
 
+Scorer::Scorer()
+{// the default constructor, use the defined Q_FILE and A_FILE path
+    this->Q_file.open(INPUT_PATH, ios::in);
+    this->A_file.open(OUTPUT_PATH, ios::in);
+    this->open_file();
+}
+
+Scorer::Scorer(const char *Ques_File,const char* Ans_File)
+{//modify the Q_FILE and A_FILE path
+    this->Q_file.open(Ques_File, ios::in);
+    this->A_file.open(Ans_File, ios::in);
+    this->open_file();
+}
 
 void Scorer::open_file()
-{
-    //to-do 
-    //for the "main" to specify the input file.
-
-    //add the overide of assembly and silkscreen
-    
+{ 
     Input_Output A;
-
-    Q_file.open(INPUT_PATH, ios::in);
-    A_file.open(OUTPUT_PATH, ios::in);
+    //Q_file.open(INPUT_PATH, ios::in);
+    //A_file.open(OUTPUT_PATH, ios::in);
     string assemblygap_str, coppergap_str, silkscreenlen_str;
     Q_file >> assemblygap_str >> coppergap_str >> silkscreenlen_str;
     assemblygap = A.File_to_Parameter(assemblygap_str);
@@ -46,54 +53,55 @@ void Scorer::open_file()
     assembly = A.Read_Assembly(Q_file);
     copper = A.Read_Copper(Q_file);
     silkscreen = Read_Silkscreen(A_file);
+    Assembly_push_out = A.Assembly_Buffer(this->assembly,this->coppergap, this->assemblygap);
 }
 
 // untest 2022/7/7
-double Scorer::first_quarter(const vector<Segment> Assembly, const vector<Segment> silkscreen)
+double Scorer::first_quarter()//const vector<Segment> Assembly, const vector<Segment> silkscreen)
 {
-    Input_Output A;
+    Input_Output A1;
     float Rectangular_area = 0;       // 絲印標示之座標極限值所構成之矩形面積
     float X_max, Y_max, X_min, Y_min; //絲印座標極限值
 
     float Y_area = 0; // 零件外觀向外等比拓展Y之面積範圍
-    vector<Segment> Assembly_push_out;
+    //vector<Segment> Assembly_push_out; 7/10, move to class private area.
 
     float Answer_1;
 
     /* calculate Rectangular_area */
-    X_max = silkscreen[0].x1;
-    X_min = silkscreen[0].x2;
-    Y_max = silkscreen[0].y1;
-    Y_min = silkscreen[0].y2;
+    X_max = this->silkscreen[0].x1;
+    X_min = this->silkscreen[0].x2;
+    Y_max = this->silkscreen[0].y1;
+    Y_min = this->silkscreen[0].y2;
 
-    for (int i = 0; i < silkscreen.size(); i++)
+    for (size_t i = 0; i < this->silkscreen.size(); i++)
     {
-        if (silkscreen[i].x2 > X_max)
-            X_max = silkscreen[i].x2;
-        if (silkscreen[i].x1 > X_max)
-            X_max = silkscreen[i].x1;
-        if (silkscreen[i].x2 < X_min)
-            X_min = silkscreen[i].x2;
-        if (silkscreen[i].x1 < X_min)
-            X_min = silkscreen[i].x1;
+        if (this->silkscreen[i].x2 > X_max)
+            X_max = this->silkscreen[i].x2;
+        if (this->silkscreen[i].x1 > X_max)
+            X_max = this->silkscreen[i].x1;
+        if (this->silkscreen[i].x2 < X_min)
+            X_min = this->silkscreen[i].x2;
+        if (this->silkscreen[i].x1 < X_min)
+            X_min = this->silkscreen[i].x1;
 
-        if (silkscreen[i].y2 > Y_max)
-            Y_max = silkscreen[i].y2;
-        if (silkscreen[i].y1 > Y_max)
-            Y_max = silkscreen[i].y1;
-        if (silkscreen[i].y2 < Y_min)
-            Y_min = silkscreen[i].y2;
-        if (silkscreen[i].y1 < Y_min)
-            Y_min = silkscreen[i].y1;
+        if (this->silkscreen[i].y2 > Y_max)
+            Y_max = this->silkscreen[i].y2;
+        if (this->silkscreen[i].y1 > Y_max)
+            Y_max = this->silkscreen[i].y1;
+        if (this->silkscreen[i].y2 < Y_min)
+            Y_min = this->silkscreen[i].y2;
+        if (this->silkscreen[i].y1 < Y_min)
+            Y_min = this->silkscreen[i].y1;
     }
     Rectangular_area = abs((X_max - X_min) * (Y_max - Y_min));
 
     /* calculate Y_area*/
     vector<Point> Assembly_push_out_points;
     vector<vector<Point>> Arc_Dots;
-    Assembly_push_out = A.Assembly_Buffer(Assembly, coppergap, assemblygap);
-    Assembly_push_out_points = A.Line_to_Point(Assembly_push_out);
-    Arc_Dots = A.Arc_Optimization(Assembly_push_out);
+    //this->Assembly_push_out = A.Assembly_Buffer(Assembly, coppergap, assemblygap);
+    Assembly_push_out_points = A1.Line_to_Point(Assembly_push_out);
+    Arc_Dots = A1.Arc_Optimization(Assembly_push_out);
 
     float total_area = 0;
     size_t i;
@@ -137,7 +145,7 @@ double Scorer::first_quarter(const vector<Segment> Assembly, const vector<Segmen
 
             cut_area = radius * radius * theta / 2 - sqrt(s * (s - radius) * (s - radius) * (s - c)); // last part is heron formula
 
-            outside = !A.point_in_polygon(center_of_circle, Assembly_push_out_points, Arc_Dots);
+            outside = !A1.point_in_polygon(center_of_circle, Assembly_push_out_points, Arc_Dots);
             if (outside)
                 total_area -= cut_area;
             else
@@ -153,17 +161,16 @@ double Scorer::first_quarter(const vector<Segment> Assembly, const vector<Segmen
 }
 
 //not finish verification, done on 2022/7/9
-double Scorer::second_quarter(const vector<Segment>Assembly, const vector<Segment> silkscreen)
+double Scorer::second_quarter()//const vector<Segment>Assembly, const vector<Segment> silkscreen)
 {
-    Input_Output Case2;
+    //Input_Output Case2;
     vector<Segment>Assembly_push_out;
 
     double part_1{0},part_2{0},Second_Score{0},total_perimeter{0},total_silkscreen{0};
     int assembly_line{0},assembly_arc{0},silk_line{0},silk_arc{0};
     size_t number_diff{0};
     //First Part 
-    //find the buffer of the assembly, not sure it is as same as description. 
-    Assembly_push_out = Case2.Assembly_Buffer(Assembly,this->coppergap,this->assemblygap);
+    //notice!! the buffer of the assembly, not sure it is as same as description. 
     //calculate the Perimeter of assembly
     double length{0},length_x{0}, length_y{0},radius{0};
     for(size_t i=0; i < Assembly_push_out.size(); i++){
@@ -214,7 +221,7 @@ double Scorer::second_quarter(const vector<Segment>Assembly, const vector<Segmen
 
     number_diff = (size_t)(abs((assembly_arc - silk_arc)) + abs((assembly_line - assembly_arc)));
     part_1 = (2 - (total_silkscreen / total_perimeter));
-    part_2 = (1 - (number_diff)/(Assembly.size() + this->copper.size()));
+    part_2 = (1 - (number_diff)/(this->assembly.size() + this->copper.size()));
     Second_Score = part_1*0.15 + part_2*0.10 ;
     //print the result of second quarter
     cout << "Part_1 score: " << part_1 << ',' << "Part_2 Score: " << part_2 <<endl;
@@ -223,7 +230,7 @@ double Scorer::second_quarter(const vector<Segment>Assembly, const vector<Segmen
     return Second_Score;
 }
 
-double Scorer::third_quarter(const vector<vector<Segment>> copper, const vector<Segment> silkscreen)
+double Scorer::third_quarter()//const vector<vector<Segment>> copper, const vector<Segment> silkscreen)
 {
     // Input_Output A;
     float L_copper = assemblygap;
@@ -235,49 +242,48 @@ double Scorer::third_quarter(const vector<vector<Segment>> copper, const vector<
 
     min_distance_sum = 0;
 
-    for (int i = 0; i < silkscreen.size(); i++)
+    for (size_t i = 0; i < this->silkscreen.size(); i++)
     {
-        A1.x = silkscreen[i].x1;
-        A1.y = silkscreen[i].y1;
-        A2.x = silkscreen[i].x2;
-        A2.y = silkscreen[i].y2;
-        for (int j = 0; j < copper.size(); j++)
+        A1.x = this->silkscreen[i].x1;
+        A1.y = this->silkscreen[i].y1;
+        A2.x = this->silkscreen[i].x2;
+        A2.y = this->silkscreen[i].y2;
+        for (size_t j = 0; j < this->copper.size(); j++)
         {
-            for (int k = 0; k < copper.at(j).size(); k++)
+            for (size_t k = 0; k < this->copper.at(j).size(); k++)
             {
-                B1.x = copper.at(j).at(k).x1;
-                B1.y = copper.at(j).at(k).y1;
-                B2.x = copper.at(j).at(k).x2;
-                B2.y = copper.at(j).at(k).y1;
-                if (silkscreen[i].is_line == 1 && copper.at(j).at(k).is_line == 1)
+                B1.x = this->copper.at(j).at(k).x1;
+                B1.y = this->copper.at(j).at(k).y1;
+                B2.x = this->copper.at(j).at(k).x2;
+                B2.y = this->copper.at(j).at(k).y1;
+                if (this->silkscreen[i].is_line == 1 && this->copper.at(j).at(k).is_line == 1)
                 {
                     if (dir(A1, A2, B1) * dir(A1, A2, B2) <= 0 && dir(B1, B2, A1) * dir(B1, B2, A2) <= 0) //兩線段相交, 距離為0
                         min_distance = 0;
                     else //如不相交, 最短距離為四個端點中到另一條線段距離的最小值
                         min_distance = min(min(min(disMin(A1, A2, B1), disMin(A1, A2, B2)), disMin(B1, B2, A1)), disMin(B1, B2, A2));
                 }
-                else if (silkscreen[i].is_line == 1 && copper.at(j).at(k).is_line == 0)
+                else if (this->silkscreen[i].is_line == 1 && this->copper.at(j).at(k).is_line == 0)
                 {
                 }
-                else if (silkscreen[i].is_line == 0 && copper.at(j).at(k).is_line == 1)
+                else if (this->silkscreen[i].is_line == 0 && this->copper.at(j).at(k).is_line == 1)
                 {
                 }
-                else if (silkscreen[i].is_line == 0 && copper.at(j).at(k).is_line == 0)
+                else if (this->silkscreen[i].is_line == 0 && this->copper.at(j).at(k).is_line == 0)
                 {
                 }
             }
         }
         min_distance_sum += min_distance;
     }
-    T_copper = min_distance_sum / silkscreen.size();
+    T_copper = min_distance_sum / this->silkscreen.size();
     Third_Score = (1 - (T_copper - L_copper) * 10 / L_copper) * 0.25;
     return Third_Score;
 }
 
 // 7/10 done untest
-double Scorer::fourth_quarter(const vector<Segment> Assembly, const vector<Segment> silkscreen)
+double Scorer::fourth_quarter()//const vector<Segment> Assembly, const vector<Segment> silkscreen)
 {
-    // Input_Output A;
     float L_outline = assemblygap;
     double min_distance;
     double min_tmp;
@@ -291,46 +297,46 @@ double Scorer::fourth_quarter(const vector<Segment> Assembly, const vector<Segme
     min_distance_sum = 0;
     vector<Point> A_ps, S_ps;
 
-    for (int i = 0; i < silkscreen.size(); i++)
+    for (size_t i = 0; i < this->silkscreen.size(); i++)
     {
-        A1.x = silkscreen[i].x1;
-        A1.y = silkscreen[i].y1;
-        A2.x = silkscreen[i].x2;
-        A2.y = silkscreen[i].y2;
-        circle_center_A.x = silkscreen[i].center_x;
-        circle_center_A.y = silkscreen[i].center_y;
+        A1.x = this->silkscreen[i].x1;
+        A1.y = this->silkscreen[i].y1;
+        A2.x = this->silkscreen[i].x2;
+        A2.y = this->silkscreen[i].y2;
+        circle_center_A.x = this->silkscreen[i].center_x;
+        circle_center_A.y = this->silkscreen[i].center_y;
         rA = dis2(A1, circle_center_A);
-        for (int j = 0; j < Assembly.size(); j++)
+        for (size_t j = 0; j < assembly.size(); j++)
         {
-            B1.x = Assembly[i].x1;
-            B1.y = Assembly[i].y1;
-            B2.x = Assembly[i].x2;
-            B2.y = Assembly[i].y2;
-            circle_center_B.x = Assembly[i].center_x;
-            circle_center_B.y = Assembly[i].center_y;
+            B1.x = assembly[i].x1;
+            B1.y = assembly[i].y1;
+            B2.x = assembly[i].x2;
+            B2.y = assembly[i].y2;
+            circle_center_B.x = assembly[i].center_x;
+            circle_center_B.y = assembly[i].center_y;
             rB = dis2(B1, circle_center_B);
-            if (silkscreen[i].is_line == 1 && Assembly[j].is_line == 1)
+            if (this->silkscreen[i].is_line == 1 && assembly[j].is_line == 1)
             {
                 if (dir(A1, A2, B1) * dir(A1, A2, B2) <= 0 && dir(B1, B2, A1) * dir(B1, B2, A2) <= 0) //兩線段相交, 距離為0
                     min_distance = 0;
                 else //如不相交, 最短距離為四個端點中到另一條線段距離的最小值
                     min_distance = min(min(min(disMin(A1, A2, B1), disMin(A1, A2, B2)), disMin(B1, B2, A1)), disMin(B1, B2, A2));
             }
-            else if (silkscreen[i].is_line == 1 && Assembly[j].is_line == 0)
+            else if (this->silkscreen[i].is_line == 1 && assembly[j].is_line == 0)
             {
                 min_distance = min(min(disMin(A1, A2, B1), disMin(A1, A2, B2)), (disMin(A1, A2, circle_center_B) - rB));
             }
-            else if (silkscreen[i].is_line == 0 && Assembly[j].is_line == 1)
+            else if (this->silkscreen[i].is_line == 0 && assembly[j].is_line == 1)
             {
                 min_distance = min(min(disMin(B1, B2, A1), disMin(B1, B2, A2)), (disMin(B1, B2, circle_center_A) - rA));
             }
-            else if (silkscreen[i].is_line == 0 && Assembly[j].is_line == 0)
+            else if (this->silkscreen[i].is_line == 0 && assembly[j].is_line == 0)
             {
-                S_ps = intersection_between_CentersLine_and_Arc(silkscreen[i], circle_center_B);
-                A_ps = intersection_between_CentersLine_and_Arc(Assembly[j], circle_center_A);
-                for(int i = 0; i < S_ps.size(); i++)
+                S_ps = intersection_between_CentersLine_and_Arc(this->silkscreen[i], circle_center_B);
+                A_ps = intersection_between_CentersLine_and_Arc(assembly[j], circle_center_A);
+                for(size_t i = 0; i < S_ps.size(); i++)
                 {
-                    for(int j = 0; j < A_ps.size(); j++)
+                    for(size_t j = 0; j < A_ps.size(); j++)
                     {
                         if(i == 0 && j == 0)
                             min_tmp = dist(S_ps[0], S_ps[0]);
@@ -341,12 +347,12 @@ double Scorer::fourth_quarter(const vector<Segment> Assembly, const vector<Segme
                         }
                     }
                 }
-                min_distance = min(min(min(min(Point_to_Arc_MinDist(A1, Assembly[j]), Point_to_Arc_MinDist(A2, Assembly[j])), Point_to_Arc_MinDist(B1, silkscreen[i])), Point_to_Arc_MinDist(B2, silkscreen[i])), min_tmp);
+                min_distance = min(min(min(min(Point_to_Arc_MinDist(A1, assembly[j]), Point_to_Arc_MinDist(A2, assembly[j])), Point_to_Arc_MinDist(B1, silkscreen[i])), Point_to_Arc_MinDist(B2, silkscreen[i])), min_tmp);
             }
         }
         min_distance_sum += min_distance;
     }
-    L_outline = min_distance_sum / silkscreen.size();
+    L_outline = min_distance_sum / this->silkscreen.size();
     Fourth_Score = (1 - (T_outline - L_outline) * 10 / L_outline) * 0.25;
     return Fourth_Score;
 }
@@ -622,6 +628,13 @@ bool Line_intersect(Segment S1, Segment S2)
     return false;
 }
 
+//enable "main" to modify the private data member, with cascading
+Scorer& Scorer::setAssembly(const vector<Segment> Assembly)
+{ this->assembly = Assembly; return *this;}
+Scorer& Scorer::setCopper(const vector<vector<Segment>> copper)
+{ this->copper = copper; return *this;}
+Scorer& Scorer::setSilkscreen(const vector<Segment> silkscreen)
+{ this->silkscreen = silkscreen; return *this;}
 
 /*struct boarder
 {
