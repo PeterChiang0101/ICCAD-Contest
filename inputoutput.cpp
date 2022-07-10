@@ -7,11 +7,12 @@ using namespace std;
 #define PI 3.14159265358979323846
 #define ARC_TO_LINE_SLICE_DENSITY 1 // 切片密度(in degree)
 
-struct Copper // 外擴Copper
-{
-    float x_min, x_max, y_min, y_max;
-    vector<Segment> segment;
-};
+
+////////////////Function Declaration/////////////
+float interpolate_x(float , Point, Point);
+Copper Arc_Boundary_Meas(Segment);
+Segment Arc_Boundary_Meas_for_Assembly(Segment);
+/////////////////End Function Declaration////////
 
 float Input_Output::File_to_Parameter(const string str) // 讀入參數
 {
@@ -218,6 +219,7 @@ vector<Point> Input_Output::Point_Extension(const vector<Segment> Assembly, cons
     return Extended_Points;
 }
 
+/************************* redefinition of the same function************************
 bool Input_Output::point_in_polygon(Point t, vector<Point> Assembly_Point, vector<vector<Point>> Arc_Points) // 運用射線法判斷點在圖形內外
 {
     int Assembly_size = Assembly_Point.size();
@@ -242,6 +244,7 @@ bool Input_Output::point_in_polygon(Point t, vector<Point> Assembly_Point, vecto
     }
     return c;
 }
+*/
 
 float interpolate_x(float y, Point p1, Point p2) // 待測點與圖形邊界交會的x值
 {

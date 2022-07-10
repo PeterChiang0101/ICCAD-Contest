@@ -26,6 +26,12 @@ struct Segment
     double theta_2; // 圓心到點二角度
 };
 
+struct Copper // 外擴Copper
+{
+    float x_min, x_max, y_min, y_max;
+    vector<Segment> segment;
+};
+
 struct Point
 {
     float x;
