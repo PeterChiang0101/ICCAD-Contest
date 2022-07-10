@@ -22,6 +22,7 @@ Point operator + (Point, Point);
 Point operator * (const int, Point);
 Point operator / (Point, const int);
 double Point_to_Arc_MinDist(Point, Segment);
+vector<Point> intersection_between_CentersLine_and_Arc(Segment, Point);
 bool Line_intersect(Segment , Segment);
 bool On_Arc(Segment, Point);
 
@@ -273,11 +274,13 @@ double Scorer::third_quarter(const vector<vector<Segment>> copper, const vector<
     return Third_Score;
 }
 
+// 7/10 done untest
 double Scorer::fourth_quarter(const vector<Segment> Assembly, const vector<Segment> silkscreen)
 {
     // Input_Output A;
     float L_outline = assemblygap;
     double min_distance;
+    double min_tmp;
     double min_distance_sum;
     double T_outline;
     double Fourth_Score;
@@ -286,6 +289,7 @@ double Scorer::fourth_quarter(const vector<Segment> Assembly, const vector<Segme
     double rB = 0;
     Point circle_center_A, circle_center_B;
     min_distance_sum = 0;
+    vector<Point> A_ps, S_ps;
 
     for (int i = 0; i < silkscreen.size(); i++)
     {
@@ -322,6 +326,22 @@ double Scorer::fourth_quarter(const vector<Segment> Assembly, const vector<Segme
             }
             else if (silkscreen[i].is_line == 0 && Assembly[j].is_line == 0)
             {
+                S_ps = intersection_between_CentersLine_and_Arc(silkscreen[i], circle_center_B);
+                A_ps = intersection_between_CentersLine_and_Arc(Assembly[j], circle_center_A);
+                for(int i = 0; i < S_ps.size(); i++)
+                {
+                    for(int j = 0; j < A_ps.size(); j++)
+                    {
+                        if(i == 0 && j == 0)
+                            min_tmp = dist(S_ps[0], S_ps[0]);
+                        else
+                        {
+                            if(dist(S_ps[i], S_ps[j]) < min_tmp)
+                                min_tmp = dist(S_ps[i], S_ps[j]);
+                        }
+                    }
+                }
+                min_distance = min(min(min(min(Point_to_Arc_MinDist(A1, Assembly[j]), Point_to_Arc_MinDist(A2, Assembly[j])), Point_to_Arc_MinDist(B1, silkscreen[i])), Point_to_Arc_MinDist(B2, silkscreen[i])), min_tmp);
             }
         }
         min_distance_sum += min_distance;
