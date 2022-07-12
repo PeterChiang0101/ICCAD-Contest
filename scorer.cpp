@@ -225,13 +225,13 @@ double Scorer::second_quarter() // const vector<Segment>Assembly, const vector<S
         }
     }
 
-    number_diff = (size_t)(abs((assembly_arc - silk_arc)) + abs((assembly_line - assembly_arc)));
+    number_diff = (size_t)(abs((assembly_arc - silk_arc)) + abs((assembly_line - silk_line)));
     part_1 = (2 - (total_silkscreen / total_perimeter));
     part_2 = (1 - ((double)number_diff / ((double)this->assembly.size() + (double)this->copper.size())));
     Second_Score = part_1 * 0.15 + part_2 * 0.10;
     // print the result of second quarter
     cout << "Part_1 score: " << part_1 << ',' << "Part_2 Score: " << part_2 << endl;
-    cout << "Total Score " << Second_Score << endl;
+    cout << "Total Score: " << Second_Score << endl;
 
     if (Second_Score > 0.25)
         return 0.25;
