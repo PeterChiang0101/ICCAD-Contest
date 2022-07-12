@@ -7,12 +7,12 @@ using namespace std;
 int main()
 {
      Scorer s("./TestingCase/test_A.txt", "./TestingCase/test_A_Ans.txt");
-     cout << s.first_quarter() << endl
+     cout << "first_score: " << s.first_quarter() << endl
           << endl;
-     cout << s.second_quarter() << endl
+     cout << "second_score: " << s.second_quarter() << endl
           << endl;
-     cout << s.third_quarter() << endl
+     cout << "third_score: " << s.third_quarter() << endl
           << endl;
-     cout << s.fourth_quarter() << endl;
+     cout << "fourth_score: " << s.fourth_quarter() << endl;
      return 0;
 }
