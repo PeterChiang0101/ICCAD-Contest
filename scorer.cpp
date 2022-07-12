@@ -21,6 +21,10 @@ Point operator-(Point, Point);
 Point operator+(Point, Point);
 Point operator*(const int, Point);
 Point operator/(Point, const int);
+bool operator==(Point, Point);
+bool operator!=(Point, Point);
+Point orth_Cswap(Point);
+Point orth_CCswap(Point);
 double Point_to_Arc_MinDist(Point, Segment);
 vector<Point> intersection_between_CentersLine_and_Arc(Segment, Point);
 bool Line_intersect(Segment, Segment);
@@ -292,7 +296,7 @@ double Scorer::third_quarter() // const vector<vector<Segment>> copper, const ve
 }
 
 // 7/10 done untest
-double Scorer::fourth_quarter() // const vector<Segment> Assembly, const vector<Segment> silkscreen)
+double Scorer::fourth_quarter() // const vector<Segment> assembly, const vector<Segment> silkscreen
 {
     float L_outline = assemblygap;
     double min_distance;
@@ -334,11 +338,33 @@ double Scorer::fourth_quarter() // const vector<Segment> Assembly, const vector<
             }
             else if (this->silkscreen[i].is_line == 1 && assembly[j].is_line == 0)
             {
-                min_distance = min(min(disMin(A1, A2, B1), disMin(A1, A2, B2)), (disMin(A1, A2, circle_center_B) - rB));
+                min_distance = min(disMin(A1, A2, B1), disMin(A1, A2, B2));
+
+                if(disMin(A1, A2, circle_center_B) < rB)
+                {
+                    min_distance = min(min_distance, rB - disMin(A1, A2, circle_center_B));
+                    if(dist(A1, circle_center_B) < rB)
+                        min_distance = min(min_distance, rB - dist(A1, circle_center_B));
+                    if(dist(A2, circle_center_B) < rB)
+                        min_distance = min(min_distance, rB - dist(A2, circle_center_B));
+                }
+                else if(disMin(A1, A2, circle_center_B) > rB)
+                    min_distance = min(min_distance, disMin(A1, A2, circle_center_B) - rB);
             }
             else if (this->silkscreen[i].is_line == 0 && assembly[j].is_line == 1)
             {
-                min_distance = min(min(disMin(B1, B2, A1), disMin(B1, B2, A2)), (disMin(B1, B2, circle_center_A) - rA));
+                min_distance = min(disMin(B1, B2, A1), disMin(B1, B2, A2));
+
+                if(disMin(B1, B2, circle_center_A) < rA)
+                {
+                    min_distance = min(min_distance, rA - disMin(B1, B2, circle_center_A));
+                    if(dist(B1, circle_center_A) < rA)
+                        min_distance = min(min_distance, rA - dist(B1, circle_center_A));
+                    if(dist(B2, circle_center_A) < rA)
+                        min_distance = min(min_distance, rA - dist(B2, circle_center_A));
+                }
+                else if(disMin(B1, B2, circle_center_A) > rA)
+                    min_distance = min(min_distance, disMin(B1, B2, circle_center_A) - rA);
             }
             else if (this->silkscreen[i].is_line == 0 && assembly[j].is_line == 0)
             {
@@ -349,21 +375,32 @@ double Scorer::fourth_quarter() // const vector<Segment> Assembly, const vector<
                     for (size_t j = 0; j < A_ps.size(); j++)
                     {
                         if (i == 0 && j == 0)
-                            min_tmp = dist(S_ps[0], S_ps[0]);
+                            min_tmp = dist(S_ps[0], A_ps[0]);
                         else
                         {
-                            if (dist(S_ps[i], S_ps[j]) < min_tmp)
-                                min_tmp = dist(S_ps[i], S_ps[j]);
+                            if (dist(S_ps[i], A_ps[j]) < min_tmp)
+                                min_tmp = dist(S_ps[i], A_ps[j]);
                         }
                     }
                 }
-                min_distance = min(min(min(min(Point_to_Arc_MinDist(A1, assembly[j]), Point_to_Arc_MinDist(A2, assembly[j])), Point_to_Arc_MinDist(B1, silkscreen[i])), Point_to_Arc_MinDist(B2, silkscreen[i])), min_tmp);
+                if((A1 != A2) && (B1 != B2))
+                    min_distance = min(min(min(min(Point_to_Arc_MinDist(A1, assembly[j]), Point_to_Arc_MinDist(A2, assembly[j])), Point_to_Arc_MinDist(B1, silkscreen[i])), Point_to_Arc_MinDist(B2, silkscreen[i])), min_tmp);
+                else if((A1 == A2) && (B1 != B2))
+                    min_distance = min(min(Point_to_Arc_MinDist(B1, silkscreen[i]), Point_to_Arc_MinDist(B2, silkscreen[i])), min_tmp);
+                else if((A1 != A2) && (B1 == B2))
+                    min_distance = min(min(Point_to_Arc_MinDist(A1, assembly[j]), Point_to_Arc_MinDist(A2, assembly[j])), min_tmp);
+                else if((A1 == A2) && (B1 == B2))
+                    min_distance = min_tmp;
             }
         }
         min_distance_sum += min_distance;
     }
-    L_outline = min_distance_sum / this->silkscreen.size();
+    T_outline = min_distance_sum / this->silkscreen.size();
     Fourth_Score = (1 - (T_outline - L_outline) * 10 / L_outline) * 0.25;
+
+    if(Fourth_Score < 0)
+        Fourth_Score = 0;
+
     return Fourth_Score;
 }
 
@@ -478,6 +515,38 @@ Point operator/(Point a, const int c)
     return v;
 }
 
+bool operator==(Point a, Point b)
+{
+    if(a.x == b.x && a.y == b.y)
+        return 1;
+    else
+        return 0;
+}
+
+bool operator!=(Point a, Point b)
+{
+    if(a.x == b.x && a.y == b.y)
+        return 0;
+    else
+        return 1;
+}
+
+Point orth_Cswap(Point a)
+{
+    Point v;
+    v.x = a.y * (-1);
+    v.y = a.x;
+    return v;
+}
+
+Point orth_CCswap(Point a)
+{
+    Point v;
+    v.x = a.y;
+    v.y = a.x * (-1);
+    return v;
+}
+
 double Point_to_Arc_MinDist(Point pp, Segment Arc)
 {
     Point p1, p2, pc;
@@ -583,8 +652,14 @@ Point find_arbitary_point_on_arc(Segment Arc)
 
     v1 = centerpoint - middlepoint;
     v2 = B - A;
-
-    if ((cross(v2, v1) > 0 && Arc.direction == 1) || (cross(v2, v1) < 0 && Arc.direction == 0))
+    if((A + B) / 2 == centerpoint)
+    {
+        if(Arc.direction == 0)
+            return middlepoint + orth_Cswap(v2 / 2);
+        else
+            return middlepoint + orth_CCswap(v2 / 2);
+    }
+    else if ((cross(v2, v1) > 0 && Arc.direction == 1) || (cross(v2, v1) < 0 && Arc.direction == 0))
         return middlepoint + (radius - dist(middlepoint, centerpoint)) / dist(middlepoint, centerpoint) * (-1 * v1);
     else
         return middlepoint + (dist(middlepoint, centerpoint) + radius) / dist(middlepoint, centerpoint) * v1;
@@ -597,8 +672,10 @@ bool On_Arc(Segment Arc, Point p)
     ar_p = find_arbitary_point_on_arc(Arc);
     AB.x1 = Arc.x1;
     AB.y1 = Arc.y1;
-    AB.x2 = ar_p.x = BC.x1;
-    AB.y2 = ar_p.y = BC.y1;
+    AB.x2 = ar_p.x;
+    AB.y2 = ar_p.y;
+    BC.x1 = ar_p.x;
+    BC.y1 = ar_p.y;
     BC.x2 = Arc.x2;
     BC.y2 = Arc.y2;
 
@@ -630,7 +707,7 @@ bool Line_intersect(Segment S1, Segment S2)
     double c4 = cross1(b1, b2, a2);
 
     // 端點不共線
-    if (c1 * c2 < 0 && c3 * c4 < 0)
+    if (c1 * c2 <= 0 && c3 * c4 <= 0)
         return true;
     // 端點共線
     /*if (c1 == 0 && Line_intersect(a1, a2, b1)) return true;
