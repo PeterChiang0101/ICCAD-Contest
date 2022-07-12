@@ -1,4 +1,4 @@
-//founction of inputoutput.h
+// function of inputoutput.h
 #include <bits/stdc++.h>
 #include "inputoutput.h"
 
@@ -7,9 +7,8 @@ using namespace std;
 #define PI 3.14159265358979323846
 #define ARC_TO_LINE_SLICE_DENSITY 1 // 切片密度(in degree)
 
-
 ////////////////Function Declaration/////////////
-float interpolate_x(float , Point, Point);
+float interpolate_x(float, Point, Point);
 Copper Arc_Boundary_Meas(Segment);
 Segment Arc_Boundary_Meas_for_Assembly(Segment);
 /////////////////End Function Declaration////////

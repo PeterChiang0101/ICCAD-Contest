@@ -24,11 +24,14 @@ testcase2: testing.exe
 testcase3: testing.exe
 	$(output_name) $(testcase3_dir) $(testcase3_out_dir)
 
-testing.exe:main.cpp
-	g++ -std=c++0x -Wall -o $(output_name) main.cpp
+testing.exe:test.cpp scorer.o
+	g++ -std=c++0x -Wall -o $(output_name) test.cpp scorer.o inputoutput.o
 
-scorer.o:scorer.cpp scorer.h
-	g++ -c -Wall -o scorer.o scorer.cpp
+scorer.o:scorer.cpp scorer.h 
+	g++ -c -Wall -o scorer.o scorer.cpp 
+
+inputoutput.o:inputoutput.cpp inputoutput.h
+	g++ -c -Wall -o inputoutput.o inputoutput.cpp
 
 Segment.o:Segment.cpp Segment.h
 	g++ -c -Wall -o Segment.o Segment.cpp

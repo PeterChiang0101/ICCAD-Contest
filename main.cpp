@@ -8,6 +8,8 @@
 #include <string>
 #include <vector>
 
+#include "scorer.h"
+
 using namespace std;
 
 #define Angle_Tolerance 0.1           //算角度誤差容許值 (rad)
@@ -150,6 +152,12 @@ int main(int argc, char **argv)
 
     file.open(argv[1], ios::in);
 
+    if (!file)
+    {
+        cout << "File open failed!" << endl;
+        file.open(INPUT_PATH, ios::in); // 預設讀取測試檔案
+    }
+
     // the first three line of the file, defines parameters for silkscreen
     file >> assemblygap_str >> coppergap_str >> silkscreenlen_str;
     assemblygap = File_to_Parameter(assemblygap_str);
@@ -181,12 +189,14 @@ int main(int argc, char **argv)
 
     // Write_File_Copper(whole_copper_barrier); // output for testing
 
-    // calculate the silkscreen
-    // ignore the arc first
+    Scorer a;
 
-    // arc needed to be treated manually
+    a.open_file();
 
-    // output
+    double score;
+    score = a.first_quarter() + a.second_quarter() + a.third_quarter() + a.fourth_quarter();
+
+    cout << "Score: " << score << endl;
 }
 
 float File_to_Parameter(const string str) // 讀入參數
@@ -659,6 +669,12 @@ void Write_File(const vector<vector<Segment>> Silkscreen, char **argv)
     fstream Output;
 
     Output.open(argv[2], ios::out);
+
+    if (!Output)
+    {
+        cout << "Error: Cannot open file" << endl;
+        Output.open(OUTPUT_PATH, ios::out); // 如果未指定路徑，使用預設路徑
+    }
 
     const size_t size = Silkscreen.size();
     for (size_t i = 0; i < size; i++)

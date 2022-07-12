@@ -17,34 +17,34 @@ double dis2(Point, Point);
 double dist(Point, Point);
 int dir(Point, Point, Point);
 double disMin(Point, Point, Point);
-Point operator - (Point, Point);
-Point operator + (Point, Point);
-Point operator * (const int, Point);
-Point operator / (Point, const int);
+Point operator-(Point, Point);
+Point operator+(Point, Point);
+Point operator*(const int, Point);
+Point operator/(Point, const int);
 double Point_to_Arc_MinDist(Point, Segment);
 vector<Point> intersection_between_CentersLine_and_Arc(Segment, Point);
-bool Line_intersect(Segment , Segment);
+bool Line_intersect(Segment, Segment);
 bool On_Arc(Segment, Point);
 
 Scorer::Scorer()
-{// the default constructor, use the defined Q_FILE and A_FILE path
+{ // the default constructor, use the defined Q_FILE and A_FILE path
     this->Q_file.open(INPUT_PATH, ios::in);
     this->A_file.open(OUTPUT_PATH, ios::in);
     this->open_file();
 }
 
-Scorer::Scorer(const char *Ques_File,const char* Ans_File)
-{//modify the Q_FILE and A_FILE path
+Scorer::Scorer(const char *Ques_File, const char *Ans_File)
+{ // modify the Q_FILE and A_FILE path
     this->Q_file.open(Ques_File, ios::in);
     this->A_file.open(Ans_File, ios::in);
     this->open_file();
 }
 
 void Scorer::open_file()
-{ 
+{
     Input_Output A;
-    //Q_file.open(INPUT_PATH, ios::in);
-    //A_file.open(OUTPUT_PATH, ios::in);
+    // Q_file.open(INPUT_PATH, ios::in);
+    // A_file.open(OUTPUT_PATH, ios::in);
     string assemblygap_str, coppergap_str, silkscreenlen_str;
     Q_file >> assemblygap_str >> coppergap_str >> silkscreenlen_str;
     assemblygap = A.File_to_Parameter(assemblygap_str);
@@ -53,18 +53,18 @@ void Scorer::open_file()
     assembly = A.Read_Assembly(Q_file);
     copper = A.Read_Copper(Q_file);
     silkscreen = Read_Silkscreen(A_file);
-    Assembly_push_out = A.Assembly_Buffer(this->assembly,this->coppergap, this->assemblygap);
+    Assembly_push_out = A.Assembly_Buffer(this->assembly, this->coppergap, this->assemblygap);
 }
 
 // untest 2022/7/7
-double Scorer::first_quarter()//const vector<Segment> Assembly, const vector<Segment> silkscreen)
+double Scorer::first_quarter() // const vector<Segment> Assembly, const vector<Segment> silkscreen)
 {
     Input_Output A1;
     float Rectangular_area = 0;       // 絲印標示之座標極限值所構成之矩形面積
     float X_max, Y_max, X_min, Y_min; //絲印座標極限值
 
     float Y_area = 0; // 零件外觀向外等比拓展Y之面積範圍
-    //vector<Segment> Assembly_push_out; 7/10, move to class private area.
+    // vector<Segment> Assembly_push_out; 7/10, move to class private area.
 
     float Answer_1;
 
@@ -99,7 +99,7 @@ double Scorer::first_quarter()//const vector<Segment> Assembly, const vector<Seg
     /* calculate Y_area*/
     vector<Point> Assembly_push_out_points;
     vector<vector<Point>> Arc_Dots;
-    //this->Assembly_push_out = A.Assembly_Buffer(Assembly, coppergap, assemblygap);
+    // this->Assembly_push_out = A.Assembly_Buffer(Assembly, coppergap, assemblygap);
     Assembly_push_out_points = A1.Line_to_Point(Assembly_push_out);
     Arc_Dots = A1.Arc_Optimization(Assembly_push_out);
 
@@ -156,81 +156,88 @@ double Scorer::first_quarter()//const vector<Segment> Assembly, const vector<Seg
     Answer_1 = (2 - Rectangular_area / Y_area) * 0.25;
     cout << "Rectangular_area:" << Rectangular_area << endl;
     cout << "Y_area:" << Y_area << endl;
-    cout << "Answer_1:" << Answer_1 <<endl;
+    cout << "Answer_1:" << Answer_1 << endl;
     return Answer_1;
 }
 
-//not finish verification, done on 2022/7/9
-double Scorer::second_quarter()//const vector<Segment>Assembly, const vector<Segment> silkscreen)
+// not finish verification, done on 2022/7/9
+double Scorer::second_quarter() // const vector<Segment>Assembly, const vector<Segment> silkscreen)
 {
-    //Input_Output Case2;
-    vector<Segment>Assembly_push_out;
+    // Input_Output Case2;
+    vector<Segment> Assembly_push_out;
 
-    double part_1{0},part_2{0},Second_Score{0},total_perimeter{0},total_silkscreen{0};
-    int assembly_line{0},assembly_arc{0},silk_line{0},silk_arc{0};
+    double part_1{0}, part_2{0}, Second_Score{0}, total_perimeter{0}, total_silkscreen{0};
+    int assembly_line{0}, assembly_arc{0}, silk_line{0}, silk_arc{0};
     size_t number_diff{0};
-    //First Part 
-    //notice!! the buffer of the assembly, not sure it is as same as description. 
-    //calculate the Perimeter of assembly
-    double length{0},length_x{0}, length_y{0},radius{0};
-    for(size_t i=0; i < Assembly_push_out.size(); i++){
+    // First Part
+    // notice!! the buffer of the assembly, not sure it is as same as description.
+    // calculate the Perimeter of assembly
+    double length{0}, length_x{0}, length_y{0}, radius{0};
+    for (size_t i = 0; i < this->Assembly_push_out.size(); i++)
+    {
         length = 0;
-        if(Assembly_push_out[i].is_line){
-            length_x = Assembly_push_out[i].x2-Assembly_push_out[i].x1;
-            length_y = Assembly_push_out[i].y2-Assembly_push_out[i].y1;
-            length = sqrt((length_x*length_x) + (length_y*length_y));
-            
+        if (this->Assembly_push_out[i].is_line) // line
+        {
+            length_x = this->Assembly_push_out[i].x2 - this->Assembly_push_out[i].x1;
+            length_y = this->Assembly_push_out[i].y2 - this->Assembly_push_out[i].y1;
+            length = sqrt((length_x * length_x) + (length_y * length_y));
         }
-        else{
-            length_x = Assembly_push_out[i].center_x - Assembly_push_out[i].x1;
-            length_y = Assembly_push_out[i].center_y - Assembly_push_out[i].y1;
-            radius = sqrt((length_x*length_x) + (length_y*length_y));
-            length = radius*(Assembly_push_out[i].theta_2 - Assembly_push_out[i].theta_1);
-            
+        else // arc
+        {
+            length_x = this->Assembly_push_out[i].center_x - this->Assembly_push_out[i].x1;
+            length_y = this->Assembly_push_out[i].center_y - this->Assembly_push_out[i].y1;
+            radius = hypot(length_x, length_y);
+            length = radius * (this->Assembly_push_out[i].theta_2 - this->Assembly_push_out[i].theta_1); // bad code, need to fix
         }
         total_perimeter += length;
     }
-    //read the Answer Silkscreen and count the number of Line and Arc.
-    for(size_t i = 0; i < this->silkscreen.size(); i++){
+    // read the Answer Silkscreen and count the number of Line and Arc.
+    for (size_t i = 0; i < this->silkscreen.size(); i++)
+    {
         length = 0;
-        if(this->silkscreen[i].is_line){
-            length_x = this->silkscreen[i].x2-this->silkscreen[i].x1;
-            length_y = this->silkscreen[i].y2-this->silkscreen[i].y1;
-            length = sqrt((length_x*length_x) + (length_y*length_y));
+        if (this->silkscreen[i].is_line)
+        {
+            length_x = this->silkscreen[i].x2 - this->silkscreen[i].x1;
+            length_y = this->silkscreen[i].y2 - this->silkscreen[i].y1;
+            length = sqrt((length_x * length_x) + (length_y * length_y));
             silk_line += 1;
         }
-        else{
+        else
+        {
             length_x = this->silkscreen[i].center_x - this->silkscreen[i].x1;
             length_y = this->silkscreen[i].center_y - this->silkscreen[i].y1;
-            radius = sqrt((length_x*length_x) + (length_y*length_y));
-            length =  radius*(Assembly_push_out[i].theta_2 - Assembly_push_out[i].theta_1);
+            radius = sqrt((length_x * length_x) + (length_y * length_y));
+            length = radius * (this->Assembly_push_out[i].theta_2 - this->Assembly_push_out[i].theta_1); // bad code, need to fix
             silk_arc += 1;
         }
         total_silkscreen += length;
     }
-    //Second_part
-     //count the number of assembly Line and Arc
-     for(size_t i = 0; i < this->assembly.size() ;i++){
-        if(this->assembly[i].is_line){
+    // Second_part
+    // count the number of assembly Line and Arc
+    for (size_t i = 0; i < this->assembly.size(); i++)
+    {
+        if (this->assembly[i].is_line)
+        {
             assembly_line += 1;
         }
-        else{
+        else
+        {
             assembly_arc += 1;
         }
-     }
+    }
 
     number_diff = (size_t)(abs((assembly_arc - silk_arc)) + abs((assembly_line - assembly_arc)));
     part_1 = (2 - (total_silkscreen / total_perimeter));
-    part_2 = (1 - (number_diff)/(this->assembly.size() + this->copper.size()));
-    Second_Score = part_1*0.15 + part_2*0.10 ;
-    //print the result of second quarter
-    cout << "Part_1 score: " << part_1 << ',' << "Part_2 Score: " << part_2 <<endl;
-    cout << "Total Score" << Second_Score << endl;
+    part_2 = (1 - (number_diff) / (this->assembly.size() + this->copper.size()));
+    Second_Score = part_1 * 0.15 + part_2 * 0.10;
+    // print the result of second quarter
+    cout << "Part_1 score: " << part_1 << ',' << "Part_2 Score: " << part_2 << endl;
+    cout << "Total Score " << Second_Score << endl;
 
     return Second_Score;
 }
 
-double Scorer::third_quarter()//const vector<vector<Segment>> copper, const vector<Segment> silkscreen)
+double Scorer::third_quarter() // const vector<vector<Segment>> copper, const vector<Segment> silkscreen)
 {
     // Input_Output A;
     float L_copper = assemblygap;
@@ -282,7 +289,7 @@ double Scorer::third_quarter()//const vector<vector<Segment>> copper, const vect
 }
 
 // 7/10 done untest
-double Scorer::fourth_quarter()//const vector<Segment> Assembly, const vector<Segment> silkscreen)
+double Scorer::fourth_quarter() // const vector<Segment> Assembly, const vector<Segment> silkscreen)
 {
     float L_outline = assemblygap;
     double min_distance;
@@ -334,15 +341,15 @@ double Scorer::fourth_quarter()//const vector<Segment> Assembly, const vector<Se
             {
                 S_ps = intersection_between_CentersLine_and_Arc(this->silkscreen[i], circle_center_B);
                 A_ps = intersection_between_CentersLine_and_Arc(assembly[j], circle_center_A);
-                for(size_t i = 0; i < S_ps.size(); i++)
+                for (size_t i = 0; i < S_ps.size(); i++)
                 {
-                    for(size_t j = 0; j < A_ps.size(); j++)
+                    for (size_t j = 0; j < A_ps.size(); j++)
                     {
-                        if(i == 0 && j == 0)
+                        if (i == 0 && j == 0)
                             min_tmp = dist(S_ps[0], S_ps[0]);
                         else
                         {
-                            if(dist(S_ps[i], S_ps[j]) < min_tmp)
+                            if (dist(S_ps[i], S_ps[j]) < min_tmp)
                                 min_tmp = dist(S_ps[i], S_ps[j]);
                         }
                     }
@@ -362,7 +369,7 @@ vector<Segment> Scorer::Read_Silkscreen(fstream &Input_File)
     Input_Output A;
     vector<Segment> Assembly;
     Segment part;
-    //vector<string> split_return;
+    // vector<string> split_return;
     string line;
     getline(Input_File, line);
 
@@ -379,7 +386,7 @@ vector<Segment> Scorer::Read_Silkscreen(fstream &Input_File)
 
 double cross1(Point o, Point a, Point b)
 {
-    return (a.x-o.x) * (b.y-o.y) - (a.y-o.y) * (b.x-o.x);
+    return (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
 }
 
 double cross(Point v1, Point v2) // 向量外積
@@ -444,7 +451,7 @@ Point operator-(Point a, Point b)
     return v;
 }
 
-Point operator + (Point a, Point b)
+Point operator+(Point a, Point b)
 {
     Point v;
     v.x = a.x + b.x;
@@ -452,19 +459,19 @@ Point operator + (Point a, Point b)
     return v;
 }
 
-Point operator * (const int c, Point a)
+Point operator*(const int c, Point a)
 {
     Point v;
-    v.x = c*a.x;
-    v.y = c*a.y;
+    v.x = c * a.x;
+    v.y = c * a.y;
     return v;
 }
 
-Point operator / (Point a, const int c)
+Point operator/(Point a, const int c)
 {
     Point v;
-    v.x = a.x/c;
-    v.y = a.y/c;
+    v.x = a.x / c;
+    v.y = a.y / c;
     return v;
 }
 
@@ -519,15 +526,15 @@ double Point_to_Arc_MinDist(Point pp, Segment Arc)
         return min(dist(pp, p1), dist(pp, p2));
 }
 
-vector<Point> intersection_between_CentersLine_and_Arc(Segment Arc, Point Center) //the other arc's center
+vector<Point> intersection_between_CentersLine_and_Arc(Segment Arc, Point Center) // the other arc's center
 {
     Point centerpoint, A;
-    Point v1, v2; 
+    Point v1, v2;
     Point tmp;
     vector<Point> intersect;
     double radius;
     double theta;
-    
+
     A.x = Arc.x1;
     A.y = Arc.y1;
     centerpoint.x = Arc.center_x;
@@ -536,47 +543,48 @@ vector<Point> intersection_between_CentersLine_and_Arc(Segment Arc, Point Center
 
     theta = atan2(centerpoint.y - Center.y, centerpoint.x + Center.x);
     v1 = Center - centerpoint;
-    tmp.x = centerpoint.x + radius*cos(theta);
-    tmp.y = centerpoint.y + radius*sin(theta);
+    tmp.x = centerpoint.x + radius * cos(theta);
+    tmp.y = centerpoint.y + radius * sin(theta);
 
-    if(On_Arc(Arc, tmp))
+    if (On_Arc(Arc, tmp))
     {
         intersect.push_back(tmp);
     }
 
     v2 = centerpoint - tmp;
-    tmp = tmp + 2*v2;
+    tmp = tmp + 2 * v2;
 
-    if(On_Arc(Arc, tmp))
+    if (On_Arc(Arc, tmp))
     {
         intersect.push_back(tmp);
     }
     return intersect;
-} 
+}
 
-Point find_arbitary_point_on_arc(Segment Arc){
+Point find_arbitary_point_on_arc(Segment Arc)
+{
 
-    Point middlepoint; //A,B中點
+    Point middlepoint; // A,B中點
     Point centerpoint, A, B;
     Point v1, v2;
     double radius;
-    
+
     A.x = Arc.x1;
     A.y = Arc.y1;
     B.x = Arc.x2;
     B.y = Arc.y2;
-    radius = dist(A,centerpoint);
+    radius = dist(A, centerpoint);
     middlepoint = (A + B) / 2;
     centerpoint.x = Arc.center_x;
     centerpoint.y = Arc.center_y;
-    
-    v1 = centerpoint - middlepoint;
-    v2 = B - A; 
 
-    if((cross(v2, v1) > 0 && Arc.direction == 1) || (cross(v2, v1) < 0 && Arc.direction == 0))
-        return middlepoint + (radius - dist(middlepoint,centerpoint))/dist(middlepoint,centerpoint)*(-1*v1);
+    v1 = centerpoint - middlepoint;
+    v2 = B - A;
+
+    if ((cross(v2, v1) > 0 && Arc.direction == 1) || (cross(v2, v1) < 0 && Arc.direction == 0))
+        return middlepoint + (radius - dist(middlepoint, centerpoint)) / dist(middlepoint, centerpoint) * (-1 * v1);
     else
-        return middlepoint + (dist(middlepoint,centerpoint) + radius)/dist(middlepoint,centerpoint)*v1;
+        return middlepoint + (dist(middlepoint, centerpoint) + radius) / dist(middlepoint, centerpoint) * v1;
 }
 
 bool On_Arc(Segment Arc, Point p)
@@ -596,7 +604,7 @@ bool On_Arc(Segment Arc, Point p)
     OP.x2 = ar_p.x;
     OP.y2 = ar_p.y;
 
-    if(Line_intersect(AB, OP) || Line_intersect(BC, OP))
+    if (Line_intersect(AB, OP) || Line_intersect(BC, OP))
         return true;
     else
         return false;
@@ -619,7 +627,8 @@ bool Line_intersect(Segment S1, Segment S2)
     double c4 = cross1(b1, b2, a2);
 
     // 端點不共線
-    if (c1 * c2 < 0 && c3 * c4 < 0) return true;
+    if (c1 * c2 < 0 && c3 * c4 < 0)
+        return true;
     // 端點共線
     /*if (c1 == 0 && Line_intersect(a1, a2, b1)) return true;
     if (c2 == 0 && Line_intersect(a1, a2, b2)) return true;
@@ -628,118 +637,19 @@ bool Line_intersect(Segment S1, Segment S2)
     return false;
 }
 
-//enable "main" to modify the private data member, with cascading
-Scorer& Scorer::setAssembly(const vector<Segment> Assembly)
-{ this->assembly = Assembly; return *this;}
-Scorer& Scorer::setCopper(const vector<vector<Segment>> copper)
-{ this->copper = copper; return *this;}
-Scorer& Scorer::setSilkscreen(const vector<Segment> silkscreen)
-{ this->silkscreen = silkscreen; return *this;}
-
-/*struct boarder
+// enable "main" to modify the private data member, with cascading
+Scorer &Scorer::setAssembly(const vector<Segment> Assembly)
 {
-    float x1{-100000};
-    float x2{-100000};
-    float y1{-100000};
-    float y2{-100000};
-
-    // below only for "arc", set all zero for "line"
-    float center_x{-100000}, center_y{-100000};
-    bool direction{0}; // 0 = ClockWise(CW), 1 = ConterClockwise(CCW)
-};*/
-
-/*vector<boarder> *extended_y() // to extend the assembly with length of "y"
-{
-}*/
-/*int first_quarter() // Raymond
-{
-    return 0;
+    this->assembly = Assembly;
+    return *this;
 }
-
-int second_quarter() // Willy Shius
+Scorer &Scorer::setCopper(const vector<vector<Segment>> copper)
 {
-    return 0;
+    this->copper = copper;
+    return *this;
 }
-
-int third_quarter() // peter // find nearest silkscreen for each copper and take average value
+Scorer &Scorer::setSilkscreen(const vector<Segment> silkscreen)
 {
-    return 0;
+    this->silkscreen = silkscreen;
+    return *this;
 }
-
-int fourth_quarter() // macoto //絲印標示與零件外觀之平均距離評分
-{
-    return 0;
-}
-
-int main()
-{
-    /* ----------Variable declaration---------- */
-/*int first_score, second_score, third_score, fourth_score, total_score;
-static string input_file_path = "input.txt";   // the given IC path
-static string output_file_path = "output.txt"; // silkscreen path
-float assemblygap, coppergap, silkscreenlen;   // read the input, given by input.txt()
-boarder temp_boarder;
-
-ifstream input_file, output_file;
-list<boarder> assembly;
-list<list<boarder>> copper;*/
-
-// vector<boarder> *copper = new vector<boarder>[5];     //  unused
-
-/* ------End of Variable declaration------- */
-
-/* -------------Reading files-------------- */
-
-//!!!not finished!!!
-// input_file.open(input_file_path, ios::in);
-// output_file.open(output_file_path, ios::in);
-/*@TODO
-    !!function needed!! *split the input string*
-
-
-    string temp;
-    input_file >> temp
-    if(temp == "assemblygap")
-    {
-        define assemblygap
-    }else if(temp == "coppergap"){
-        define coppergap
-    }else if(temp == "silkscreenlen"){
-        define silkscreenlen
-    }else if(temp == "assembly"){
-        switch current input object to assembly
-    }else if (temp == "copper"){
-        switch input object to copper / to next copper
-
-    }else if (temp == "line"){
-        file >> temp_boarder;
-        list current.push_back(temp_boarder);
-    }else if (temp == "arc"){
-        file >> temp_boarder;
-        list current.push_back(temp_boarder);
-
-    }else{
-        cerr << "Error!";
-    }
-
-*/
-
-/* ----------End of Reading Files---------- */
-
-/* -----------Calling Functions------------ */
-/*first_score = first_quarter();
-second_score = second_quarter();
-third_score = third_quarter();
-fourth_score = fourth_quarter();
-/* --------End of Calling Functions-------- */
-
-// total_score = first_score + second_score + third_score + fourth_score;
-
-/* --------------Score output-------------- */
-/*cout << "first_score: " << first_score << endl
-     << "second_score: " << second_score << endl
-     << "third_score: " << third_score << endl
-     << "fourth_score: " << fourth_score << endl;
-cout << "The score of this silkscreen is: " << total_score << " / 100" << endl;*/
-/* -----------End of Score output---------- */
-//}
