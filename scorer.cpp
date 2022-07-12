@@ -121,12 +121,12 @@ double Scorer::first_quarter() // const vector<Segment> Assembly, const vector<S
     bool outside;
     float radius = 0; // Law of cosines
     float c = 0;      // Law of cosines
-    double theta;     // Law of cosines
+    double theta = 0;     // Law of cosines
 
     float s; // heron formula
 
     float cut_area;
-
+    float testing_variable = 0;
     for (i = 0; i < Assembly_push_out.size(); i++)
     {
         if (!Assembly_push_out.at(i).is_line)
@@ -138,11 +138,12 @@ double Scorer::first_quarter() // const vector<Segment> Assembly, const vector<S
             point_2.x = Assembly_push_out.at(i).x2;
             point_2.y = Assembly_push_out.at(i).y2;
 
-            radius = dis2(center_of_circle, point_1);
-            c = dis2(point_1, point_2);
+            radius = sqrt(dis2(center_of_circle, point_1));
+            c = sqrt(dis2(point_1, point_2));
             s = (radius + radius + c) / 2;
-            theta = acos((2 * (radius * radius) - c * c) / (2 * radius * c)); // Law of cosines
-
+            testing_variable = (2 * (radius * radius) - c * c) / (2 * radius * radius);
+            theta = acos(testing_variable); // Law of cosines
+            
             cut_area = radius * radius * theta / 2 - sqrt(s * (s - radius) * (s - radius) * (s - c)); // last part is heron formula
 
             outside = !A1.point_in_polygon(center_of_circle, Assembly_push_out_points, Arc_Dots);
@@ -153,11 +154,11 @@ double Scorer::first_quarter() // const vector<Segment> Assembly, const vector<S
         }
     }
 
-    Answer_1 = (2 - Rectangular_area / Y_area) * 0.25;
+    Answer_1 = (2 - Rectangular_area / (total_area/2)) * 0.25;
     cout << "Rectangular_area:" << Rectangular_area << endl;
-    cout << "Y_area:" << Y_area << endl;
+    cout << "total_area:" << total_area << endl;
     cout << "Answer_1:" << Answer_1 << endl;
-    return Answer_1;
+    return (Answer_1 > 0.25)? 0.25 : Answer_1; //大於0.25只算0.25
 }
 
 // not finish verification, done on 2022/7/9
