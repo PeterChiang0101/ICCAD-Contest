@@ -6,6 +6,7 @@ BUGsss
 
 - [x] 左中絲印與銅箔計算時會發生錯誤
 - [ ] 多出多餘的絲印，右上兩線段未切割 (剩餘一圓弧)
+- [ ] debug scorer
 
 ---
 
@@ -649,6 +650,12 @@ assembly : vector<segment>, store the assembly details
 Peter
 
 ## Optimization
+
+2022/7/12
+
+debug scorer part 2
+
+Peter
 
 2022/07/05
 

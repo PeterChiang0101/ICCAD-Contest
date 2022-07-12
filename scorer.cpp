@@ -164,7 +164,6 @@ double Scorer::first_quarter() // const vector<Segment> Assembly, const vector<S
 double Scorer::second_quarter() // const vector<Segment>Assembly, const vector<Segment> silkscreen)
 {
     // Input_Output Case2;
-    vector<Segment> Assembly_push_out;
 
     double part_1{0}, part_2{0}, Second_Score{0}, total_perimeter{0}, total_silkscreen{0};
     int assembly_line{0}, assembly_arc{0}, silk_line{0}, silk_arc{0};
@@ -176,18 +175,18 @@ double Scorer::second_quarter() // const vector<Segment>Assembly, const vector<S
     for (size_t i = 0; i < this->Assembly_push_out.size(); i++)
     {
         length = 0;
-        if (this->Assembly_push_out[i].is_line) // line
+        if (Assembly_push_out[i].is_line) // line
         {
-            length_x = this->Assembly_push_out[i].x2 - this->Assembly_push_out[i].x1;
-            length_y = this->Assembly_push_out[i].y2 - this->Assembly_push_out[i].y1;
-            length = sqrt((length_x * length_x) + (length_y * length_y));
+            length_x = Assembly_push_out[i].x2 - Assembly_push_out[i].x1;
+            length_y = Assembly_push_out[i].y2 - Assembly_push_out[i].y1;
+            length = hypot(length_x, length_y);
         }
         else // arc
         {
-            length_x = this->Assembly_push_out[i].center_x - this->Assembly_push_out[i].x1;
-            length_y = this->Assembly_push_out[i].center_y - this->Assembly_push_out[i].y1;
+            length_x = Assembly_push_out[i].center_x - Assembly_push_out[i].x1;
+            length_y = Assembly_push_out[i].center_y - Assembly_push_out[i].y1;
             radius = hypot(length_x, length_y);
-            length = radius * (this->Assembly_push_out[i].theta_2 - this->Assembly_push_out[i].theta_1); // bad code, need to fix
+            length = radius * (Assembly_push_out[i].theta_2 - Assembly_push_out[i].theta_1); // bad code, need to fix
         }
         total_perimeter += length;
     }
@@ -199,15 +198,15 @@ double Scorer::second_quarter() // const vector<Segment>Assembly, const vector<S
         {
             length_x = this->silkscreen[i].x2 - this->silkscreen[i].x1;
             length_y = this->silkscreen[i].y2 - this->silkscreen[i].y1;
-            length = sqrt((length_x * length_x) + (length_y * length_y));
+            length = hypot(length_x, length_y);
             silk_line += 1;
         }
         else
         {
             length_x = this->silkscreen[i].center_x - this->silkscreen[i].x1;
             length_y = this->silkscreen[i].center_y - this->silkscreen[i].y1;
-            radius = sqrt((length_x * length_x) + (length_y * length_y));
-            length = radius * (this->Assembly_push_out[i].theta_2 - this->Assembly_push_out[i].theta_1); // bad code, need to fix
+            radius = hypot(length_x, length_y);
+            length = radius * (Assembly_push_out[i].theta_2 - Assembly_push_out[i].theta_1); // bad code, need to fix
             silk_arc += 1;
         }
         total_silkscreen += length;
@@ -228,13 +227,16 @@ double Scorer::second_quarter() // const vector<Segment>Assembly, const vector<S
 
     number_diff = (size_t)(abs((assembly_arc - silk_arc)) + abs((assembly_line - assembly_arc)));
     part_1 = (2 - (total_silkscreen / total_perimeter));
-    part_2 = (1 - (number_diff) / (this->assembly.size() + this->copper.size()));
+    part_2 = (1 - ((double)number_diff / ((double)this->assembly.size() + (double)this->copper.size())));
     Second_Score = part_1 * 0.15 + part_2 * 0.10;
     // print the result of second quarter
     cout << "Part_1 score: " << part_1 << ',' << "Part_2 Score: " << part_2 << endl;
     cout << "Total Score " << Second_Score << endl;
 
-    return Second_Score;
+    if (Second_Score > 0.25)
+        return 0.25;
+    else
+        return Second_Score;
 }
 
 double Scorer::third_quarter() // const vector<vector<Segment>> copper, const vector<Segment> silkscreen)
