@@ -11,9 +11,8 @@ using namespace std;
 #define INPUT_PATH "./TestingCase/test_B.txt"
 #define OUTPUT_PATH "./TestingCase/test_B_Ans.txt"
 
-
 //=================function declarations==========================
-double Arc_Degree(const Segment&);//calculate the Segment theta
+double Arc_Degree(const Segment &); // calculate the Segment theta
 double cross(Point, Point);
 double dot(Point, Point);
 double dis2(Point, Point);
@@ -128,7 +127,7 @@ double Scorer::first_quarter() // const vector<Segment> Assembly, const vector<S
     bool outside;
     float radius = 0; // Law of cosines
     float c = 0;      // Law of cosines
-    double theta = 0;     // Law of cosines
+    double theta = 0; // Law of cosines
 
     float s; // heron formula
 
@@ -150,7 +149,7 @@ double Scorer::first_quarter() // const vector<Segment> Assembly, const vector<S
             s = (radius + radius + c) / 2;
             testing_variable = (2 * (radius * radius) - c * c) / (2 * radius * radius);
             theta = acos(testing_variable); // Law of cosines
-            
+
             cut_area = radius * radius * theta / 2 - sqrt(s * (s - radius) * (s - radius) * (s - c)); // last part is heron formula
 
             outside = !A1.point_in_polygon(center_of_circle, Assembly_push_out_points, Arc_Dots);
@@ -161,11 +160,11 @@ double Scorer::first_quarter() // const vector<Segment> Assembly, const vector<S
         }
     }
 
-    Answer_1 = (2 - Rectangular_area / (total_area/2)) * 0.25;
+    Answer_1 = (2 - Rectangular_area / (total_area / 2)) * 0.25;
     cout << "Rectangular_area:" << Rectangular_area << endl;
     cout << "total_area:" << total_area << endl;
     cout << "Answer_1:" << Answer_1 << endl;
-    return (Answer_1 > 0.25)? 0.25 : Answer_1; //大於0.25只算0.25
+    return (Answer_1 > 0.25) ? 0.25 : Answer_1; //大於0.25只算0.25
 }
 
 // not finish verification, done on 2022/7/9
@@ -212,7 +211,7 @@ double Scorer::second_quarter() // const vector<Segment>Assembly, const vector<S
             length_x = this->silkscreen[i].center_x - this->silkscreen[i].x1;
             length_y = this->silkscreen[i].center_y - this->silkscreen[i].y1;
             radius = hypot(length_x, length_y);
-            length = radius * Arc_Degree(this->silkscreen[i]); 
+            length = radius * Arc_Degree(this->silkscreen[i]);
             silk_arc += 1;
         }
         total_silkscreen += length;
@@ -232,8 +231,8 @@ double Scorer::second_quarter() // const vector<Segment>Assembly, const vector<S
     }
 
     number_diff = (double)(abs((assembly_arc - silk_arc)) + abs((assembly_line - silk_line)));
-    part_1 = (2 - (total_silkscreen / total_perimeter));
-    part_2 = 1 - (number_diff / (double)(this->assembly.size() + this->copper.size()));
+    part_1 = ((2 - (total_silkscreen / total_perimeter)) > 1) ? 1 : (2 - (total_silkscreen / total_perimeter));
+    part_2 = (1 - (number_diff / (double)(this->assembly.size() + this->copper.size())) > 1) ? 1 : (1 - (number_diff / (double)(this->assembly.size() + this->copper.size())));
     Second_Score = part_1 * 0.15 + part_2 * 0.10;
     // print the result of second quarter
     cout << "Part_1 score: " << part_1 << ',' << "Part_2 Score: " << part_2 << endl;
@@ -245,16 +244,19 @@ double Scorer::second_quarter() // const vector<Segment>Assembly, const vector<S
         return Second_Score;
 }
 
-double Arc_Degree(const Segment& S1)
+double Arc_Degree(const Segment &S1)
 {
     double degree{0};
-    if(!S1.is_line){
+    if (!S1.is_line)
+    {
         degree = abs(S1.theta_1 - S1.theta_2);
-        if(S1.theta_1 > 0 && S1.theta_2 < 0 && S1.direction){
+        if (S1.theta_1 > 0 && S1.theta_2 < 0 && S1.direction)
+        {
             degree = 2 * PI - degree;
         }
-        else{ 
-            if(S1.theta_1 <0 && S1.theta_2 > 0 && !S1.direction)
+        else
+        {
+            if (S1.theta_1 < 0 && S1.theta_2 > 0 && !S1.direction)
                 degree = 2 * PI - degree;
         }
     }
@@ -357,30 +359,30 @@ double Scorer::fourth_quarter() // const vector<Segment> assembly, const vector<
             {
                 min_distance = min(disMin(A1, A2, B1), disMin(A1, A2, B2));
 
-                if(disMin(A1, A2, circle_center_B) < rB)
+                if (disMin(A1, A2, circle_center_B) < rB)
                 {
                     min_distance = min(min_distance, rB - disMin(A1, A2, circle_center_B));
-                    if(dist(A1, circle_center_B) < rB)
+                    if (dist(A1, circle_center_B) < rB)
                         min_distance = min(min_distance, rB - dist(A1, circle_center_B));
-                    if(dist(A2, circle_center_B) < rB)
+                    if (dist(A2, circle_center_B) < rB)
                         min_distance = min(min_distance, rB - dist(A2, circle_center_B));
                 }
-                else if(disMin(A1, A2, circle_center_B) > rB)
+                else if (disMin(A1, A2, circle_center_B) > rB)
                     min_distance = min(min_distance, disMin(A1, A2, circle_center_B) - rB);
             }
             else if (this->silkscreen[i].is_line == 0 && assembly[j].is_line == 1)
             {
                 min_distance = min(disMin(B1, B2, A1), disMin(B1, B2, A2));
 
-                if(disMin(B1, B2, circle_center_A) < rA)
+                if (disMin(B1, B2, circle_center_A) < rA)
                 {
                     min_distance = min(min_distance, rA - disMin(B1, B2, circle_center_A));
-                    if(dist(B1, circle_center_A) < rA)
+                    if (dist(B1, circle_center_A) < rA)
                         min_distance = min(min_distance, rA - dist(B1, circle_center_A));
-                    if(dist(B2, circle_center_A) < rA)
+                    if (dist(B2, circle_center_A) < rA)
                         min_distance = min(min_distance, rA - dist(B2, circle_center_A));
                 }
-                else if(disMin(B1, B2, circle_center_A) > rA)
+                else if (disMin(B1, B2, circle_center_A) > rA)
                     min_distance = min(min_distance, disMin(B1, B2, circle_center_A) - rA);
             }
             else if (this->silkscreen[i].is_line == 0 && assembly[j].is_line == 0)
@@ -400,13 +402,13 @@ double Scorer::fourth_quarter() // const vector<Segment> assembly, const vector<
                         }
                     }
                 }
-                if((A1 != A2) && (B1 != B2))
+                if ((A1 != A2) && (B1 != B2))
                     min_distance = min(min(min(min(Point_to_Arc_MinDist(A1, assembly[j]), Point_to_Arc_MinDist(A2, assembly[j])), Point_to_Arc_MinDist(B1, silkscreen[i])), Point_to_Arc_MinDist(B2, silkscreen[i])), min_tmp);
-                else if((A1 == A2) && (B1 != B2))
+                else if ((A1 == A2) && (B1 != B2))
                     min_distance = min(min(Point_to_Arc_MinDist(B1, silkscreen[i]), Point_to_Arc_MinDist(B2, silkscreen[i])), min_tmp);
-                else if((A1 != A2) && (B1 == B2))
+                else if ((A1 != A2) && (B1 == B2))
                     min_distance = min(min(Point_to_Arc_MinDist(A1, assembly[j]), Point_to_Arc_MinDist(A2, assembly[j])), min_tmp);
-                else if((A1 == A2) && (B1 == B2))
+                else if ((A1 == A2) && (B1 == B2))
                     min_distance = min_tmp;
             }
         }
@@ -415,7 +417,7 @@ double Scorer::fourth_quarter() // const vector<Segment> assembly, const vector<
     T_outline = min_distance_sum / this->silkscreen.size();
     Fourth_Score = (1 - (T_outline - L_outline) * 10 / L_outline) * 0.25;
 
-    if(Fourth_Score < 0)
+    if (Fourth_Score < 0)
         Fourth_Score = 0;
 
     return Fourth_Score;
@@ -534,7 +536,7 @@ Point operator/(Point a, const int c)
 
 bool operator==(Point a, Point b)
 {
-    if(a.x == b.x && a.y == b.y)
+    if (a.x == b.x && a.y == b.y)
         return 1;
     else
         return 0;
@@ -542,7 +544,7 @@ bool operator==(Point a, Point b)
 
 bool operator!=(Point a, Point b)
 {
-    if(a.x == b.x && a.y == b.y)
+    if (a.x == b.x && a.y == b.y)
         return 0;
     else
         return 1;
@@ -669,9 +671,9 @@ Point find_arbitary_point_on_arc(Segment Arc)
 
     v1 = centerpoint - middlepoint;
     v2 = B - A;
-    if((A + B) / 2 == centerpoint)
+    if ((A + B) / 2 == centerpoint)
     {
-        if(Arc.direction == 0)
+        if (Arc.direction == 0)
             return middlepoint + orth_Cswap(v2 / 2);
         else
             return middlepoint + orth_CCswap(v2 / 2);
