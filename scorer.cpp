@@ -11,6 +11,9 @@ using namespace std;
 #define INPUT_PATH "./TestingCase/test_B.txt"
 #define OUTPUT_PATH "./TestingCase/test_B_Ans.txt"
 
+
+//=================function declarations==========================
+double Arc_Degree(const Segment&);//calculate the Segment theta
 double cross(Point, Point);
 double dot(Point, Point);
 double dis2(Point, Point);
@@ -168,16 +171,14 @@ double Scorer::first_quarter() // const vector<Segment> Assembly, const vector<S
 // not finish verification, done on 2022/7/9
 double Scorer::second_quarter() // const vector<Segment>Assembly, const vector<Segment> silkscreen)
 {
-    // Input_Output Case2;
-
     double part_1{0}, part_2{0}, Second_Score{0}, total_perimeter{0}, total_silkscreen{0};
     int assembly_line{0}, assembly_arc{0}, silk_line{0}, silk_arc{0};
-    size_t number_diff{0};
+    double number_diff{0};
     // First Part
     // notice!! the buffer of the assembly, not sure it is as same as description.
     // calculate the Perimeter of assembly
     double length{0}, length_x{0}, length_y{0}, radius{0};
-    for (size_t i = 0; i < this->Assembly_push_out.size(); i++)
+    for (size_t i = 0; i < Assembly_push_out.size(); i++)
     {
         length = 0;
         if (Assembly_push_out[i].is_line) // line
@@ -191,7 +192,7 @@ double Scorer::second_quarter() // const vector<Segment>Assembly, const vector<S
             length_x = Assembly_push_out[i].center_x - Assembly_push_out[i].x1;
             length_y = Assembly_push_out[i].center_y - Assembly_push_out[i].y1;
             radius = hypot(length_x, length_y);
-            length = radius * (Assembly_push_out[i].theta_2 - Assembly_push_out[i].theta_1); // bad code, need to fix
+            length = radius * Arc_Degree(Assembly_push_out[i]);
         }
         total_perimeter += length;
     }
@@ -211,7 +212,7 @@ double Scorer::second_quarter() // const vector<Segment>Assembly, const vector<S
             length_x = this->silkscreen[i].center_x - this->silkscreen[i].x1;
             length_y = this->silkscreen[i].center_y - this->silkscreen[i].y1;
             radius = hypot(length_x, length_y);
-            length = radius * (Assembly_push_out[i].theta_2 - Assembly_push_out[i].theta_1); // bad code, need to fix
+            length = radius * Arc_Degree(this->silkscreen[i]); 
             silk_arc += 1;
         }
         total_silkscreen += length;
@@ -230,18 +231,34 @@ double Scorer::second_quarter() // const vector<Segment>Assembly, const vector<S
         }
     }
 
-    number_diff = (size_t)(abs((assembly_arc - silk_arc)) + abs((assembly_line - silk_line)));
+    number_diff = (double)(abs((assembly_arc - silk_arc)) + abs((assembly_line - silk_line)));
     part_1 = (2 - (total_silkscreen / total_perimeter));
-    part_2 = (1 - ((double)number_diff / ((double)this->assembly.size() + (double)this->copper.size())));
+    part_2 = 1 - (number_diff / (double)(this->assembly.size() + this->copper.size()));
     Second_Score = part_1 * 0.15 + part_2 * 0.10;
     // print the result of second quarter
     cout << "Part_1 score: " << part_1 << ',' << "Part_2 Score: " << part_2 << endl;
-    cout << "Total Score: " << Second_Score << endl;
+    cout << "Second Score: " << Second_Score << endl;
 
     if (Second_Score > 0.25)
         return 0.25;
     else
         return Second_Score;
+}
+
+double Arc_Degree(const Segment& S1)
+{
+    double degree{0};
+    if(!S1.is_line){
+        degree = abs(S1.theta_1 - S1.theta_2);
+        if(S1.theta_1 > 0 && S1.theta_2 < 0 && S1.direction){
+            degree = 2 * PI - degree;
+        }
+        else{ 
+            if(S1.theta_1 <0 && S1.theta_2 > 0 && !S1.direction)
+                degree = 2 * PI - degree;
+        }
+    }
+    return degree;
 }
 
 double Scorer::third_quarter() // const vector<vector<Segment>> copper, const vector<Segment> silkscreen)
@@ -415,7 +432,7 @@ vector<Segment> Scorer::Read_Silkscreen(fstream &Input_File)
 
     while (getline(Input_File, line))
     {
-        if (line == "assembly")
+        if (line == "silkscreen")
             continue;
         else
             part = A.String_to_Line(line);

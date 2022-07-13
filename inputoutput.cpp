@@ -121,7 +121,7 @@ Segment Input_Output::String_to_Line(string line) // 讀取時建立線段
         part.slope = (part.y2 - part.y1) / (part.x2 - part.x1);
         part.y_intercept = part.y1 - part.slope * part.x1;
         part.theta = atan2(part.y2 - part.y1, part.x2 - part.x1);
-        // theta_1 = 0 , theta_2 = 0 ???
+        part.theta_1 = 0;part.theta_2 = 0;
     }
     else if (vector_size == 8)
     {
