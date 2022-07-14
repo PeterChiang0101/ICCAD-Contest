@@ -8,7 +8,7 @@
 #include <string>
 #include <vector>
 
-#include "scorer.h"
+// #include "scorer.h"
 
 using namespace std;
 
@@ -189,14 +189,16 @@ int main(int argc, char **argv)
 
     // Write_File_Copper(whole_copper_barrier); // output for testing
 
-    Scorer a;
+    /*
+        Scorer a;
 
-    a.open_file();
+        a.open_file();
 
-    double score;
-    score = a.first_quarter() + a.second_quarter() + a.third_quarter() + a.fourth_quarter();
+        double score;
+        score = a.first_quarter() + a.second_quarter() + a.third_quarter() + a.fourth_quarter();
 
-    cout << "Score: " << score << endl;
+        cout << "Score: " << score << endl;
+    */
 }
 
 float File_to_Parameter(const string str) // 讀入參數
@@ -1642,6 +1644,10 @@ bool sort_increase_points(const Point p1, const Point p2)
     {
         return (p1.y < p2.y);
     }
+}
+
+vector<vector<Segment>> fit_boarder_condition(vector<vector<Segment>> Silkscreen, vector<Segment> Assembly)
+{
 }
 
 ///////////////////////////////////////////////////////
