@@ -266,10 +266,11 @@ double Arc_Degree(const Segment &S1)
 
 double Scorer::third_quarter() // const vector<vector<Segment>> copper, const vector<Segment> silkscreen)
 {
-    // Input_Output A;
-    float L_copper = assemblygap;
-    double min_distance;
+    float L_copper = coppergap;
+    double min_distance{0},min_dist_result{0},min_copper_distance{0};
     double min_distance_sum;
+    size_t continue_seg{0};
+    int continue_seg_count{0};
     double T_copper;
     double Third_Score;
     Point A1, A2, B1, B2; // A,B兩線段
@@ -278,6 +279,16 @@ double Scorer::third_quarter() // const vector<vector<Segment>> copper, const ve
 
     for (size_t i = 0; i < this->silkscreen.size(); i++)
     {
+        //count the continue_silkscreen
+        if(++continue_seg_count >= continue_num[continue_seg])
+        {
+            continue_seg++;
+            continue_seg_count = 0;
+        }
+        //skip the silkscreen doesn't have edge points.
+        if(continue_seg_count != 0 && continue_seg_count != 1)
+        {   continue;}
+  
         A1.x = this->silkscreen[i].x1;
         A1.y = this->silkscreen[i].y1;
         A2.x = this->silkscreen[i].x2;
@@ -289,7 +300,7 @@ double Scorer::third_quarter() // const vector<vector<Segment>> copper, const ve
                 B1.x = this->copper.at(j).at(k).x1;
                 B1.y = this->copper.at(j).at(k).y1;
                 B2.x = this->copper.at(j).at(k).x2;
-                B2.y = this->copper.at(j).at(k).y1;
+                B2.y = this->copper.at(j).at(k).y2;
                 if (this->silkscreen[i].is_line == 1 && this->copper.at(j).at(k).is_line == 1)
                 {
                     if (dir(A1, A2, B1) * dir(A1, A2, B2) <= 0 && dir(B1, B2, A1) * dir(B1, B2, A2) <= 0) //兩線段相交, 距離為0
@@ -306,13 +317,34 @@ double Scorer::third_quarter() // const vector<vector<Segment>> copper, const ve
                 else if (this->silkscreen[i].is_line == 0 && this->copper.at(j).at(k).is_line == 0)
                 {
                 }
+
+                if(k ==0)//find the smallest "min_distance"
+                {
+                    min_dist_result = min_distance ;
+                }
+                else
+                {
+                    if( min_distance < min_dist_result)
+                        {min_dist_result = min_distance;}
+                }
+            }
+            if(j == 0)//find the smallest "min_dist_result"
+            {
+                min_copper_distance = min_dist_result;
+            }
+            else
+            {
+                if(min_dist_result < min_copper_distance)
+                    {min_copper_distance = min_dist_result;}
             }
         }
-        min_distance_sum += min_distance;
+        min_distance_sum += min_copper_distance;// need to compare
     }
-    T_copper = min_distance_sum / this->silkscreen.size();
+    T_copper = min_distance_sum / (double)this->silkscreen.size();
     Third_Score = (1 - (T_copper - L_copper) * 10 / L_copper) * 0.25;
-    return Third_Score;
+    //print the score of the third_quarter
+    cout <<"T_copper: "<< T_copper <<"\nThird Score: " << Third_Score << endl;
+    return (Third_Score > 0.25) ? 0.25 : Third_Score;
 }
 
 // 7/10 done untest
@@ -509,7 +541,7 @@ vector<Segment> Scorer::Read_Silkscreen(fstream &Input_File)
     int continue_count;
     getline(Input_File, line);
 
-    while (getline(Input_File, line))
+    while (getline(Input_File, line, '\n'))//error for caseA (19 -> 20)Silkscreen
     {
         if (line == "silkscreen")
         {
