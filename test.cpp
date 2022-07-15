@@ -6,7 +6,7 @@ using namespace std;
 
 int main()
 {
-     Scorer s("./TestingCase/test_A.txt", "./TestingCase/test_A_Ans.txt");
+     Scorer s("./TestingCase/test_B.txt", "./TestingCase/test_B_Ans.txt");
      cout << "first_score: " << s.first_quarter() << endl
           << endl;
      cout << "second_score: " << s.second_quarter() << endl

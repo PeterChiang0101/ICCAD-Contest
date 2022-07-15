@@ -46,6 +46,7 @@ private:
     fstream Q_file; // 題目
     fstream A_file; // 答案
     float assemblygap, coppergap, silkscreenlen;
+    vector<int> continue_num; // 每個連續線段的線段數量
     vector<Segment> assembly;
     vector<vector<Segment>> copper;
     vector<Segment> silkscreen;
