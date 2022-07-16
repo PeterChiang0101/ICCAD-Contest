@@ -446,8 +446,10 @@ vector<Point> Point_Extension(const vector<Segment> Assembly, const bool is_asse
         double Angle_Divided = (first_angle + second_angle) / 2; //角平分線的角度
         // float Bisector_Slope = tan(Angle_Divided);               //角平分線
         double Point_Extend_Range; //點外擴距離
-        if (is_assembly)
+        if (is_assembly && second_line.is_line && first_line.is_line)
             Point_Extend_Range = assemblygap / sin(Angle_Divided - first_angle);
+        else if (is_assembly)
+            Point_Extend_Range = 1.25 * assemblygap / sin(Angle_Divided - first_angle);
         else
             Point_Extend_Range = coppergap / sin(Angle_Divided - first_angle);
         Point Extend_1, Extend_2; //交點向外延伸的兩個點
