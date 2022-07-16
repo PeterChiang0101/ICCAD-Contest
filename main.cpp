@@ -16,8 +16,8 @@ using namespace std;
 #define Subtraction_Tolerance 0.00005 // float 相減誤差容許值
 #define PI 3.14159265358979323846
 #define ARC_TO_LINE_SLICE_DENSITY 1 // 切片密度(in degree)
-#define INPUT_PATH "./TestingCase/test_C.txt"
-#define OUTPUT_PATH "./TestingCase/test_C_Ans.txt"
+#define INPUT_PATH "./TestingCase/test_A.txt"
+#define OUTPUT_PATH "./TestingCase/test_A_Ans.txt"
 // assemblygap : the minimum distance between assembly and silkscreen
 // coppergap : the minimum distance between copper and silkscreen
 // silkscreenlen : the minimum length of silkscreen
@@ -258,7 +258,7 @@ Segment String_to_Line(string line) // 讀取時建立線段
             part.center_y = stof(Splited.at(i));
             break;
         case 7:
-            part.direction = (Splited.at(i) == "CCW") ? 1 : 0;
+            part.direction = (Splited.at(i).find("CCW") != string::npos) ? 1 : 0;
             break;
         }
     }
@@ -295,9 +295,9 @@ vector<Segment> Read_Assembly(fstream &Input_File) // 讀取assembly，轉換為
 
     while (getline(Input_File, line))
     {
-        if (line[0] == 'c') // copper
-            return Assembly;
-        else if (line[1] == 's') // assembly
+        if (line[0] == 'c')
+            break;
+        else if (line[1] == 's')
             continue;
         else
         {
@@ -329,7 +329,7 @@ vector<vector<Segment>> Read_Copper(fstream &Input_File) // 讀取copper，轉�
     string line;
     while (getline(Input_File, line))
     {
-        if (line == "copper")
+        if (line[0] == 'c')
         {
             copper_pack.push_back(copper);
             copper.clear();
@@ -386,6 +386,7 @@ vector<Segment> Assembly_Buffer(const vector<Segment> Assembly)
 vector<Copper> Copper_Buffer(const vector<vector<Segment>> coppers)
 {
     int size = coppers.size();
+    cout << "copper size: " << size << endl;
     Copper Single_Copper;
     vector<Copper> Every_Copper;
     for (int i = 0; i < size; i++)
@@ -529,106 +530,108 @@ vector<Segment> Point_to_Line(vector<Point> Extended_Points, vector<Segment> Ass
 Copper Copper_Point_to_Line(vector<Point> Extended_Points, vector<Segment> copper)
 {
     size_t size = copper.size();
+    cout << "size = " << size << endl;
     Segment A_Line;
     Copper Silkscreen;
     if (!Extended_Points.empty())
     {
         Silkscreen.x_min = Silkscreen.x_max = Extended_Points.at(0).x; // initialize
         Silkscreen.y_min = Silkscreen.y_max = Extended_Points.at(0).y;
+        for (size_t i = 0; i < size; i++)
+        {
+            // calculate boundary
+            /*
+            if (!copper.at(i).is_line)
+            {
+                Arc_Boundary = Arc_Boundary_Meas(copper.at(i));
+                Silkscreen.x_min = min(Silkscreen.x_min, Arc_Boundary.x_min);
+                Silkscreen.x_max = max(Silkscreen.x_max, Arc_Boundary.x_max);
+                Silkscreen.y_min = min(Silkscreen.y_min, Arc_Boundary.y_min);
+                Silkscreen.y_max = max(Silkscreen.y_max, Arc_Boundary.y_max);
+            }
+            if (Extended_Points.at(i).x > Silkscreen.x_max)
+            {
+                Silkscreen.x_max = Extended_Points.at(i).x;
+            }
+            else if (Extended_Points.at(i).x < Silkscreen.x_min)
+            {
+                Silkscreen.x_min = Extended_Points.at(i).x;
+            }
+
+            if (Extended_Points.at(i).y > Silkscreen.y_max)
+            {
+                Silkscreen.y_max = Extended_Points.at(i).y;
+            }
+            else if (Extended_Points.at(i).y < Silkscreen.y_min)
+            {
+                Silkscreen.y_min = Extended_Points.at(i).y;
+            }
+            */
+
+            // calculate point to line
+            A_Line.is_line = (Extended_Points.at(i).Next_Arc) ? false : true;
+            A_Line.x1 = Extended_Points.at(i).x;
+            A_Line.y1 = Extended_Points.at(i).y;
+            if (i != size - 1)
+            {
+                A_Line.x2 = Extended_Points.at(i + 1).x;
+                A_Line.y2 = Extended_Points.at(i + 1).y;
+            }
+            else
+            {
+                A_Line.x2 = Extended_Points.at(0).x;
+                A_Line.y2 = Extended_Points.at(0).y;
+            }
+            if (A_Line.is_line)
+            {
+                A_Line.slope = (A_Line.y2 - A_Line.y1) / (A_Line.x2 - A_Line.x1);
+                A_Line.y_intercept = A_Line.y1 - A_Line.slope * A_Line.x1;
+                A_Line.center_x = A_Line.center_y = A_Line.direction = 0;
+            }
+            else
+            {
+                A_Line.slope = A_Line.y_intercept = A_Line.theta = 0;
+
+                A_Line.center_x = copper.at(i).center_x;
+                A_Line.center_y = copper.at(i).center_y;
+                A_Line.direction = copper.at(i).direction;
+
+                A_Line.theta_1 = atan2(A_Line.y1 - A_Line.center_y, A_Line.x1 - A_Line.center_x);
+                A_Line.theta_2 = atan2(A_Line.y2 - A_Line.center_y, A_Line.x2 - A_Line.center_x);
+            }
+            if (!A_Line.is_line) // arc
+            {
+                A_Line = Arc_Boundary_Meas_for_Assembly(A_Line);
+            }
+            else // line
+            {
+                A_Line.x_min = min(A_Line.x1, A_Line.x2);
+                A_Line.x_max = max(A_Line.x1, A_Line.x2);
+                A_Line.y_min = min(A_Line.y1, A_Line.y2);
+                A_Line.y_max = max(A_Line.y1, A_Line.y2);
+            }
+
+            if (A_Line.x_max > Silkscreen.x_max)
+            {
+                Silkscreen.x_max = A_Line.x_max;
+            }
+            if (A_Line.x_min < Silkscreen.x_min)
+            {
+                Silkscreen.x_min = A_Line.x_min;
+            }
+            if (A_Line.y_max > Silkscreen.y_max)
+            {
+                Silkscreen.y_max = A_Line.y_max;
+            }
+            if (A_Line.y_min < Silkscreen.y_min)
+            {
+                Silkscreen.y_min = A_Line.y_min;
+            }
+
+            Silkscreen.segment.push_back(A_Line);
+        }
     }
-    for (size_t i = 0; i < size; i++)
-    {
-        // calculate boundary
-        /*
-        if (!copper.at(i).is_line)
-        {
-            Arc_Boundary = Arc_Boundary_Meas(copper.at(i));
-            Silkscreen.x_min = min(Silkscreen.x_min, Arc_Boundary.x_min);
-            Silkscreen.x_max = max(Silkscreen.x_max, Arc_Boundary.x_max);
-            Silkscreen.y_min = min(Silkscreen.y_min, Arc_Boundary.y_min);
-            Silkscreen.y_max = max(Silkscreen.y_max, Arc_Boundary.y_max);
-        }
-        if (Extended_Points.at(i).x > Silkscreen.x_max)
-        {
-            Silkscreen.x_max = Extended_Points.at(i).x;
-        }
-        else if (Extended_Points.at(i).x < Silkscreen.x_min)
-        {
-            Silkscreen.x_min = Extended_Points.at(i).x;
-        }
 
-        if (Extended_Points.at(i).y > Silkscreen.y_max)
-        {
-            Silkscreen.y_max = Extended_Points.at(i).y;
-        }
-        else if (Extended_Points.at(i).y < Silkscreen.y_min)
-        {
-            Silkscreen.y_min = Extended_Points.at(i).y;
-        }
-        */
-
-        // calculate point to line
-        A_Line.is_line = (Extended_Points.at(i).Next_Arc) ? false : true;
-        A_Line.x1 = Extended_Points.at(i).x;
-        A_Line.y1 = Extended_Points.at(i).y;
-        if (i != size - 1)
-        {
-            A_Line.x2 = Extended_Points.at(i + 1).x;
-            A_Line.y2 = Extended_Points.at(i + 1).y;
-        }
-        else
-        {
-            A_Line.x2 = Extended_Points.at(0).x;
-            A_Line.y2 = Extended_Points.at(0).y;
-        }
-        if (A_Line.is_line)
-        {
-            A_Line.slope = (A_Line.y2 - A_Line.y1) / (A_Line.x2 - A_Line.x1);
-            A_Line.y_intercept = A_Line.y1 - A_Line.slope * A_Line.x1;
-            A_Line.center_x = A_Line.center_y = A_Line.direction = 0;
-        }
-        else
-        {
-            A_Line.slope = A_Line.y_intercept = A_Line.theta = 0;
-
-            A_Line.center_x = copper.at(i).center_x;
-            A_Line.center_y = copper.at(i).center_y;
-            A_Line.direction = copper.at(i).direction;
-
-            A_Line.theta_1 = atan2(A_Line.y1 - A_Line.center_y, A_Line.x1 - A_Line.center_x);
-            A_Line.theta_2 = atan2(A_Line.y2 - A_Line.center_y, A_Line.x2 - A_Line.center_x);
-        }
-        if (!A_Line.is_line) // arc
-        {
-            A_Line = Arc_Boundary_Meas_for_Assembly(A_Line);
-        }
-        else // line
-        {
-            A_Line.x_min = min(A_Line.x1, A_Line.x2);
-            A_Line.x_max = max(A_Line.x1, A_Line.x2);
-            A_Line.y_min = min(A_Line.y1, A_Line.y2);
-            A_Line.y_max = max(A_Line.y1, A_Line.y2);
-        }
-
-        if (A_Line.x_max > Silkscreen.x_max)
-        {
-            Silkscreen.x_max = A_Line.x_max;
-        }
-        if (A_Line.x_min < Silkscreen.x_min)
-        {
-            Silkscreen.x_min = A_Line.x_min;
-        }
-        if (A_Line.y_max > Silkscreen.y_max)
-        {
-            Silkscreen.y_max = A_Line.y_max;
-        }
-        if (A_Line.y_min < Silkscreen.y_min)
-        {
-            Silkscreen.y_min = A_Line.y_min;
-        }
-
-        Silkscreen.segment.push_back(A_Line);
-    }
     return Silkscreen;
 }
 
@@ -1341,6 +1344,13 @@ vector<vector<Segment>> Find_Continuous_Segment(vector<Segment> Silkscreen)
     vector<vector<Segment>> continue_segment;
     vector<Segment> continue_temp;
     size_t Silkscreen_size = Silkscreen.size();
+    cout << "Silkscreen_size = " << Silkscreen_size << endl;
+    if (Silkscreen_size == 0)
+    {
+        cout << "Error: Find_Continuous_Segment: Silkscreen is empty" << endl;
+        return continue_segment;
+    }
+
     for (size_t i = 0; i < Silkscreen_size; i++)
     {
         if (i == Silkscreen_size - 1)
