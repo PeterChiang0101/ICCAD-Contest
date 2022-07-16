@@ -139,6 +139,8 @@ bool In_Between_Lines(Point, Point, Point);
 vector<vector<Segment>> Delete_Short_Silkscreen(vector<Segment>);
 
 vector<vector<Segment>> Find_Continuous_Segment(vector<Segment>);
+
+vector<vector<Segment>> fit_boarder_condition(vector<vector<Segment>>, vector<Segment>, vector<Segment>, vector<Copper>);
 // bool Outside_of_Assembly(const Point, const vector<Segment>);
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -179,10 +181,15 @@ int main(int argc, char **argv)
     vector<Segment> Silkscreen_Cut;
 
     vector<vector<Segment>> Continuous_Silkscreen; // 連續線段在同一vector裡
+
+    vector<vector<Segment>> Boarder_Condition; // 在同一vector裡的線段是否符合邊界條件 (需要大於assembly邊界)
+
     // Write_File(silkscreen);
     Silkscreen_Cut = Final_Silkscreen(silkscreen, whole_copper_barrier);
 
-    Continuous_Silkscreen = Delete_Short_Silkscreen(Silkscreen_Cut);
+    Continuous_Silkscreen = Delete_Short_Silkscreen(Silkscreen_Cut); // 刪除短的線段
+
+    Boarder_Condition = fit_boarder_condition(Continuous_Silkscreen, silkscreen, assembly, whole_copper_barrier);
 
     Write_File(Continuous_Silkscreen, argv);
     // Write_File(Silkscreen_Cut);
@@ -293,7 +300,21 @@ vector<Segment> Read_Assembly(fstream &Input_File) // 讀取assembly，轉換為
         else if (line == "assembly")
             continue;
         else
+        {
             part = String_to_Line(line);
+            if (part.is_line)
+            {
+                part.x_min = min(part.x1, part.x2);
+                part.x_max = max(part.x1, part.x2);
+                part.y_min = min(part.y1, part.y2);
+                part.y_max = max(part.y1, part.y2);
+            }
+            else
+            {
+                part = Arc_Boundary_Meas_for_Assembly(part);
+            }
+        }
+
         Assembly.push_back(part);
     }
     return Assembly;
@@ -944,6 +965,21 @@ vector<Segment> Final_Silkscreen(vector<Segment> Silkscreen_Original, vector<Cop
             int a = 0;
         }
         Silkscreen_Cut_Part = Cut_Silkscreen_by_Copper(Silkscreen_Original.at(i), Coppers);
+        int Silkscreen_Cut_Part_Size = Silkscreen_Cut_Part.size();
+        for (int j = 0; j < Silkscreen_Cut_Part_Size; j++)
+        {
+            if (Silkscreen_Cut_Part.at(j).is_line)
+            {
+                Silkscreen_Cut_Part.at(j).x_min = min(Silkscreen_Cut_Part.at(j).x1, Silkscreen_Cut_Part.at(j).x2);
+                Silkscreen_Cut_Part.at(j).x_max = max(Silkscreen_Cut_Part.at(j).x1, Silkscreen_Cut_Part.at(j).x2);
+                Silkscreen_Cut_Part.at(j).y_min = min(Silkscreen_Cut_Part.at(j).y1, Silkscreen_Cut_Part.at(j).y2);
+                Silkscreen_Cut_Part.at(j).y_max = max(Silkscreen_Cut_Part.at(j).y1, Silkscreen_Cut_Part.at(j).y2);
+            }
+            else
+            {
+                Silkscreen_Cut_Part.at(j) = Arc_Boundary_Meas_for_Assembly(Silkscreen_Cut_Part.at(j));
+            }
+        }
         Silkscreen_Cut_Complete.insert(Silkscreen_Cut_Complete.end(), Silkscreen_Cut_Part.begin(), Silkscreen_Cut_Part.end());
     }
     return Silkscreen_Cut_Complete;
@@ -1311,7 +1347,7 @@ vector<vector<Segment>> Find_Continuous_Segment(vector<Segment> Silkscreen)
         {
             continue_temp.push_back(Silkscreen.at(i));
 
-            if ((Silkscreen.at(i).x2 == Silkscreen.at(0).x1) && (Silkscreen.at(i).y2 == Silkscreen.at(0).y1))
+            if ((Silkscreen.at(i).x2 == Silkscreen.at(0).x1) && (Silkscreen.at(i).y2 == Silkscreen.at(0).y1)) // 如果最後一條線是連接到第一條線的，則加入
             {
                 continue_temp.insert(continue_temp.end(), continue_segment.at(0).begin(), continue_segment.at(0).end());
                 continue_segment.erase(continue_segment.begin());
@@ -1646,8 +1682,165 @@ bool sort_increase_points(const Point p1, const Point p2)
     }
 }
 
-vector<vector<Segment>> fit_boarder_condition(vector<vector<Segment>> Silkscreen, vector<Segment> Assembly)
+vector<vector<Segment>> fit_boarder_condition(vector<vector<Segment>> Silkscreen, vector<Segment> Uncut_Silkscreen, vector<Segment> Assembly, vector<Copper> Copper_Expanded)
 {
+    int Assembly_size = Assembly.size();
+    int Silkscreen_size = Silkscreen.size();
+    int Silkscreen_piece_size;
+
+    float Assembly_x_min = Assembly[0].x_min;
+    float Assembly_x_max = Assembly[0].x_max;
+    float Assembly_y_min = Assembly[0].y_min;
+    float Assembly_y_max = Assembly[0].y_max;
+
+    int Uppest_Assembly_index = 0;   // assembly 最上面的線
+    int Lowest_Assembly_index = 0;   // assembly 最下面的線
+    int Leftest_Assembly_index = 0;  // assembly 最左邊的線
+    int Rightest_Assembly_index = 0; // assembly 最右邊的線
+
+    float Silkscreen_x_min = Silkscreen[0][0].x_min;
+    float Silkscreen_x_max = Silkscreen[0][0].x_max;
+    float Silkscreen_y_min = Silkscreen[0][0].y_min;
+    float Silkscreen_y_max = Silkscreen[0][0].y_max;
+
+    int Silkscreen_index_Up = 0;
+    int Silkscreen_index_Down = 0;
+    int Silkscreen_index_Left = 0;
+    int Silkscreen_index_Right = 0;
+    int Silkscreen_continuous_index_Up = 0;
+    int Silkscreen_continuous_index_Down = 0;
+    int Silkscreen_continuous_index_Left = 0;
+    int Silkscreen_continuous_index_Right = 0;
+
+    vector<vector<Segment>> Silkscreen_fit_Condition;
+
+    for (int i = 0; i < Assembly_size; i++)
+    {
+        if (Assembly[i].x_min < Assembly_x_min)
+        {
+            Assembly_x_min = Assembly[i].x_min;
+            Lowest_Assembly_index = i;
+        }
+        if (Assembly[i].x_max > Assembly_x_max)
+        {
+            Assembly_x_max = Assembly[i].x_max;
+            Uppest_Assembly_index = i;
+        }
+        if (Assembly[i].y_min < Assembly_y_min)
+        {
+            Assembly_y_min = Assembly[i].y_min;
+            Leftest_Assembly_index = i;
+        }
+        if (Assembly[i].y_max > Assembly_y_max)
+        {
+            Assembly_y_max = Assembly[i].y_max;
+            Rightest_Assembly_index = i;
+        }
+    }
+    for (int i = 0; i < Silkscreen_size; i++)
+    {
+        Silkscreen_piece_size = Silkscreen[i].size();
+        for (int j = 0; j < Silkscreen_piece_size; j++)
+        {
+            if (Silkscreen[i][j].x_min < Silkscreen_x_min)
+            {
+                Silkscreen_x_min = Silkscreen[i][j].x_min;
+                Silkscreen_index_Down = i;
+                Silkscreen_continuous_index_Down = j;
+            }
+            if (Silkscreen[i][j].x_max > Silkscreen_x_max)
+            {
+                Silkscreen_x_max = Silkscreen[i][j].x_max;
+                Silkscreen_index_Up = i;
+                Silkscreen_continuous_index_Up = j;
+            }
+            if (Silkscreen[i][j].y_min < Silkscreen_y_min)
+            {
+                Silkscreen_y_min = Silkscreen[i][j].y_min;
+                Silkscreen_index_Left = i;
+                Silkscreen_continuous_index_Left = j;
+            }
+            if (Silkscreen[i][j].y_max > Silkscreen_y_max)
+            {
+                Silkscreen_y_max = Silkscreen[i][j].y_max;
+                Silkscreen_index_Right = i;
+                Silkscreen_continuous_index_Right = j;
+            }
+        }
+    }
+
+    if (Silkscreen_x_min > Assembly_x_min) // 下方沒包住
+    {
+    }
+    else if (Silkscreen_x_max < Assembly_x_max) // 上方沒包住
+    {
+        // 找到包住 assembly 上方極值的 copper
+        // 模仿copper，在外面包一條線，並且把線段加入Silkscreen_fit_Condition
+    }
+    else if (Silkscreen_y_min > Assembly_y_min) // 左方沒包住
+    {
+    }
+    else if (Silkscreen_y_max < Assembly_y_max) // 右方沒包住
+    {
+    }
+    else // 全部包住
+    {
+        return Silkscreen;
+    }
+}
+
+vector<Segment> Add_Excess_Silkscreen_For_Boarder_Condition(vector<vector<Segment>> Silkscreen, Point extremum, vector<Copper> Copper_Expanded, int side)
+{
+    int Copper_Expanded_size = Copper_Expanded.size();
+    Segment Boarder;
+    Boarder.is_line = true;
+
+    for (int i = 0; i < Copper_Expanded_size; i++)
+    {
+        if (Copper_Expanded[i].x_min <= extremum.x && Copper_Expanded[i].x_max >= extremum.x && Copper_Expanded[i].y_min <= extremum.y && Copper_Expanded[i].y_max >= extremum.y) // 在 copper 裡面
+        {
+            switch (side)
+            {
+            case 1: // down
+            case 2: // up
+                Boarder.x1 = Boarder.x2 = extremum.x;
+                Boarder.y1 = Copper_Expanded[i].y_min - 1;
+                Boarder.y2 = Copper_Expanded[i].y_max + 1;
+                break;
+            case 3: // left
+            case 4: // right
+                Boarder.y1 = Boarder.y2 = extremum.y;
+                Boarder.x1 = Copper_Expanded[i].x_min - 1;
+                Boarder.x2 = Copper_Expanded[i].x_max + 1;
+                break;
+            }
+
+            vector<Segment> Boarder_piece; // 邊界劃過copper的線段
+            Boarder_piece = silkscreen_cut_single_copper(Boarder, Copper_Expanded[i]);
+            if (Boarder_piece.size() == 0)
+            {
+                cout << "error: Boarder_piece.size() == 0" << endl;
+                return vector<Segment>();
+            }
+
+            vector<vector<Point>> Arc_Dots;
+            vector<Point> Copper_Dots;
+            Arc_Dots = Arc_Optimization(Copper_Expanded[i].segment);
+            Copper_Dots = Line_to_Point(Copper_Expanded[i].segment);
+            for (int j = 0; j < Silkscreen.size(); j++)
+            {
+                for (int k = 0; k < Silkscreen[j].size(); k++)
+                {
+                    Point temp;
+                    temp.x = Silkscreen[j][k].x1;
+                    temp.y = Silkscreen[j][k].y1;
+                    if (point_in_polygon(temp, Copper_Dots, Arc_Dots) == true) // 點在 copper 裡面
+                    {
+                    }
+                }
+            }
+        }
+    }
 }
 
 ///////////////////////////////////////////////////////

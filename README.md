@@ -206,6 +206,12 @@ int main(); // 主程式
 
 ## Algorithms
 
+2022/7/16
+
+working on boarder condition
+
+Peter
+
 2022/7/4
 
 add Arc features for Sorting, still not finished.
