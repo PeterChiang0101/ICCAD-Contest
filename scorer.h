@@ -37,6 +37,7 @@ public:
     double second_quarter();//const vector<Segment>, const vector<Segment>);
     double third_quarter();//const vector<vector<Segment>>, const vector<Segment>);
     double fourth_quarter();//const vector<Segment>, const vector<Segment>);
+    double Total_score();
     Scorer& setAssembly(const vector<Segment>);
     Scorer& setCopper(const vector<vector<Segment>>);
     Scorer& setSilkscreen(const vector<Segment>);
