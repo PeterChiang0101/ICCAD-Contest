@@ -302,6 +302,10 @@ double Scorer::third_quarter() //const vector<vector<Segment>> copper, const vec
                 B1.y = this->copper.at(j).at(k).y1;
                 B2.x = this->copper.at(j).at(k).x2;
                 B2.y = this->copper.at(j).at(k).y2;
+
+                if (dir(A1, A2, B1) * dir(A1, A2, B2) <= 0 && dir(B1, B2, A1) * dir(B1, B2, A2) <= 0) //兩線段相交, 距離為0
+                        min_distance = 0;
+
                 if (this->silkscreen[i].is_line == 1 && this->copper.at(j).at(k).is_line == 1)
                 {
                     if (dir(A1, A2, B1) * dir(A1, A2, B2) <= 0 && dir(B1, B2, A1) * dir(B1, B2, A2) <= 0) //兩線段相交, 距離為0
@@ -311,6 +315,7 @@ double Scorer::third_quarter() //const vector<vector<Segment>> copper, const vec
                 }
                 else if (this->silkscreen[i].is_line == 1 && this->copper.at(j).at(k).is_line == 0)
                 {
+                    
                 }
                 else if (this->silkscreen[i].is_line == 0 && this->copper.at(j).at(k).is_line == 1)
                 {
@@ -353,7 +358,7 @@ double Scorer::third_quarter() //const vector<vector<Segment>> copper, const vec
         }
         
     }
-    T_copper = min_distance_sum / (double)this->silkscreen.size();
+    T_copper = min_distance_sum / (double)this->continue_num.size();
     Third_Score = (1 - (T_copper - L_copper) * 10 / L_copper) * 0.25;
     //print the score of the third_quarter
     cout <<"T_copper: "<< T_copper <<"\nThird Score: " << Third_Score << endl;
