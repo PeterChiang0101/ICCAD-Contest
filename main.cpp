@@ -162,9 +162,9 @@ int main(int argc, char **argv)
 
     // the first three line of the file, defines parameters for silkscreen
     file >> assemblygap_str >> coppergap_str >> silkscreenlen_str;
-    assemblygap = File_to_Parameter(assemblygap_str);
-    coppergap = File_to_Parameter(coppergap_str);
-    silkscreenlen = File_to_Parameter(silkscreenlen_str);
+    assemblygap = File_to_Parameter(assemblygap_str) * 1.0005; // 加上一點防止計算誤差
+    coppergap = File_to_Parameter(coppergap_str) * 1.0005;
+    silkscreenlen = File_to_Parameter(silkscreenlen_str) * 1.0005;
 
     vector<Segment> assembly;
     vector<vector<Segment>> copper;
@@ -386,7 +386,6 @@ vector<Segment> Assembly_Buffer(const vector<Segment> Assembly)
 vector<Copper> Copper_Buffer(const vector<vector<Segment>> coppers)
 {
     int size = coppers.size();
-    cout << "copper size: " << size << endl;
     Copper Single_Copper;
     vector<Copper> Every_Copper;
     for (int i = 0; i < size; i++)
@@ -530,7 +529,6 @@ vector<Segment> Point_to_Line(vector<Point> Extended_Points, vector<Segment> Ass
 Copper Copper_Point_to_Line(vector<Point> Extended_Points, vector<Segment> copper)
 {
     size_t size = copper.size();
-    cout << "size = " << size << endl;
     Segment A_Line;
     Copper Silkscreen;
     if (!Extended_Points.empty())
@@ -1344,7 +1342,6 @@ vector<vector<Segment>> Find_Continuous_Segment(vector<Segment> Silkscreen)
     vector<vector<Segment>> continue_segment;
     vector<Segment> continue_temp;
     size_t Silkscreen_size = Silkscreen.size();
-    cout << "Silkscreen_size = " << Silkscreen_size << endl;
     if (Silkscreen_size == 0)
     {
         cout << "Error: Find_Continuous_Segment: Silkscreen is empty" << endl;
