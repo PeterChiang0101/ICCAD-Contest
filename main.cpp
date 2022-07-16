@@ -295,9 +295,9 @@ vector<Segment> Read_Assembly(fstream &Input_File) // 讀取assembly，轉換為
 
     while (getline(Input_File, line))
     {
-        if (line == "copper")
+        if (line[0] == 'c') // copper
             return Assembly;
-        else if (line == "assembly")
+        else if (line[1] == 's') // assembly
             continue;
         else
         {
