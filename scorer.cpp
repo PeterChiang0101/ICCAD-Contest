@@ -264,16 +264,17 @@ double Arc_Degree(const Segment &S1)
     return degree;
 }
 
-double Scorer::third_quarter() // const vector<vector<Segment>> copper, const vector<Segment> silkscreen)
+double Scorer::third_quarter() //const vector<vector<Segment>> copper, const vector<Segment> silkscreen)
 {
     float L_copper = coppergap;
-    double min_distance{0},min_dist_result{0},min_copper_distance{0};
+    double min_distance{0},min_dist_result{0},min_copper_distance{0},min_copper_temp{0};
     double min_distance_sum;
     size_t continue_seg{0};
     int continue_seg_count{0};
     double T_copper;
     double Third_Score;
     Point A1, A2, B1, B2; // A,B兩線段
+    bool min_copper_used = false;
 
     min_distance_sum = 0;
 
@@ -338,7 +339,19 @@ double Scorer::third_quarter() // const vector<vector<Segment>> copper, const ve
                     {min_copper_distance = min_dist_result;}
             }
         }
-        min_distance_sum += min_copper_distance;// need to compare
+        if(continue_seg_count == 0)//the end of the continuous segment
+        {   //compare the distance of the begin and end.
+            if(min_copper_used && (min_copper_temp < min_copper_distance))
+            {    min_distance_sum += min_copper_temp;}
+            else 
+            {    min_distance_sum += min_copper_distance;}
+        }
+        else
+        {
+            min_copper_temp = min_copper_distance;
+            min_copper_used = true;
+        }
+        
     }
     T_copper = min_distance_sum / (double)this->silkscreen.size();
     Third_Score = (1 - (T_copper - L_copper) * 10 / L_copper) * 0.25;
@@ -534,30 +547,27 @@ double Scorer::fourth_quarter() // const vector<Segment> assembly, const vector<
 vector<Segment> Scorer::Read_Silkscreen(fstream &Input_File)
 {
     Input_Output A;
-    vector<Segment> Assembly;
+    vector<Segment> Silkscreen;
     Segment part;
-    // vector<string> split_return;
     string line;
     int continue_count;
-    getline(Input_File, line);
 
-    while (getline(Input_File, line, '\n'))//error for caseA (19 -> 20)Silkscreen
+    while (getline(Input_File, line))
     {
         if (line == "silkscreen")
         {
-            continue_num.push_back(continue_count);
             continue_count = 0;
+            continue_num.push_back(continue_count);
             continue;
         }
-        else{
+        else if(line != "")
+        {
             part = A.String_to_Line(line);
-            continue_count++;
+            continue_num.back() = (++continue_count);
+            Silkscreen.push_back(part);
         }
-        
-        Assembly.push_back(part);
     }
-    continue_num.push_back(continue_count);
-    return Assembly;
+    return Silkscreen;
 }
 
 double cross1(Point o, Point a, Point b)
