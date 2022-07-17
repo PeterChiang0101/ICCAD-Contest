@@ -160,8 +160,8 @@ double Scorer::first_quarter() // const vector<Segment> Assembly, const vector<S
                 total_area += cut_area;
         }
     }
-
-    Answer_1 = (2 - Rectangular_area / (total_area / 2)) * 0.25;
+    total_area /= 2; //修正項
+    Answer_1 = (2 - Rectangular_area / (total_area)) * 0.25;
     cout << "First Score:" << Answer_1 << endl
          << endl;
     cout << "Rectangular_area:" << Rectangular_area << endl;
