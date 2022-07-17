@@ -404,8 +404,6 @@ vector<Point> Point_Extension(const vector<Segment> Assembly, const bool is_asse
     vector<vector<Point>> Arc_Dots;
     vector<Segment> Silkscreen;
 
-    float arc_radius = 0;
-
     Assembly_Points = Line_to_Point(Assembly); //線切割為點
     Arc_Dots = Arc_Optimization(Assembly);     // 將圓弧切割成多個點，以利辨識點在圖形內外
     if (size == 1)                             // i think only happened in copper, eg: a full circle
@@ -448,58 +446,28 @@ vector<Point> Point_Extension(const vector<Segment> Assembly, const bool is_asse
         double Angle_Divided = (first_angle + second_angle) / 2; //角平分線的角度
         // float Bisector_Slope = tan(Angle_Divided);               //角平分線
         double Point_Extend_Range; //點外擴距離
+        if (is_assembly)
+            Point_Extend_Range = assemblygap / sin(Angle_Divided - first_angle);
+        else
+            Point_Extend_Range = coppergap / sin(Angle_Divided - first_angle);
+        Point Extend_1, Extend_2; //交點向外延伸的兩個點
+        bool Outside_1, Outside_2;
+        Extend_1.x = Assembly_Points.at(j).x + Point_Extend_Range * cos(Angle_Divided);
+        Extend_1.y = Assembly_Points.at(j).y + Point_Extend_Range * sin(Angle_Divided);
+        Extend_2.x = Assembly_Points.at(j).x - Point_Extend_Range * cos(Angle_Divided);
+        Extend_2.y = Assembly_Points.at(j).y - Point_Extend_Range * sin(Angle_Divided);
 
-        if (second_line.is_line && first_line.is_line)
-        {
-            if (is_assembly && second_line.is_line && first_line.is_line)
-                Point_Extend_Range = assemblygap / sin(Angle_Divided - first_angle);
-            else if (is_assembly)
-                Point_Extend_Range = 1.25 * assemblygap / sin(Angle_Divided - first_angle);
-            else
-                Point_Extend_Range = coppergap / sin(Angle_Divided - first_angle);
-            Point Extend_1, Extend_2; //交點向外延伸的兩個點
-            bool Outside_1, Outside_2;
-            Extend_1.x = Assembly_Points.at(j).x + Point_Extend_Range * cos(Angle_Divided);
-            Extend_1.y = Assembly_Points.at(j).y + Point_Extend_Range * sin(Angle_Divided);
-            Extend_2.x = Assembly_Points.at(j).x - Point_Extend_Range * cos(Angle_Divided);
-            Extend_2.y = Assembly_Points.at(j).y - Point_Extend_Range * sin(Angle_Divided);
+        Extend_1.Next_Arc = Assembly_Points.at(j).Next_Arc;
+        Extend_2.Next_Arc = Assembly_Points.at(j).Next_Arc;
 
-            Extend_1.Next_Arc = Assembly_Points.at(j).Next_Arc;
-            Extend_2.Next_Arc = Assembly_Points.at(j).Next_Arc;
+        //點是否在圖型外
+        Outside_1 = !point_in_polygon(Extend_1, Assembly_Points, Arc_Dots); // true for outside, false for inside
+        Outside_2 = !point_in_polygon(Extend_2, Assembly_Points, Arc_Dots);
 
-            //點是否在圖型外
-            Outside_1 = !point_in_polygon(Extend_1, Assembly_Points, Arc_Dots); // true for outside, false for inside
-            Outside_2 = !point_in_polygon(Extend_2, Assembly_Points, Arc_Dots);
-
-            if (Outside_1 && !Outside_2) // 1 is outside, 2 is inside
-                Extended_Points.push_back(Extend_1);
-            else if (Outside_2 && !Outside_1) // 2 is outside, 1 is inside
-                Extended_Points.push_back(Extend_2);
-        }
-        else if (first_line.is_line && !second_line.is_line)
-        {
-            // 未處理第一條線為arc的情況
-            Segment buffer_circle; // 外擴圓弧所在的圓
-            buffer_circle.center_x = second_line.center_x;
-            buffer_circle.center_y = second_line.center_y;
-            float radius = hypot(second_line.x1 - second_line.center_x, second_line.y1 - second_line.center_y);
-
-            Point temp;
-            temp.x = buffer_circle.center_x;
-            temp.y = buffer_circle.center_y;
-            bool concave = !point_in_polygon(temp, Assembly_Points, Arc_Dots); // 圓弧是否凹陷
-
-            if (concave)
-            {
-                buffer_circle.x1 = buffer_circle.x2 = second_line.center_x + (1 - assemblygap / radius) * (second_line.x1 - second_line.center_x);
-                buffer_circle.y1 = buffer_circle.y2 = second_line.center_y + (1 - assemblygap / radius) * (second_line.y1 - second_line.center_y);
-            }
-            else
-            {
-                buffer_circle.x1 = buffer_circle.x2 = second_line.center_x + (1 + assemblygap / radius) * (second_line.x1 - second_line.center_x);
-                buffer_circle.y1 = buffer_circle.y2 = second_line.center_y + (1 + assemblygap / radius) * (second_line.y1 - second_line.center_y);
-            }
-        }
+        if (Outside_1 && !Outside_2) // 1 is outside, 2 is inside
+            Extended_Points.push_back(Extend_1);
+        else if (Outside_2 && !Outside_1) // 2 is outside, 1 is inside
+            Extended_Points.push_back(Extend_2);
     }
     return Extended_Points;
 }
