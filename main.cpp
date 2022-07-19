@@ -80,6 +80,10 @@ vector<Copper> Copper_Buffer(const vector<vector<Segment>>);
 
 vector<Point> Point_Extension(const vector<Segment>, const bool);
 
+vector<Point> Arc_Point_Tuning(const vector<Segment>, const bool, vector<Point>);
+
+Point first_intersection_between_line_and_arc_for_arc_tuning(Segment, Point, Point);
+
 vector<Segment> Point_to_Line(vector<Point>, vector<Segment>);
 
 Copper Copper_Point_to_Line(vector<Point>, vector<Segment>);
@@ -125,6 +129,8 @@ Copper Arc_Boundary_Meas(Segment);
 Segment Arc_Boundary_Meas_for_Assembly(Segment);
 
 float cross(Point, Point);
+
+float dot(Point, Point);
 
 Point intersection(Point, Point, Point, Point);
 
@@ -469,7 +475,197 @@ vector<Point> Point_Extension(const vector<Segment> Assembly, const bool is_asse
         else if (Outside_2 && !Outside_1) // 2 is outside, 1 is inside
             Extended_Points.push_back(Extend_2);
     }
+    Extended_Points = Arc_Point_Tuning(Assembly, is_assembly, Extended_Points); // 圖形外擴點調整
     return Extended_Points;
+}
+
+vector<Point> Arc_Point_Tuning(const vector<Segment> Assembly, const bool is_assembly, vector<Point> Extended_Points) // 圓與直線外擴距離不對，需用此函數修正
+{
+    const size_t size = Extended_Points.size();
+
+    Segment first_line, second_line;
+
+    float silkscreen_assembly_gap;
+    float radius;
+    float radius_silkscreen;
+
+    bool concave; // true for concave, false for convex
+
+    Segment Pushout_Circle;
+
+    Point first_point, second_point;
+
+    Point Intersection_Points;
+
+    if (is_assembly)
+        for (size_t i = 0; i < size; i++)
+        {
+            if (i == 0)
+                first_line = Assembly.at(size - 1);
+            else
+                first_line = Assembly.at(i - 1);
+            second_line = Assembly.at(i);
+
+            if (!first_line.is_line && second_line.is_line) // 第一個是圓弧 第二個是線段
+            {
+                radius = hypot(first_line.x2 - first_line.center_x, first_line.y2 - first_line.center_y);
+                radius_silkscreen = hypot(Extended_Points.at(i).x - first_line.center_x, Extended_Points.at(i).y - first_line.center_y);
+                if (radius_silkscreen > radius)
+                    concave = false; // 凸
+                else
+                    concave = true; // 凹
+                Pushout_Circle.center_x = first_line.center_x;
+                Pushout_Circle.center_y = first_line.center_y;
+                Pushout_Circle.direction = first_line.direction;
+                Pushout_Circle.theta_1 = first_line.theta_1;
+                Pushout_Circle.theta_2 = first_line.theta_1;
+
+                first_point.x = Extended_Points.at(i).x;
+                first_point.y = Extended_Points.at(i).y;
+                if (i != size - 1)
+                {
+                    second_point.x = Extended_Points.at(i + 1).x;
+                    second_point.y = Extended_Points.at(i + 1).y;
+                }
+                else
+                {
+                    second_point.x = Extended_Points.at(0).x;
+                    second_point.y = Extended_Points.at(0).y;
+                }
+
+                if (concave)
+                {
+                    Pushout_Circle.x1 = Pushout_Circle.x2 = first_line.center_x + (1 - assemblygap / radius) * (first_line.x2 - first_line.center_x);
+                    Pushout_Circle.y1 = Pushout_Circle.y2 = first_line.center_y + (1 - assemblygap / radius) * (first_line.y2 - first_line.center_y);
+                }
+                else
+                {
+                    Pushout_Circle.x1 = Pushout_Circle.x2 = first_line.center_x + (1 + assemblygap / radius) * (first_line.x2 - first_line.center_x);
+                    Pushout_Circle.y1 = Pushout_Circle.y2 = first_line.center_y + (1 + assemblygap / radius) * (first_line.y2 - first_line.center_y);
+                }
+
+                Intersection_Points = first_intersection_between_line_and_arc_for_arc_tuning(Pushout_Circle, first_point, second_point);
+
+                Extended_Points.at(i).x = Intersection_Points.x;
+                Extended_Points.at(i).y = Intersection_Points.y;
+            }
+            if (first_line.is_line && !second_line.is_line) // 第一個是線段 第二個是圓弧
+            {
+                radius = hypot(second_line.x1 - second_line.center_x, second_line.y1 - second_line.center_y);
+                radius_silkscreen = hypot(second_line.x1 - second_line.center_x, second_line.y1 - second_line.center_y);
+                if (radius_silkscreen > radius)
+                    concave = false; // 凸
+                else
+                    concave = true; // 凹
+                Pushout_Circle.center_x = second_line.center_x;
+                Pushout_Circle.center_y = second_line.center_y;
+                Pushout_Circle.direction = second_line.direction;
+                Pushout_Circle.theta_1 = second_line.theta_1;
+                Pushout_Circle.theta_2 = second_line.theta_1;
+
+                if (i != 0)
+                {
+                    first_point.x = Extended_Points.at(i - 1).x;
+                    first_point.y = Extended_Points.at(i - 1).y;
+                }
+                else
+                {
+                    first_point.x = Extended_Points.at(size - 1).x;
+                    first_point.y = Extended_Points.at(size - 1).y;
+                }
+                second_point.x = Extended_Points.at(i).x;
+                second_point.y = Extended_Points.at(i).y;
+
+                if (concave)
+                {
+                    Pushout_Circle.x1 = Pushout_Circle.x2 = second_line.center_x + (1 - assemblygap / radius) * (second_line.x1 - second_line.center_x);
+                    Pushout_Circle.y1 = Pushout_Circle.y2 = second_line.center_y + (1 - assemblygap / radius) * (second_line.y1 - second_line.center_y);
+                }
+                else
+                {
+                    Pushout_Circle.x1 = Pushout_Circle.x2 = second_line.center_x + (1 + assemblygap / radius) * (second_line.x1 - second_line.center_x);
+                    Pushout_Circle.y1 = Pushout_Circle.y2 = second_line.center_y + (1 + assemblygap / radius) * (second_line.y1 - second_line.center_y);
+                }
+
+                Intersection_Points = first_intersection_between_line_and_arc_for_arc_tuning(Pushout_Circle, first_point, second_point);
+
+                Extended_Points.at(i).x = Intersection_Points.x;
+                Extended_Points.at(i).y = Intersection_Points.y;
+            }
+        }
+    return Extended_Points;
+}
+
+Point first_intersection_between_line_and_arc_for_arc_tuning(Segment Arc, Point Line_First_Point, Point Line_Second_Point)
+{
+    // 圓公式 (x-x0)^2 + (y-y0)^2 = r^2
+    // 直線公式 ax + by + c = 0
+    // 交會點公式 (a^2 + b^2)x^2 + 2(-x0 * b^2 + a * c + y0 * a * b)x + ((x0^2 + y0^2 + r^2) * b^2 + c^2 - 2 * y0 * b * c) = 0
+
+    Point d; // 直線向量
+    d.x = Line_Second_Point.x - Line_First_Point.x;
+    d.y = Line_Second_Point.y - Line_First_Point.y;
+    Point f; // 圓至線段起點的向量
+    f.x = Line_First_Point.x - Arc.center_x;
+    f.y = Line_First_Point.y - Arc.center_y;
+    float r = hypot(Arc.x2 - Arc.center_x, Arc.y2 - Arc.center_y); // 圓半徑
+
+    float a = dot(d, d);
+    float b = 2 * dot(f, d);
+    float c = dot(f, f) - r * r;
+
+    float discriminant = b * b - 4 * a * c;
+    if (discriminant < 0)
+    {
+        // no intersection
+        return Point();
+    }
+    else
+    {
+        // ray didn't totally miss sphere,
+        // so there is a solution to
+        // the equation.
+
+        discriminant = sqrt(discriminant);
+
+        // either solution may be on or off the ray so need to test both
+        // t1 is always the smaller value, because BOTH discriminant and
+        // a are nonnegative.
+        float t1 = (-b - discriminant) / (2 * a); // 方程式的兩個解
+        float t2 = (-b + discriminant) / (2 * a);
+
+        // 3x HIT cases:
+        //          -o->             --|-->  |            |  --|->
+        // Impale(t1 hit,t2 hit), Poke(t1 hit,t2>1), ExitWound(t1<0, t2 hit),
+
+        // 3x MISS cases:
+        //       ->  o                     o ->              | -> |
+        // FallShort (t1>1,t2>1), Past (t1<0,t2<0), CompletelyInside(t1<0, t2>1)
+
+        // P = E + t * d
+
+        // t1 is the intersection, and it's closer than t2
+        // (since t1 uses -b - discriminant)
+        // Impale, Poke
+
+        // t1 is the intersection, and it's closer than t2
+        // (since t1 uses -b - discriminant)
+        // Impale, Poke
+        Point P1;
+        P1.x = Line_First_Point.x + t1 * d.x;
+        P1.y = Line_First_Point.y + t1 * d.y;
+
+        // here t1 didn't intersect so we are either started
+        // inside the sphere or completely past it
+
+        // ExitWound
+        Point P2;
+        P2.x = Line_First_Point.x + t2 * d.x;
+        P2.y = Line_First_Point.y + t2 * d.y;
+
+        return (min(abs(t1), abs(t2)) == t1) ? P1 : P2;
+    }
+    return Point();
 }
 
 vector<Segment> Point_to_Line(vector<Point> Extended_Points, vector<Segment> Assembly) // assembly 專屬

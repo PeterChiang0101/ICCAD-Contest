@@ -659,11 +659,37 @@ Peter
 
 ## Optimization
 
+2022/7/18
+
+fixing arc too close to assembly, still have to deal with coppers and arc & arc
+
+new function
+
+```text
+Arc_Point_Tuning()
+```
+
+Peter
+
+---
+
 2022/7/12
 
 debug scorer part 2
 
 Peter
+
+---
+
+2022/07/09
+
+finish fourth quarter second and third part, fourth part ongoing
+
+create third quarter
+
+Raymond
+
+---
 
 2022/07/05
 
@@ -677,16 +703,10 @@ create inputoutput.h, containing some fuctions in main.cpp, for scorer.
 
 Raymond
 
+---
+
 2022/07/05
 
 finish first quarter, using law of cosine and heron formula, untesting
-
-Raymond
-
-2022/07/09
-
-finish fourth quarter second and third part, fourth part ongoing
-
-create third quarter
 
 Raymond
