@@ -172,7 +172,7 @@ double Scorer::first_quarter() // const vector<Segment> Assembly, const vector<S
     return (Answer_1 > 0.25) ? 0.25 : Answer_1; //大於0.25只算0.25
 }
 
-// not finish verification, done on 2022/7/9
+//finish verification, done on 2022/7/9
 double Scorer::second_quarter() // const vector<Segment>Assembly, const vector<Segment> silkscreen)
 {
     double part_1{0}, part_2{0}, Second_Score{0}, total_perimeter{0}, total_silkscreen{0};
@@ -322,6 +322,7 @@ double Scorer::third_quarter() // const vector<vector<Segment>> copper, const ve
                 }
                 else if (this->silkscreen[i].is_line == 1 && this->copper.at(j).at(k).is_line == 0)
                 {
+
                     
                 }
                 else if (this->silkscreen[i].is_line == 0 && this->copper.at(j).at(k).is_line == 1)
@@ -329,6 +330,7 @@ double Scorer::third_quarter() // const vector<vector<Segment>> copper, const ve
                 }
                 else if (this->silkscreen[i].is_line == 0 && this->copper.at(j).at(k).is_line == 0)
                 {
+
                 }
 
                 if (k == 0) // find the smallest "min_distance"
@@ -452,6 +454,7 @@ double Scorer::fourth_quarter() // const vector<Segment> assembly, const vector<
                 }*/
                 if (disMin(A1, A2, circle_center_B) > rB)
                 {
+                    //
                     A_ps = intersection_between_CentersLine_and_Arc(this->assembly[j], circle_center_B + orth_Cswap(A1 - A2));
                     for (size_t i = 0; i < A_ps.size(); i++)
                     {
@@ -482,7 +485,7 @@ double Scorer::fourth_quarter() // const vector<Segment> assembly, const vector<
                         min_distance = min(min_distance, rA - dist(B2, circle_center_A));
                 }*/
                 if (disMin(B1, B2, circle_center_A) > rA)
-                {
+                {   
                     S_ps = intersection_between_CentersLine_and_Arc(this->silkscreen[i], circle_center_A + orth_Cswap(B1 - B2));
                     for (size_t i = 0; i < S_ps.size(); i++)
                     {
@@ -502,7 +505,7 @@ double Scorer::fourth_quarter() // const vector<Segment> assembly, const vector<
             else if (this->silkscreen[i].is_line == 0 && assembly[j].is_line == 0)
             {
                 if (circle_center_A == circle_center_B)
-                {
+                {   //兩個圓弧構成之連心線與圓弧焦點關係
                     if (Concentric_Circle_On_Arc(silkscreen[i], assembly[j]) == 1)
                     {
                         if (rA > rB)
@@ -586,7 +589,7 @@ double Scorer::Total_score()
     return total_score;
 }
 
-vector<Segment> Scorer::Read_Silkscreen(fstream &Input_File)
+vector<Segment> Scorer::Read_Silkscreen(fstream &Input_File)// 讀取絲印
 {
     Input_Output A;
     vector<Segment> Silkscreen;
@@ -602,7 +605,7 @@ vector<Segment> Scorer::Read_Silkscreen(fstream &Input_File)
             continue_num.push_back(continue_count);
             continue;
         }
-        else if (line != "")
+        else if (line != "")//防止讀到換行空格
         {
             part = A.String_to_Line(line);
             continue_num.back() = (++continue_count);
@@ -687,7 +690,7 @@ Point operator+(Point a, Point b)
     return v;
 }
 
-Point operator*(double c, Point a)
+Point operator*(double c, Point a)//@overload,伸縮
 {
     Point v;
     v.x = c * a.x;
@@ -695,7 +698,7 @@ Point operator*(double c, Point a)
     return v;
 }
 
-Point operator/(Point a, double c)
+Point operator/(Point a, double c)//@overload,伸縮
 {
     Point v;
     v.x = a.x / c;
@@ -719,7 +722,7 @@ bool operator!=(Point a, Point b)
         return 1;
 }
 
-Point orth_Cswap(Point a)
+Point orth_Cswap(Point a) //垂直順時鐘(向量)
 {
     Point v;
     v.x = a.y * (-1);
@@ -727,7 +730,7 @@ Point orth_Cswap(Point a)
     return v;
 }
 
-Point orth_CCswap(Point a)
+Point orth_CCswap(Point a) //垂直逆時鍾(向量)
 {
     Point v;
     v.x = a.y;
@@ -735,57 +738,7 @@ Point orth_CCswap(Point a)
     return v;
 }
 
-/*double Point_to_Arc_MinDist(Point pp, Segment Arc)
-{
-    Point p1, p2, pc;
-    p1.x = Arc.x1;
-    p1.y = Arc.y1;
-    p2.x = Arc.x2;
-    p2.y = Arc.y2;
-    pc.x = Arc.center_x;
-    pc.y = Arc.center_y;
-
-    Point v1, v2, v3;
-    v1 = p1 - pc;
-    v2 = p2 - pc;
-    v3 = pp - pc;
-
-    if (Arc.direction == 0) //如果是順時針，把p1和p2點互換
-    {
-        Point t = p1;
-        p1 = p2;
-        p2 = t;
-    }
-
-    double cosA = dot(v1, v2) / (dist(p1, pc) * dist(p2, pc)); // Arc cos(v1與v2的夾角)
-    if (fabs(cosA) > 1)                                        // if fabs(cosA)>1, then acos(cosA) error
-    {
-        if (cosA < 0)
-            cosA += eps;
-        else
-            cosA -= eps;
-    }
-    double maxd = acos(cosA); // v1與v2的夾角
-    if (cross(v1, v2) < 0 && fabs(cross(v1, v2)) > eps)
-        maxd = 2 * PI - maxd;
-    double cosB = dot(v1, v3) / (dist(p1, pc) * dist(pp, pc));
-    if (fabs(cosB) > 1)
-    {
-        if (cosB < 0)
-            cosB += eps;
-        else
-            cosB -= eps;
-    }
-    double degree = acos(cosB); // v1與v3的夾角
-
-    if (cross(v1, v3) < 0 && fabs(cross(v1, v3)) > eps)
-        degree = 2 * PI - degree;
-    if (degree < maxd)
-        return fabs(dist(pp, pc) - dist(p1, pc));
-    else
-        return min(dist(pp, p1), dist(pp, p2));
-}*/
-double Point_to_Arc_MinDist(Point pp, Segment Arc)
+double Point_to_Arc_MinDist(Point pp, Segment Arc)//點到圓弧之最短距離
 {
     Point p1, p2, pc, ex_p;
     p1.x = Arc.x1;
@@ -813,7 +766,7 @@ double Point_to_Arc_MinDist(Point pp, Segment Arc)
 }
 
 vector<Point> intersection_between_CentersLine_and_Arc(Segment Arc, Point Center) // the other arc's center
-{
+{// 圓心線對Arc的交點
     Point centerpoint, A;
     Point v1, v2;
     Point tmp;
@@ -847,7 +800,7 @@ vector<Point> intersection_between_CentersLine_and_Arc(Segment Arc, Point Center
     return intersect;
 }
 
-Point find_arbitary_point_on_arc(Segment Arc)
+Point find_arbitary_point_on_arc(Segment Arc)//找出Arc兩端外圓上一點
 {
 
     Point middlepoint; // A,B中點
@@ -879,7 +832,7 @@ Point find_arbitary_point_on_arc(Segment Arc)
         return middlepoint + (dist(middlepoint, centerpoint) + radius) / dist(middlepoint, centerpoint) * v1;
 }
 
-bool On_Arc(Segment Arc, Point p)
+bool On_Arc(Segment Arc, Point p)//判斷點P是否在Arc上 
 {
     Segment AB, BC, OP;
     Point ar_p;
@@ -904,7 +857,7 @@ bool On_Arc(Segment Arc, Point p)
         return false;
 }
 
-bool Concentric_Circle_On_Arc(Segment Arc1, Segment Arc2)
+bool Concentric_Circle_On_Arc(Segment Arc1, Segment Arc2)//同心圓對兩Arc端點射線，在Arc是否有交點
 {
     Point A1, A2, B1, B2;
     Point Center;
