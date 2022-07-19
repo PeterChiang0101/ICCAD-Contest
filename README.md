@@ -30,7 +30,8 @@ low priority:
 - [ ] vector 換成 list
 - [x] makefile
 - [ ] inputoutput 的 Dot 與 Scorer 的 dot 功能重複
-- [ ] silkscreen_cut_single_copper 可用於判斷 Assembly 是否被 Silkscreen 切割(更名) 
+- [ ] silkscreen_cut_single_copper 可用於判斷 Assembly 是否被 Silkscreen 切割(更名)
+- [ ] silkscreen_cut_single_copper 可利用極值排除加速
 
 ## I/O
 
@@ -207,6 +208,14 @@ int main(); // 主程式
 ```
 
 ## Algorithms
+
+2022/7/19
+
+working on boarder condition
+
+Peter
+
+---
 
 2022/7/16
 
@@ -663,7 +672,7 @@ Peter
 
 2022/7/19
 
-fix the third part scorer 
+fix the third part scorer
 
 2022/7/18
 

@@ -1989,7 +1989,7 @@ vector<Segment> Add_Excess_Silkscreen_For_Boarder_Condition(vector<vector<Segmen
                 Boarder.x2 = Copper_Expanded[i].x_max + 1;
                 break;
             }
-
+            /*
             vector<Segment> Boarder_piece; // 邊界劃過copper的線段
             Boarder_piece = silkscreen_cut_single_copper(Boarder, Copper_Expanded[i]);
             if (Boarder_piece.size() == 0)
@@ -2001,7 +2001,6 @@ vector<Segment> Add_Excess_Silkscreen_For_Boarder_Condition(vector<vector<Segmen
             vector<Point> Extend_Line_End_Points; // 延伸線段的終點
 
             int Boarder_piece_size = Boarder_piece.size();
-
             for (int j = 0; j < Boarder_piece_size; j++) // 將終點轉為點形式
             {
                 Point temp;
@@ -2014,7 +2013,7 @@ vector<Segment> Add_Excess_Silkscreen_For_Boarder_Condition(vector<vector<Segmen
                 temp.Next_Arc = false;
                 Extend_Line_End_Points.push_back(temp);
             }
-
+            */
             vector<vector<Point>> Arc_Dots;
             vector<Point> Copper_Dots;
             Arc_Dots = Arc_Optimization(Copper_Expanded[i].segment);
@@ -2046,7 +2045,11 @@ vector<Segment> Add_Excess_Silkscreen_For_Boarder_Condition(vector<vector<Segmen
 
             Copper Fake_Copper_for_Assembly; // 假的銅箔，用來比較點是否在線段上
             Fake_Copper_for_Assembly.segment = Assembly;
-            vector<bool> Qualified_Dots; // 在線段上的點是否符合要求
+            vector<bool> Qualified_Dots_Front; // 在線段上的點是否符合要求
+            vector<bool> Qualified_Dots_Back;  // 在線段上的點是否符合要求
+
+            vector<vector<Segment>> Extended_Silkscreen_Candidate; // 延伸的silkscreen
+            vector<Segment> Extended_Silkscreen;                   // 延伸的silkscreen
 
             for (int j = 0; j < Boarder_Dots_size; j++) // 找到點位於copper的哪一個線段上
             {
@@ -2054,15 +2057,25 @@ vector<Segment> Add_Excess_Silkscreen_For_Boarder_Condition(vector<vector<Segmen
                 {
                     if (Copper_Expanded.at(i).segment.at(k).is_line) // 直線
                     {
-                        if (Boarder_Dots.at(j).x < Copper_Expanded.at(i).segment.at(k).x_max && Boarder_Dots.at(j).x < Copper_Expanded.at(i).segment.at(k).x_min && Boarder_Dots.at(j).y < Copper_Expanded.at(i).segment.at(k).y_max && Boarder_Dots.at(j).y < Copper_Expanded.at(i).segment.at(k).y_min)
-                            if (abs(atan2(Boarder_Dots.at(j).y - Copper_Expanded.at(i).segment.at(k).y1, Boarder_Dots.at(j).x - Copper_Expanded.at(i).segment.at(k).x1) - atan2(Copper_Expanded.at(i).segment.at(k).y2 - Copper_Expanded.at(i).segment.at(k).y1, Copper_Expanded.at(i).segment.at(k).x2 - Copper_Expanded.at(i).segment.at(k).x1)) < Angle_Tolerance)
-                                Boarder_Dots_index = k;
+                        Point a_vector, b_vector;
+                        a_vector.x = Copper_Expanded.at(i).segment.at(k).x1 - Boarder_Dots.at(j).x;
+                        a_vector.y = Copper_Expanded.at(i).segment.at(k).y1 - Boarder_Dots.at(j).y;
+                        b_vector.y = Copper_Expanded.at(i).segment.at(k).y2 - Boarder_Dots.at(j).y;
+                        b_vector.x = Copper_Expanded.at(i).segment.at(k).x2 - Boarder_Dots.at(j).x;
+                        if (cross(a_vector, b_vector) == 0 && dot(a_vector, b_vector) <= 0) // 點在線段上
+                        {
+                            Boarder_Dots_index = k;
+                            break;
+                        }
                     }
                     else // 圓弧
                     {
                         float theta = atan2(Boarder_Dots.at(j).y - Copper_Expanded.at(i).segment.at(k).center_y, Boarder_Dots.at(j).x - Copper_Expanded.at(i).segment.at(k).center_x);
                         if (Point_Inside_Arc(theta, Copper_Expanded.at(i).segment.at(k).theta_1, Copper_Expanded.at(i).segment.at(k).theta_2, Copper_Expanded.at(i).segment.at(k).direction))
+                        {
                             Boarder_Dots_index = k;
+                            break;
+                        }
                     }
                 }
                 bool first_line = true;
@@ -2076,6 +2089,14 @@ vector<Segment> Add_Excess_Silkscreen_For_Boarder_Condition(vector<vector<Segmen
                     Second.x = Copper_Expanded.at(i).segment.at(k).x2;
                     Second.y = Copper_Expanded.at(i).segment.at(k).y2;
 
+                    Point Boarder_first, Boarder_second;
+                    Boarder_first.x = Boarder.x1;
+                    Boarder_first.y = Boarder.y1;
+                    Boarder_second.x = Boarder.x2;
+                    Boarder_second.y = Boarder.y2;
+
+                    Point Extend_End_Point;
+
                     if (first_line == true)
                     {
                         Second.x == Boarder_Dots.at(j).x;
@@ -2086,23 +2107,30 @@ vector<Segment> Add_Excess_Silkscreen_For_Boarder_Condition(vector<vector<Segmen
                         First.x == Boarder_Dots.at(j).x;
                         First.y == Boarder_Dots.at(j).y;
                     }
-                    if (first_line == false && k == Boarder_Dots_index) // 繞一圈
-                    {
-                        Qualified_Dots.push_back(true);
-                        break;
-                    }
 
+                    Extend_End_Point = intersection(First, Second, Boarder_first, Boarder_second);
+                    
                     Segment temp;
                     temp.x1 = First.x;
                     temp.y1 = First.y;
                     temp.x2 = Second.x;
                     temp.y2 = Second.y;
-                    if (!silkscreen_cut_single_copper(temp, Fake_Copper_for_Assembly).empty()) // 線段經過assembly的內部
+
+                    if (Extend_End_Point.x != INFINITY && Extend_End_Point.y != INFINITY) // 繞一圈
                     {
-                        Qualified_Dots.push_back(false);
+                        Qualified_Dots_Front.push_back(true);
+                        temp.x1 = Extend_End_Point.x;
+                        temp.y1 = Extend_End_Point.y;
+                        Extended_Silkscreen.push_back(temp);
                         break;
                     }
 
+                    if (!silkscreen_cut_single_copper(temp, Fake_Copper_for_Assembly).empty()) // 線段經過assembly的內部
+                    {
+                        Qualified_Dots_Front.push_back(false);
+                        break;
+                    }
+                    Extended_Silkscreen.push_back(temp);
                     first_line = false;
                 }
 
