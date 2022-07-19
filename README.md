@@ -29,6 +29,8 @@ low priority:
 - [ ] 分class
 - [ ] vector 換成 list
 - [x] makefile
+- [ ] inputoutput 的 Dot 與 Scorer 的 dot 功能重複
+- [ ] silkscreen_cut_single_copper 可用於判斷 Assembly 是否被 Silkscreen 切割(更名) 
 
 ## I/O
 
@@ -658,6 +660,10 @@ assembly : vector<segment>, store the assembly details
 Peter
 
 ## Optimization
+
+2022/7/19
+
+fix the third part scorer 
 
 2022/7/18
 
