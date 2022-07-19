@@ -18,6 +18,7 @@ BUGsss
 - [x] 外擴圓心
 - [x] 大於180度之Segment尚未完成
 - [ ] 完成Scorer第三部分
+- [ ] 一個凹陷過於尖，會導致崩潰(兩點外擴皆在assembly內，無結果)
 
 low priority:
 
