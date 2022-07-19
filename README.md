@@ -7,7 +7,7 @@ BUGsss
 - [x] 左中絲印與銅箔計算時會發生錯誤
 - [ ] 多出多餘的絲印，右上兩線段未切割 (剩餘一圓弧)
 - [ ] debug scorer
-- [ ] Scorer "Read_Silkscreen" 在CaseA會重複最後一個silkscreen
+- [x] Scorer "Read_Silkscreen" 在CaseA會重複最後一個silkscreen
 
 ---
 
