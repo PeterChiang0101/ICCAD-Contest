@@ -528,7 +528,7 @@ double Scorer::fourth_quarter() // const vector<Segment> assembly, const vector<
                             }
                         }
                     }
-                    if (S_ps.size() != 0 && A_ps.size() != 0)
+                    if (!S_ps.empty() && !A_ps.empty())
                         min_distance = min_tmp;
                 }
 
