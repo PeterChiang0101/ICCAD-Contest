@@ -644,21 +644,10 @@ Point first_intersection_between_line_and_arc_for_arc_tuning(Segment Arc, Point 
 
         // P = E + t * d
 
-        // t1 is the intersection, and it's closer than t2
-        // (since t1 uses -b - discriminant)
-        // Impale, Poke
-
-        // t1 is the intersection, and it's closer than t2
-        // (since t1 uses -b - discriminant)
-        // Impale, Poke
         Point P1;
         P1.x = Line_First_Point.x + t1 * d.x;
         P1.y = Line_First_Point.y + t1 * d.y;
 
-        // here t1 didn't intersect so we are either started
-        // inside the sphere or completely past it
-
-        // ExitWound
         Point P2;
         P2.x = Line_First_Point.x + t2 * d.x;
         P2.y = Line_First_Point.y + t2 * d.y;
@@ -1906,18 +1895,9 @@ vector<vector<Segment>> fit_boarder_condition(vector<vector<Segment>> Silkscreen
     float Silkscreen_y_min = Silkscreen[0][0].y_min;
     float Silkscreen_y_max = Silkscreen[0][0].y_max;
 
-    int Silkscreen_index_Up = 0;
-    int Silkscreen_index_Down = 0;
-    int Silkscreen_index_Left = 0;
-    int Silkscreen_index_Right = 0;
-    int Silkscreen_continuous_index_Up = 0;
-    int Silkscreen_continuous_index_Down = 0;
-    int Silkscreen_continuous_index_Left = 0;
-    int Silkscreen_continuous_index_Right = 0;
-
     vector<vector<Segment>> Silkscreen_fit_Condition;
 
-    for (int i = 0; i < Assembly_size; i++)
+    for (int i = 0; i < Assembly_size; i++) // 找assembly極值
     {
         if (Assembly[i].x_min < Assembly_x_min)
         {
@@ -1940,7 +1920,7 @@ vector<vector<Segment>> fit_boarder_condition(vector<vector<Segment>> Silkscreen
             Rightest_Assembly_index = i;
         }
     }
-    for (int i = 0; i < Silkscreen_size; i++)
+    for (int i = 0; i < Silkscreen_size; i++) // 找絲印極值
     {
         Silkscreen_piece_size = Silkscreen[i].size();
         for (int j = 0; j < Silkscreen_piece_size; j++)
@@ -1948,26 +1928,18 @@ vector<vector<Segment>> fit_boarder_condition(vector<vector<Segment>> Silkscreen
             if (Silkscreen[i][j].x_min < Silkscreen_x_min)
             {
                 Silkscreen_x_min = Silkscreen[i][j].x_min;
-                Silkscreen_index_Down = i;
-                Silkscreen_continuous_index_Down = j;
             }
             if (Silkscreen[i][j].x_max > Silkscreen_x_max)
             {
                 Silkscreen_x_max = Silkscreen[i][j].x_max;
-                Silkscreen_index_Up = i;
-                Silkscreen_continuous_index_Up = j;
             }
             if (Silkscreen[i][j].y_min < Silkscreen_y_min)
             {
                 Silkscreen_y_min = Silkscreen[i][j].y_min;
-                Silkscreen_index_Left = i;
-                Silkscreen_continuous_index_Left = j;
             }
             if (Silkscreen[i][j].y_max > Silkscreen_y_max)
             {
                 Silkscreen_y_max = Silkscreen[i][j].y_max;
-                Silkscreen_index_Right = i;
-                Silkscreen_continuous_index_Right = j;
             }
         }
     }
