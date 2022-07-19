@@ -664,15 +664,18 @@ double Scorer::Total_score()
     cout << "Score Detail:" << endl
          << endl;
     double First_Score = round(first_quarter() * 10000) / 10000;
+    First_Score = (First_Score > 0) ? First_Score : 0;
     double Second_Score = round(second_quarter() * 10000) / 10000;
+    Second_Score = (Second_Score > 0) ? Second_Score : 0;
     double Third_Score = round(third_quarter() * 10000) / 10000;
+    Third_Score = (Third_Score > 0) ? Third_Score : 0;
     double Fourth_Score = round(fourth_quarter() * 10000) / 10000;
+    Fourth_Score = (Fourth_Score > 0) ? Fourth_Score : 0;
     cout << "First Score: " << setprecision(4) << fixed << First_Score << endl
          << endl;
     cout << "Second Score: " << setprecision(4) << fixed << Second_Score << endl
          << endl;
     cout << "Third Score: " << setprecision(4) << fixed << Third_Score << endl
-
          << endl;
     cout << "Fourth Score: " << setprecision(4) << fixed << Fourth_Score << endl
          << endl;
