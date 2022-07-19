@@ -168,9 +168,9 @@ int main(int argc, char **argv)
 
     // the first three line of the file, defines parameters for silkscreen
     file >> assemblygap_str >> coppergap_str >> silkscreenlen_str;
-    assemblygap = File_to_Parameter(assemblygap_str) * 1.0005; // 加上一點防止計算誤差
-    coppergap = File_to_Parameter(coppergap_str) * 1.0005;
-    silkscreenlen = File_to_Parameter(silkscreenlen_str) * 1.0005;
+    assemblygap = File_to_Parameter(assemblygap_str) * 1.00005; // 加上一點防止計算誤差
+    coppergap = File_to_Parameter(coppergap_str) * 1.00005;
+    silkscreenlen = File_to_Parameter(silkscreenlen_str) * 1.00005;
 
     vector<Segment> assembly;
     vector<vector<Segment>> copper;
@@ -1964,7 +1964,7 @@ vector<vector<Segment>> fit_boarder_condition(vector<vector<Segment>> Silkscreen
     }
 }
 
-vector<Segment> Add_Excess_Silkscreen_For_Boarder_Condition(vector<vector<Segment>> Silkscreen, Point extremum, vector<Copper> Copper_Expanded, int side)
+vector<Segment> Add_Excess_Silkscreen_For_Boarder_Condition(vector<vector<Segment>> Silkscreen, Point extremum, vector<Copper> Copper_Expanded, int side, vector<Segment> Assembly)
 {
     int Copper_Expanded_size = Copper_Expanded.size();
     Segment Boarder;
@@ -1998,20 +1998,116 @@ vector<Segment> Add_Excess_Silkscreen_For_Boarder_Condition(vector<vector<Segmen
                 return vector<Segment>();
             }
 
+            vector<Point> Extend_Line_End_Points; // 延伸線段的終點
+
+            int Boarder_piece_size = Boarder_piece.size();
+
+            for (int j = 0; j < Boarder_piece_size; j++) // 將終點轉為點形式
+            {
+                Point temp;
+                temp.x = Boarder_piece[j].x1;
+                temp.y = Boarder_piece[j].y1;
+                temp.Next_Arc = false;
+                Extend_Line_End_Points.push_back(temp);
+                temp.x = Boarder_piece[j].x2;
+                temp.y = Boarder_piece[j].y2;
+                temp.Next_Arc = false;
+                Extend_Line_End_Points.push_back(temp);
+            }
+
             vector<vector<Point>> Arc_Dots;
             vector<Point> Copper_Dots;
             Arc_Dots = Arc_Optimization(Copper_Expanded[i].segment);
             Copper_Dots = Line_to_Point(Copper_Expanded[i].segment);
+
+            vector<Point> Boarder_Dots; // 在此銅箔上的點
             for (int j = 0; j < Silkscreen.size(); j++)
             {
-                for (int k = 0; k < Silkscreen[j].size(); k++)
+                Point temp;
+                temp.x = Silkscreen[j][0].x1; // 連續線段的第一個點
+                temp.y = Silkscreen[j][0].y1;
+                temp.Next_Arc = false;
+                if (point_in_polygon(temp, Copper_Dots, Arc_Dots) == true) // 點在 copper 上面
                 {
-                    Point temp;
-                    temp.x = Silkscreen[j][k].x1;
-                    temp.y = Silkscreen[j][k].y1;
-                    if (point_in_polygon(temp, Copper_Dots, Arc_Dots) == true) // 點在 copper 裡面
+                    Boarder_Dots.push_back(temp);
+                }
+
+                temp.x = Silkscreen[j][Silkscreen[j].size()].x2; // 連續線段的最後一個點
+                temp.y = Silkscreen[j][Silkscreen[j].size()].y2;
+                temp.Next_Arc = false;
+                if (point_in_polygon(temp, Copper_Dots, Arc_Dots) == true) // 點在 copper 上面
+                {
+                    Boarder_Dots.push_back(temp);
+                }
+            }
+
+            int Boarder_Dots_size = Boarder_Dots.size();
+            int Boarder_Dots_index; // Boarder_Dots在copper線段中的index
+
+            Copper Fake_Copper_for_Assembly; // 假的銅箔，用來比較點是否在線段上
+            Fake_Copper_for_Assembly.segment = Assembly;
+            vector<bool> Qualified_Dots; // 在線段上的點是否符合要求
+
+            for (int j = 0; j < Boarder_Dots_size; j++) // 找到點位於copper的哪一個線段上
+            {
+                for (int k = 0; k < Copper_Expanded.at(i).segment.size(); k++)
+                {
+                    if (Copper_Expanded.at(i).segment.at(k).is_line) // 直線
                     {
+                        if (Boarder_Dots.at(j).x < Copper_Expanded.at(i).segment.at(k).x_max && Boarder_Dots.at(j).x < Copper_Expanded.at(i).segment.at(k).x_min && Boarder_Dots.at(j).y < Copper_Expanded.at(i).segment.at(k).y_max && Boarder_Dots.at(j).y < Copper_Expanded.at(i).segment.at(k).y_min)
+                            if (abs(atan2(Boarder_Dots.at(j).y - Copper_Expanded.at(i).segment.at(k).y1, Boarder_Dots.at(j).x - Copper_Expanded.at(i).segment.at(k).x1) - atan2(Copper_Expanded.at(i).segment.at(k).y2 - Copper_Expanded.at(i).segment.at(k).y1, Copper_Expanded.at(i).segment.at(k).x2 - Copper_Expanded.at(i).segment.at(k).x1)) < Angle_Tolerance)
+                                Boarder_Dots_index = k;
                     }
+                    else // 圓弧
+                    {
+                        float theta = atan2(Boarder_Dots.at(j).y - Copper_Expanded.at(i).segment.at(k).center_y, Boarder_Dots.at(j).x - Copper_Expanded.at(i).segment.at(k).center_x);
+                        if (Point_Inside_Arc(theta, Copper_Expanded.at(i).segment.at(k).theta_1, Copper_Expanded.at(i).segment.at(k).theta_2, Copper_Expanded.at(i).segment.at(k).direction))
+                            Boarder_Dots_index = k;
+                    }
+                }
+                bool first_line = true;
+
+                for (int k = Boarder_Dots_index;; (k) ? k-- : k = Copper_Expanded.at(i).segment.size() - 1) // 往前找
+                {
+                    Point First;
+                    Point Second;
+                    First.x = Copper_Expanded.at(i).segment.at(k).x1;
+                    First.y = Copper_Expanded.at(i).segment.at(k).y1;
+                    Second.x = Copper_Expanded.at(i).segment.at(k).x2;
+                    Second.y = Copper_Expanded.at(i).segment.at(k).y2;
+
+                    if (first_line == true)
+                    {
+                        Second.x == Boarder_Dots.at(j).x;
+                        Second.y == Boarder_Dots.at(j).y;
+                    }
+                    else if (first_line == false && k == Boarder_Dots_index)
+                    {
+                        First.x == Boarder_Dots.at(j).x;
+                        First.y == Boarder_Dots.at(j).y;
+                    }
+                    if (first_line == false && k == Boarder_Dots_index) // 繞一圈
+                    {
+                        Qualified_Dots.push_back(true);
+                        break;
+                    }
+
+                    Segment temp;
+                    temp.x1 = First.x;
+                    temp.y1 = First.y;
+                    temp.x2 = Second.x;
+                    temp.y2 = Second.y;
+                    if (!silkscreen_cut_single_copper(temp, Fake_Copper_for_Assembly).empty()) // 線段經過assembly的內部
+                    {
+                        Qualified_Dots.push_back(false);
+                        break;
+                    }
+
+                    first_line = false;
+                }
+
+                for (int k = Boarder_Dots_index;; (k) ? k++ : k = 0) // 往後找
+                {
                 }
             }
         }

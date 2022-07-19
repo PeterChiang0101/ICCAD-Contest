@@ -55,6 +55,11 @@ private:
     vector<Point> Point_Extension(const vector<Segment>, const bool, float, float);
     vector<Segment> Point_to_Line(vector<Point>, vector<Segment>); // assembly 專屬
     vector<Point> Arc_to_Poly(Segment);
+
+    vector<Point> Arc_Point_Tuning(const vector<Segment>, const bool, vector<Point>, float, float);
+    Point first_intersection_between_line_and_arc_for_arc_tuning(Segment, Point, Point);
+
+    float Dot(Point, Point);
 };
 
 #endif
