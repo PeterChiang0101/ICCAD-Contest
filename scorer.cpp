@@ -311,7 +311,7 @@ double Scorer::third_quarter() // const vector<vector<Segment>> copper, const ve
                 B2.y = this->copper.at(j).at(k).y2;
 
                 if (dir(A1, A2, B1) * dir(A1, A2, B2) <= 0 && dir(B1, B2, A1) * dir(B1, B2, A2) <= 0) //兩線段相交, 距離為0
-                        min_distance = 0;
+                    min_distance = 0;
 
                 if (this->silkscreen[i].is_line == 1 && this->copper.at(j).at(k).is_line == 1)
                 {
@@ -322,7 +322,6 @@ double Scorer::third_quarter() // const vector<vector<Segment>> copper, const ve
                 }
                 else if (this->silkscreen[i].is_line == 1 && this->copper.at(j).at(k).is_line == 0)
                 {
-                    
                 }
                 else if (this->silkscreen[i].is_line == 0 && this->copper.at(j).at(k).is_line == 1)
                 {
@@ -465,7 +464,8 @@ double Scorer::fourth_quarter() // const vector<Segment> assembly, const vector<
                                 min_tmp = disMin(A1, A2, A_ps[i]);
                         }
                     }
-                    min_distance = min(min_distance, min_tmp);
+                    if (!A_ps.empty())
+                        min_distance = min(min_distance, min_tmp);
                 }
             }
             else if (this->silkscreen[i].is_line == 0 && assembly[j].is_line == 1)
@@ -575,10 +575,20 @@ double Scorer::Total_score()
     double total_score = 0;
     cout << "Score Detail:" << endl
          << endl;
-    double First_Score = first_quarter();
-    double Second_Score = second_quarter();
-    double Third_Score = third_quarter();
-    double Fourth_Score = fourth_quarter();
+    double First_Score = round(first_quarter() * 10000) / 10000;
+    double Second_Score = round(second_quarter() * 10000) / 10000;
+    double Third_Score = round(third_quarter() * 10000) / 10000;
+    double Fourth_Score = round(fourth_quarter() * 10000) / 10000;
+    cout << "First Score: " << setprecision(4) << fixed << First_Score << endl
+         << endl;
+    cout << "Second Score: " << setprecision(4) << fixed << Second_Score << endl
+         << endl;
+    cout << "Third Score: " << setprecision(4) << fixed << Third_Score << endl
+
+         << endl;
+    cout << "Fourth Score: " << setprecision(4) << fixed << Fourth_Score << endl
+         << endl;
+
     cout << "End of Score Detail" << endl
          << endl;
     cout << "Total Score: ";
