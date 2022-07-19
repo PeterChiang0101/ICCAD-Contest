@@ -6,8 +6,9 @@ BUGsss
 
 - [x] 左中絲印與銅箔計算時會發生錯誤
 - [ ] 多出多餘的絲印，右上兩線段未切割 (剩餘一圓弧)
-- [ ] debug scorer
+- [ ] debug scorer fourth quarter
 - [x] Scorer "Read_Silkscreen" 在CaseA會重複最後一個silkscreen
+- [ ] Case C 少一線段
 
 ---
 
@@ -19,6 +20,8 @@ BUGsss
 - [x] 大於180度之Segment尚未完成
 - [ ] 完成Scorer第三部分
 - [ ] 一個凹陷過於尖，會導致崩潰(兩點外擴皆在assembly內，無結果)
+- [ ] 絲印外擴，如無結果，push_back原始assembly point的值
+- [ ] 製作Segment版本intersection()
 
 low priority:
 
@@ -100,6 +103,7 @@ flowchart LR
     a4([Assembly_Buffer])
     a5([Copper_Buffer])
     a6([Write_File])
+    a7([Fit_Boarder_Condition])
 
         subgraph parameter
         b1([assemblygap])
@@ -150,7 +154,8 @@ flowchart LR
     e3 --> e4
     b3 --> e4
 
-    e4 --> a6
+    e4 --> a7
+    a7 --> a6
 ```
 
 ```C++
@@ -212,7 +217,17 @@ int main(); // 主程式
 
 2022/7/19
 
-working on boarder condition
+working on boarder condition, done, not tested
+
+three new function
+
+```test
+vector<vector<Segment>> fit_boarder_condition()
+
+vector<vector<Segment>> Add_Excess_Silkscreen_For_Boarder_Condition()
+
+float Calculate_Silkscreen_length()
+```
 
 Peter
 
