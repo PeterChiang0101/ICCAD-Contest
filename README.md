@@ -5,8 +5,8 @@
 BUGsss
 
 - [x] 左中絲印與銅箔計算時會發生錯誤
-- [ ] 多出多餘的絲印，右上兩線段未切割 (剩餘一圓弧)
-- [ ] debug scorer fourth quarter
+- [x] 多出多餘的絲印，右上兩線段未切割 (剩餘一圓弧)
+- [x] debug scorer fourth quarter
 - [x] Scorer "Read_Silkscreen" 在CaseA會重複最後一個silkscreen
 - [ ] Case C 少一線段
 
@@ -22,6 +22,7 @@ BUGsss
 - [ ] 一個凹陷過於尖，會導致崩潰(兩點外擴皆在assembly內，無結果)
 - [ ] 絲印外擴，如無結果，push_back原始assembly point的值
 - [ ] 製作Segment版本intersection()
+- [x] Arc 修正, Copper需正確運作
 
 low priority:
 
