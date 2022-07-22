@@ -7,7 +7,7 @@
 using namespace std;
 
 #define PI 3.14159265358979323846
-#define eps 1e-8
+#define tolerance 0.001
 #define INPUT_PATH "./TestingCase/test_B.txt"
 #define OUTPUT_PATH "./TestingCase/test_B_Ans.txt"
 
@@ -378,6 +378,7 @@ double Scorer::third_quarter() // const vector<vector<Segment>> copper, const ve
                 }
                 else if (this->silkscreen.at(i).is_line == 0 && this->copper.at(j).at(k).is_line == 0)
                 {
+                    min_distance = 999999999;
                     if (circle_center_A == circle_center_B)
                     {
                         if (Concentric_Circle_On_Arc(silkscreen[i], copper.at(j).at(k)) == 1)
@@ -415,6 +416,20 @@ double Scorer::third_quarter() // const vector<vector<Segment>> copper, const ve
                         min_distance = min(min(Point_to_Arc_MinDist(B1, silkscreen[i]), Point_to_Arc_MinDist(B2, silkscreen[i])), min_distance);
                     else if ((A1 != A2) && (B1 == B2))
                         min_distance = min(min(Point_to_Arc_MinDist(A1, copper.at(j).at(k)), Point_to_Arc_MinDist(A2, copper.at(j).at(k))), min_distance);
+                }
+
+                if((min_distance < L_copper && min_distance > L_copper - tolerance) || (min_distance > L_copper && min_distance < L_copper + tolerance))
+                    min_distance = L_copper;
+                else if(min_distance < L_copper - tolerance){
+                    cout << "Error: i = " << i << ", j = " << j << ", k = " << k << " coppergap: " << L_copper << " min_distance: " << min_distance << endl;
+                    cout << "Silksreen: (" << silkscreen[i].x1 << "," << silkscreen[i].y1 << ") -> (" << silkscreen[i].x2 << "," << silkscreen[i].y2 << ") is_line = " << silkscreen[i].is_line;
+                    if(silkscreen[i].is_line == 0)
+                        cout << " center: (" << silkscreen[i].center_x << "," << silkscreen[i].center_y << ")";
+                    cout << "     Copper: (" << copper[j][k].x1 << "," << copper[j][k].y1 << ") -> (" << copper[j][k].x2 << "," << copper[j][k].y2 << ") is_line = " << copper[j][k].is_line;
+                    if(copper[j][k].is_line == 0)
+                        cout << " center: (" << copper[j][k].center_x << "," << copper[j][k].center_y << ")"<< endl;
+                    else
+                        cout << endl;
                 }
 
                 if (k == 0 || min_dist_result > min_distance) // find the smallest "min_distance"
@@ -461,6 +476,7 @@ double Scorer::third_quarter() // const vector<vector<Segment>> copper, const ve
     T_copper = min_distance_sum / (double)this->continue_num.size();
     Third_Score = (1 - (T_copper - L_copper) * 10 / L_copper) * 0.25;
     // print the score of the third_quarter
+    cout << endl;
     cout << "Third Score: " << Third_Score << endl
          << endl;
     cout << "T_copper: " << T_copper << endl
@@ -590,6 +606,7 @@ double Scorer::fourth_quarter() // const vector<Segment> assembly, const vector<
             }
             else if (this->silkscreen[i].is_line == 0 && assembly[j].is_line == 0)
             {
+                min_distance = 999999999;
                 if (circle_center_A == circle_center_B)
                 {   //兩個圓弧構成之連心線與圓弧焦點關係
                     if (Concentric_Circle_On_Arc(silkscreen[i], assembly[j]) == 1)
@@ -630,8 +647,25 @@ double Scorer::fourth_quarter() // const vector<Segment> assembly, const vector<
                 // else if ((A1 == A2) && (B1 == B2))
                 // min_distance = min_tmp;
             }
+
+            if((min_distance < L_outline && min_distance > L_outline - tolerance) || (min_distance > L_outline && min_distance < L_outline + tolerance))
+                min_distance = L_outline;
+            else if(min_distance < L_outline - tolerance){
+                cout << "Error: i = " << i << ", j = " << j << " assemblygap: " << L_outline << " min_distance: " << min_distance << endl;
+                cout << "Silksreen: (" << silkscreen[i].x1 << "," << silkscreen[i].y1 << ") -> (" << silkscreen[i].x2 << "," << silkscreen[i].y2 << ") is_line = " << silkscreen[i].is_line;
+                if(silkscreen[i].is_line == 0)
+                    cout << " center: (" << silkscreen[i].center_x << "," << silkscreen[i].center_y << ")";
+                cout << "     Assembly: (" << assembly[j].x1 << "," << assembly[j].y1 << ") -> (" << assembly[j].x2 << "," << assembly[j].y2 << ") is_line = " << assembly[j].is_line;
+                if(assembly[j].is_line == 0)
+                    cout << " center: (" << assembly[j].center_x << "," << assembly[j].center_y << ")"<< endl;
+                else
+                    cout << endl;
+            }
+
             if (j == 0 || shortest_min > min_distance)
                 shortest_min = min_distance;
+
+            
         }
 
         if (count_number == 1)
@@ -652,6 +686,7 @@ double Scorer::fourth_quarter() // const vector<Segment> assembly, const vector<
     if (Fourth_Score < 0)
         Fourth_Score = 0;
 
+    cout << endl;
     cout << "Fourth Score: " << Fourth_Score << endl
          << endl;
     cout << "T_outline: " << T_outline << endl
@@ -763,9 +798,9 @@ double disMin(Point A, Point B, Point P) //點P到線段AB的最短距離
 {
     double r = ((P.x - A.x) * (B.x - A.x) + (P.y - A.y) * (B.y - A.y)) / dis2(A, B);
     if (r <= 0)
-        return sqrt(dis2(A, P));
+        return dist(A, P);
     else if (r >= 1)
-        return sqrt(dis2(B, P));
+        return dist(B, P);
     else
     {
         double AC = r * sqrt(dis2(A, B));
@@ -855,13 +890,21 @@ double Point_to_Arc_MinDist(Point pp, Segment Arc)//點到圓弧之最短距離
 
     if (On_Arc(Arc, ex_p) || p1 == p2)
     {
-        if (dist(pp, pc) > radius)
+        if (dist(pp, pc) > radius){
             return dist(pp, pc) - radius;
+        }
+        
+            
         else
+        {
             return radius - dist(pp, pc);
+        }
+            
     }
-    else
+    else{
         return min(dist(pp, p1), dist(pp, p2));
+    }
+        
 }
 
 vector<Point> intersection_between_CentersLine_and_Arc(Segment Arc, Point Center) // the other arc's center
