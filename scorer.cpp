@@ -63,7 +63,7 @@ void Scorer::open_file()
     Assembly_push_out = A.Assembly_Buffer(this->assembly, this->coppergap, this->assemblygap);
 }
 
-// untest 2022/7/7
+//test passed 2022/07/19
 double Scorer::first_quarter() // const vector<Segment> Assembly, const vector<Segment> silkscreen)
 {
     Input_Output A1;
@@ -162,10 +162,18 @@ double Scorer::first_quarter() // const vector<Segment> Assembly, const vector<S
     }
     total_area /= 2; //修正項
     Answer_1 = (2 - Rectangular_area / (total_area)) * 0.25;
-    cout << "First Score:" << Answer_1 << endl
-         << endl;
-    cout << "Rectangular_area:" << Rectangular_area << endl;
-    cout << "total_area:" << total_area << endl
+    cout << "First Score:"; 
+    if(Answer_1 > 0.25) 
+        cout << 0.25 << endl << "over 0.25\n";
+    else 
+        cout << Answer_1 
+        << endl
+        << endl;
+    cout << "Rectangular_area:" << Rectangular_area 
+    << endl;
+    cout << "total_area:" << total_area 
+    << endl;
+    if(total_area >= Rectangular_area) cout << "first quarter wrong total_area >= Rectangular_area"
          << endl
          << endl;
 
@@ -244,9 +252,11 @@ double Scorer::second_quarter() // const vector<Segment>Assembly, const vector<S
          << endl;
     cout << "Part_1 score: " << part_1 << endl
          << "Part_2 Score: " << part_2 << endl
-         << endl
          << endl;
-
+    if(total_perimeter > total_silkscreen) 
+        cout << "second quarter part_1 wrong ttotal_perimeter > total_silkscreen";
+        cout << endl
+        << endl;
     return Second_Score;
 }
 
