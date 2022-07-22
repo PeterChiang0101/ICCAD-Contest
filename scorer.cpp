@@ -287,6 +287,8 @@ double Scorer::third_quarter() // const vector<vector<Segment>> copper, const ve
     Point circle_center_A, circle_center_B;
     vector<Point> A_ps, S_ps;
 
+    bool pass_monitor = true;
+
     min_distance_sum = 0;
 
     for (size_t i = 0; i < this->silkscreen.size(); i++)
@@ -418,9 +420,10 @@ double Scorer::third_quarter() // const vector<vector<Segment>> copper, const ve
                         min_distance = min(min(Point_to_Arc_MinDist(A1, copper.at(j).at(k)), Point_to_Arc_MinDist(A2, copper.at(j).at(k))), min_distance);
                 }
 
-                if((min_distance < L_copper && min_distance > L_copper - tolerance) || (min_distance > L_copper && min_distance < L_copper + tolerance))
+                if((min_distance < L_copper && min_distance > L_copper - tolerance)) // || (min_distance > L_copper && min_distance < L_copper + tolerance))
                     min_distance = L_copper;
                 else if(min_distance < L_copper - tolerance){
+                    pass_monitor = false;
                     cout << "Error: i(silkscreen) = " << i << ", j(copper) = " << j << ", k = " << k << " coppergap: " << L_copper << " min_distance: " << min_distance << endl;
                     cout << "Silksreen: (" << silkscreen[i].x1 << "," << silkscreen[i].y1 << ") -> (" << silkscreen[i].x2 << "," << silkscreen[i].y2 << ") is_line = " << silkscreen[i].is_line;
                     if(silkscreen[i].is_line == 0)
@@ -476,7 +479,11 @@ double Scorer::third_quarter() // const vector<vector<Segment>> copper, const ve
     T_copper = min_distance_sum / (double)this->continue_num.size();
     Third_Score = (1 - (T_copper - L_copper) * 10 / L_copper) * 0.25;
     // print the score of the third_quarter
-    cout << endl;
+
+    if(pass_monitor)
+        cout<< "All pass restriction" << endl;
+    else
+        cout << "!!!!!!Error!!!!!!" << endl;
     cout << "Third Score: " << Third_Score << endl
          << endl;
     cout << "T_copper: " << T_copper << endl
@@ -503,6 +510,8 @@ double Scorer::fourth_quarter() // const vector<Segment> assembly, const vector<
     int group = 0;
     int count_number = 0;
     bool brk = false;
+
+    bool pass_monitor = true;
 
     min_distance_sum = 0;
     vector<Point> A_ps, S_ps;
@@ -648,9 +657,10 @@ double Scorer::fourth_quarter() // const vector<Segment> assembly, const vector<
                 // min_distance = min_tmp;
             }
 
-            if((min_distance < L_outline && min_distance > L_outline - tolerance) || (min_distance > L_outline && min_distance < L_outline + tolerance))
+            if((min_distance < L_outline && min_distance > L_outline - tolerance)) // || (min_distance > L_outline && min_distance < L_outline + tolerance))
                 min_distance = L_outline;
             else if(min_distance < L_outline - tolerance){
+                pass_monitor = false;
                 cout << "Error: i(silkscreen) = " << i << ", j(assembly) = " << j << " assemblygap: " << L_outline << " min_distance: " << min_distance << endl;
                 cout << "Silksreen: (" << silkscreen[i].x1 << "," << silkscreen[i].y1 << ") -> (" << silkscreen[i].x2 << "," << silkscreen[i].y2 << ") is_line = " << silkscreen[i].is_line;
                 if(silkscreen[i].is_line == 0)
@@ -686,7 +696,10 @@ double Scorer::fourth_quarter() // const vector<Segment> assembly, const vector<
     if (Fourth_Score < 0)
         Fourth_Score = 0;
 
-    cout << endl;
+    if(pass_monitor)
+        cout<< "All pass restriction" << endl;
+    else
+        cout << "!!!!!!Error!!!!!!" << endl;
     cout << "Fourth Score: " << Fourth_Score << endl
          << endl;
     cout << "T_outline: " << T_outline << endl
