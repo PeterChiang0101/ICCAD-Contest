@@ -16,8 +16,8 @@ using namespace std;
 #define Subtraction_Tolerance 0.00005 // float 相減誤差容許值
 #define PI 3.14159265358979323846
 #define ARC_TO_LINE_SLICE_DENSITY 1 // 切片密度(in degree)
-#define INPUT_PATH "./TestingCase/test_A.txt"
-#define OUTPUT_PATH "./TestingCase/test_A_Ans.txt"
+#define INPUT_PATH "./TestingCase/test_C.txt"
+#define OUTPUT_PATH "./TestingCase/test_C_Ans.txt"
 // assemblygap : the minimum distance between assembly and silkscreen
 // coppergap : the minimum distance between copper and silkscreen
 // silkscreenlen : the minimum length of silkscreen
@@ -201,7 +201,7 @@ int main(int argc, char **argv)
 
     Boarder_Condition = fit_boarder_condition(Continuous_Silkscreen, silkscreen, assembly, whole_copper_barrier);
 
-    Write_File(Continuous_Silkscreen, argv);
+    Write_File(Boarder_Condition, argv);
     // Write_File(Silkscreen_Cut);
 
     // Write_File_Copper(whole_copper_barrier); // output for testing
@@ -1823,13 +1823,13 @@ vector<Point> Point_Sort(const Segment Silkscreen_Piece, vector<Point> Intersect
         // Seperate points into upper and lower semicircle
         for (size_t i = 0; i < Intersection_Points.size(); i++)
         {
-            if (Intersection_Points[i].y > X_axis)
+            if (Intersection_Points.at(i).y > X_axis)
             {
-                upper_points.push_back(Intersection_Points[i]);
+                upper_points.push_back(Intersection_Points.at(i));
             }
             else
             {
-                lower_points.push_back(Intersection_Points[i]);
+                lower_points.push_back(Intersection_Points.at(i));
             }
         }
 
@@ -1888,116 +1888,114 @@ vector<vector<Segment>> fit_boarder_condition(vector<vector<Segment>> Silkscreen
     int Silkscreen_size = Silkscreen.size();
     int Silkscreen_piece_size;
 
-    float Assembly_x_min = Assembly[0].x_min;
-    float Assembly_x_max = Assembly[0].x_max;
-    float Assembly_y_min = Assembly[0].y_min;
-    float Assembly_y_max = Assembly[0].y_max;
+    float Assembly_x_min = Assembly.at(0).x_min;
+    float Assembly_x_max = Assembly.at(0).x_max;
+    float Assembly_y_min = Assembly.at(0).y_min;
+    float Assembly_y_max = Assembly.at(0).y_max;
 
     int Uppest_Assembly_index = 0;   // assembly 最上面的線
     int Lowest_Assembly_index = 0;   // assembly 最下面的線
     int Leftest_Assembly_index = 0;  // assembly 最左邊的線
     int Rightest_Assembly_index = 0; // assembly 最右邊的線
 
-    float Silkscreen_x_min = Silkscreen[0][0].x_min;
-    float Silkscreen_x_max = Silkscreen[0][0].x_max;
-    float Silkscreen_y_min = Silkscreen[0][0].y_min;
-    float Silkscreen_y_max = Silkscreen[0][0].y_max;
+    float Silkscreen_x_min = Silkscreen.at(0).at(0).x_min;
+    float Silkscreen_x_max = Silkscreen.at(0).at(0).x_max;
+    float Silkscreen_y_min = Silkscreen.at(0).at(0).y_min;
+    float Silkscreen_y_max = Silkscreen.at(0).at(0).y_max;
 
     vector<vector<Segment>> Silkscreen_fit_Condition;
 
     for (int i = 0; i < Assembly_size; i++) // 找assembly極值
     {
-        if (Assembly[i].x_min < Assembly_x_min)
+        if (Assembly.at(i).x_min < Assembly_x_min)
         {
-            Assembly_x_min = Assembly[i].x_min;
-            Lowest_Assembly_index = i;
-        }
-        if (Assembly[i].x_max > Assembly_x_max)
-        {
-            Assembly_x_max = Assembly[i].x_max;
-            Uppest_Assembly_index = i;
-        }
-        if (Assembly[i].y_min < Assembly_y_min)
-        {
-            Assembly_y_min = Assembly[i].y_min;
+            Assembly_x_min = Assembly.at(i).x_min;
             Leftest_Assembly_index = i;
         }
-        if (Assembly[i].y_max > Assembly_y_max)
+        if (Assembly.at(i).x_max > Assembly_x_max)
         {
-            Assembly_y_max = Assembly[i].y_max;
+            Assembly_x_max = Assembly.at(i).x_max;
             Rightest_Assembly_index = i;
+        }
+        if (Assembly.at(i).y_min < Assembly_y_min)
+        {
+            Assembly_y_min = Assembly.at(i).y_min;
+            Lowest_Assembly_index = i;
+        }
+        if (Assembly.at(i).y_max > Assembly_y_max)
+        {
+            Assembly_y_max = Assembly.at(i).y_max;
+            Uppest_Assembly_index = i;
         }
     }
     for (int i = 0; i < Silkscreen_size; i++) // 找絲印極值
     {
-        Silkscreen_piece_size = Silkscreen[i].size();
+        Silkscreen_piece_size = Silkscreen.at(i).size();
         for (int j = 0; j < Silkscreen_piece_size; j++)
         {
-            if (Silkscreen[i][j].x_min < Silkscreen_x_min)
+            if (Silkscreen.at(i).at(j).x_min < Silkscreen_x_min)
             {
-                Silkscreen_x_min = Silkscreen[i][j].x_min;
+                Silkscreen_x_min = Silkscreen.at(i).at(j).x_min;
             }
-            if (Silkscreen[i][j].x_max > Silkscreen_x_max)
+            if (Silkscreen.at(i).at(j).x_max > Silkscreen_x_max)
             {
-                Silkscreen_x_max = Silkscreen[i][j].x_max;
+                Silkscreen_x_max = Silkscreen.at(i).at(j).x_max;
             }
-            if (Silkscreen[i][j].y_min < Silkscreen_y_min)
+            if (Silkscreen.at(i).at(j).y_min < Silkscreen_y_min)
             {
-                Silkscreen_y_min = Silkscreen[i][j].y_min;
+                Silkscreen_y_min = Silkscreen.at(i).at(j).y_min;
             }
-            if (Silkscreen[i][j].y_max > Silkscreen_y_max)
+            if (Silkscreen.at(i).at(j).y_max > Silkscreen_y_max)
             {
-                Silkscreen_y_max = Silkscreen[i][j].y_max;
+                Silkscreen_y_max = Silkscreen.at(i).at(j).y_max;
             }
         }
     }
 
     Point extremum;
 
-    if (Silkscreen_x_min > Assembly_x_min) // 下方沒包住
+    if (Silkscreen_x_min > Assembly_x_min) // 左方沒包住
     {
-        extremum.x = Assembly.at(Lowest_Assembly_index).x_min;
-        if (extremum.x == Assembly.at(Lowest_Assembly_index).x1)
-            extremum.y = Assembly.at(Lowest_Assembly_index).y1;
-        else if ((extremum.x == Assembly.at(Lowest_Assembly_index).x2))
-            extremum.y = Assembly.at(Lowest_Assembly_index).y2;
+        extremum.x = Assembly.at(Leftest_Assembly_index).x_min;
+        if (extremum.x == Assembly.at(Leftest_Assembly_index).x1)
+            extremum.y = Assembly.at(Leftest_Assembly_index).y1;
+        else if ((extremum.x == Assembly.at(Leftest_Assembly_index).x2))
+            extremum.y = Assembly.at(Leftest_Assembly_index).y2;
         else
-            extremum.y = Assembly.at(Lowest_Assembly_index).center_y - hypot(Assembly.at(Lowest_Assembly_index).x2 - Assembly.at(Lowest_Assembly_index).center_x, Assembly.at(Lowest_Assembly_index).y2 - Assembly.at(Lowest_Assembly_index).center_x);
+            extremum.y = Assembly.at(Leftest_Assembly_index).center_y - hypot(Assembly.at(Leftest_Assembly_index).x2 - Assembly.at(Leftest_Assembly_index).center_x, Assembly.at(Leftest_Assembly_index).y2 - Assembly.at(Leftest_Assembly_index).center_x);
         Silkscreen = Add_Excess_Silkscreen_For_Boarder_Condition(Silkscreen, extremum, Copper_Expanded, 1, Assembly);
     }
-    if (Silkscreen_x_max < Assembly_x_max) // 上方沒包住
+    if (Silkscreen_x_max < Assembly_x_max) // 右方沒包住
     {
-        extremum.x = Assembly.at(Uppest_Assembly_index).x_max;
-        if (extremum.x == Assembly.at(Uppest_Assembly_index).x1)
-            extremum.y = Assembly.at(Uppest_Assembly_index).y1;
-        else if ((extremum.x == Assembly.at(Uppest_Assembly_index).x2))
-            extremum.y = Assembly.at(Uppest_Assembly_index).y2;
+        extremum.x = Assembly.at(Rightest_Assembly_index).x_max;
+        if (extremum.x == Assembly.at(Rightest_Assembly_index).x1)
+            extremum.y = Assembly.at(Rightest_Assembly_index).y1;
+        else if ((extremum.x == Assembly.at(Rightest_Assembly_index).x2))
+            extremum.y = Assembly.at(Rightest_Assembly_index).y2;
         else
-            extremum.y = Assembly.at(Uppest_Assembly_index).center_y + hypot(Assembly.at(Uppest_Assembly_index).x2 - Assembly.at(Uppest_Assembly_index).center_x, Assembly.at(Uppest_Assembly_index).y2 - Assembly.at(Uppest_Assembly_index).center_x);
+            extremum.y = Assembly.at(Rightest_Assembly_index).center_y + hypot(Assembly.at(Rightest_Assembly_index).x2 - Assembly.at(Rightest_Assembly_index).center_x, Assembly.at(Rightest_Assembly_index).y2 - Assembly.at(Rightest_Assembly_index).center_x);
         Silkscreen = Add_Excess_Silkscreen_For_Boarder_Condition(Silkscreen, extremum, Copper_Expanded, 2, Assembly);
     }
-    if (Silkscreen_y_min > Assembly_y_min) // 左方沒包住
+    if (Silkscreen_y_min > Assembly_y_min) // 下方沒包住
     {
-        extremum.y = Assembly.at(Leftest_Assembly_index).y_min;
-        if (extremum.y == Assembly.at(Leftest_Assembly_index).y1)
-            extremum.x = Assembly.at(Leftest_Assembly_index).x1;
-        else if ((extremum.y == Assembly.at(Leftest_Assembly_index).y2))
-            extremum.x = Assembly.at(Leftest_Assembly_index).x2;
+        extremum.y = Assembly.at(Lowest_Assembly_index).y_min;
+        if (extremum.y == Assembly.at(Lowest_Assembly_index).y1)
+            extremum.x = Assembly.at(Lowest_Assembly_index).x1;
+        else if ((extremum.y == Assembly.at(Lowest_Assembly_index).y2))
+            extremum.x = Assembly.at(Lowest_Assembly_index).x2;
         else
-            extremum.x = Assembly.at(Leftest_Assembly_index).center_x - hypot(Assembly.at(Leftest_Assembly_index).y2 - Assembly.at(Leftest_Assembly_index).center_y, Assembly.at(Leftest_Assembly_index).x2 - Assembly.at(Leftest_Assembly_index).center_y);
-        extremum.y = Assembly[Leftest_Assembly_index].y_min;
+            extremum.x = Assembly.at(Lowest_Assembly_index).center_x - hypot(Assembly.at(Lowest_Assembly_index).y2 - Assembly.at(Lowest_Assembly_index).center_y, Assembly.at(Lowest_Assembly_index).x2 - Assembly.at(Lowest_Assembly_index).center_y);
         Silkscreen = Add_Excess_Silkscreen_For_Boarder_Condition(Silkscreen, extremum, Copper_Expanded, 3, Assembly);
     }
-    if (Silkscreen_y_max < Assembly_y_max) // 右方沒包住
+    if (Silkscreen_y_max < Assembly_y_max) // 上方沒包住
     {
-        extremum.y = Assembly.at(Rightest_Assembly_index).y_max;
-        if (extremum.y == Assembly.at(Rightest_Assembly_index).y1)
-            extremum.x = Assembly.at(Rightest_Assembly_index).x1;
-        else if ((extremum.y == Assembly.at(Rightest_Assembly_index).y2))
-            extremum.x = Assembly.at(Rightest_Assembly_index).x2;
+        extremum.y = Assembly.at(Uppest_Assembly_index).y_max;
+        if (extremum.y == Assembly.at(Uppest_Assembly_index).y1)
+            extremum.x = Assembly.at(Uppest_Assembly_index).x1;
+        else if ((extremum.y == Assembly.at(Uppest_Assembly_index).y2))
+            extremum.x = Assembly.at(Uppest_Assembly_index).x2;
         else
-            extremum.x = Assembly.at(Rightest_Assembly_index).center_x + hypot(Assembly.at(Rightest_Assembly_index).y2 - Assembly.at(Rightest_Assembly_index).center_y, Assembly.at(Rightest_Assembly_index).x2 - Assembly.at(Rightest_Assembly_index).center_y);
-        extremum.y = Assembly[Rightest_Assembly_index].y_max;
+            extremum.x = Assembly.at(Uppest_Assembly_index).center_x + hypot(Assembly.at(Uppest_Assembly_index).y2 - Assembly.at(Uppest_Assembly_index).center_y, Assembly.at(Uppest_Assembly_index).x2 - Assembly.at(Uppest_Assembly_index).center_y);
         Silkscreen = Add_Excess_Silkscreen_For_Boarder_Condition(Silkscreen, extremum, Copper_Expanded, 4, Assembly);
     }
 
@@ -2012,26 +2010,26 @@ vector<vector<Segment>> Add_Excess_Silkscreen_For_Boarder_Condition(vector<vecto
 
     for (int i = 0; i < Copper_Expanded_size; i++)
     {
-        if (Copper_Expanded[i].x_min <= extremum.x && Copper_Expanded[i].x_max >= extremum.x && Copper_Expanded[i].y_min <= extremum.y && Copper_Expanded[i].y_max >= extremum.y) // 在 copper 裡面
+        if (Copper_Expanded.at(i).x_min <= extremum.x && Copper_Expanded.at(i).x_max >= extremum.x && Copper_Expanded.at(i).y_min <= extremum.y && Copper_Expanded.at(i).y_max >= extremum.y) // 在 copper 裡面
         {
-            switch (side)
+            switch (side) // 沿著須處理的邊做一直線，而後與copper圖型取交點
             {
-            case 1: // down
-            case 2: // up
-                Boarder.y1 = Boarder.y2 = extremum.y;
-                Boarder.x1 = Copper_Expanded[i].x_min - 1;
-                Boarder.x2 = Copper_Expanded[i].x_max + 1;
-                break;
-            case 3: // left
-            case 4: // right
+            case 1: // left
+            case 2: // right
                 Boarder.x1 = Boarder.x2 = extremum.x;
-                Boarder.y1 = Copper_Expanded[i].y_min - 1;
-                Boarder.y2 = Copper_Expanded[i].y_max + 1;
+                Boarder.y1 = Copper_Expanded.at(i).y_min - 1;
+                Boarder.y2 = Copper_Expanded.at(i).y_max + 1;
+                break;
+            case 3: // bottom
+            case 4: // up
+                Boarder.y1 = Boarder.y2 = extremum.y;
+                Boarder.x1 = Copper_Expanded.at(i).x_min - 1;
+                Boarder.x2 = Copper_Expanded.at(i).x_max + 1;
                 break;
             }
             /*
             vector<Segment> Boarder_piece; // 邊界劃過copper的線段
-            Boarder_piece = silkscreen_cut_single_copper(Boarder, Copper_Expanded[i]);
+            Boarder_piece = silkscreen_cut_single_copper(Boarder, Copper_Expanded.at(i));
             if (Boarder_piece.size() == 0)
             {
                 cout << "error: Boarder_piece.size() == 0" << endl;
@@ -2044,20 +2042,20 @@ vector<vector<Segment>> Add_Excess_Silkscreen_For_Boarder_Condition(vector<vecto
             for (int j = 0; j < Boarder_piece_size; j++) // 將終點轉為點形式
             {
                 Point temp;
-                temp.x = Boarder_piece[j].x1;
-                temp.y = Boarder_piece[j].y1;
+                temp.x = Boarder_piece.at(j).x1;
+                temp.y = Boarder_piece.at(j).y1;
                 temp.Next_Arc = false;
                 Extend_Line_End_Points.push_back(temp);
-                temp.x = Boarder_piece[j].x2;
-                temp.y = Boarder_piece[j].y2;
+                temp.x = Boarder_piece.at(j).x2;
+                temp.y = Boarder_piece.at(j).y2;
                 temp.Next_Arc = false;
                 Extend_Line_End_Points.push_back(temp);
             }
             */
             vector<vector<Point>> Arc_Dots;
             vector<Point> Copper_Dots;
-            Arc_Dots = Arc_Optimization(Copper_Expanded[i].segment);
-            Copper_Dots = Line_to_Point(Copper_Expanded[i].segment);
+            Arc_Dots = Arc_Optimization(Copper_Expanded.at(i).segment);
+            Copper_Dots = Line_to_Point(Copper_Expanded.at(i).segment);
 
             vector<Point> Boarder_Dots;                 // 在此銅箔上的點
             vector<bool> Boarder_Dots_is_First_Point;   // 在此銅箔上的點是否為第一點
@@ -2066,8 +2064,8 @@ vector<vector<Segment>> Add_Excess_Silkscreen_For_Boarder_Condition(vector<vecto
             for (int j = 0; j < Silkscreen.size(); j++)
             {
                 Point temp;
-                temp.x = Silkscreen[j][0].x1; // 連續線段的第一個點
-                temp.y = Silkscreen[j][0].y1;
+                temp.x = Silkscreen.at(j).at(0).x1; // 連續線段的第一個點
+                temp.y = Silkscreen.at(j).at(0).y1;
                 temp.Next_Arc = false;
                 if (point_in_polygon(temp, Copper_Dots, Arc_Dots) == true) // 點在 copper 上面
                 {
@@ -2076,8 +2074,8 @@ vector<vector<Segment>> Add_Excess_Silkscreen_For_Boarder_Condition(vector<vecto
                     Boarder_Dots_index_in_Assembly.push_back(j);
                 }
 
-                temp.x = Silkscreen[j][Silkscreen[j].size()].x2; // 連續線段的最後一個點
-                temp.y = Silkscreen[j][Silkscreen[j].size()].y2;
+                temp.x = Silkscreen.at(j).at(Silkscreen.at(j).size() - 1).x2; // 連續線段的最後一個點
+                temp.y = Silkscreen.at(j).at(Silkscreen.at(j).size() - 1).y2;
                 temp.Next_Arc = false;
                 if (point_in_polygon(temp, Copper_Dots, Arc_Dots) == true) // 點在 copper 上面
                 {
@@ -2148,13 +2146,13 @@ vector<vector<Segment>> Add_Excess_Silkscreen_For_Boarder_Condition(vector<vecto
 
                     if (first_line == true)
                     {
-                        Second.x == Boarder_Dots.at(j).x;
-                        Second.y == Boarder_Dots.at(j).y;
+                        Second.x = Boarder_Dots.at(j).x;
+                        Second.y = Boarder_Dots.at(j).y;
                     }
                     else if (first_line == false && k == Boarder_Dots_index)
                     {
-                        First.x == Boarder_Dots.at(j).x;
-                        First.y == Boarder_Dots.at(j).y;
+                        First.x = Boarder_Dots.at(j).x;
+                        First.y = Boarder_Dots.at(j).y;
                     }
 
                     if (Copper_Expanded.at(i).segment.at(k).is_line)
@@ -2230,13 +2228,13 @@ vector<vector<Segment>> Add_Excess_Silkscreen_For_Boarder_Condition(vector<vecto
 
                     if (first_line == true)
                     {
-                        First.x == Boarder_Dots.at(j).x;
-                        First.y == Boarder_Dots.at(j).y;
+                        First.x = Boarder_Dots.at(j).x;
+                        First.y = Boarder_Dots.at(j).y;
                     }
                     else if (first_line == false && k == Boarder_Dots_index)
                     {
-                        Second.x == Boarder_Dots.at(j).x;
-                        Second.y == Boarder_Dots.at(j).y;
+                        Second.x = Boarder_Dots.at(j).x;
+                        Second.y = Boarder_Dots.at(j).y;
                     }
 
                     if (Copper_Expanded.at(i).segment.at(k).is_line)
@@ -2311,7 +2309,8 @@ vector<vector<Segment>> Add_Excess_Silkscreen_For_Boarder_Condition(vector<vecto
             float min_length = INFINITY;
             float temp_length;
             vector<Segment> Extended_Silkscreen;
-            int Extended_Silkscreen_index = 0;
+            int Extended_Silkscreen_index = 0;                    // 第幾個延伸線段
+            int Extended_Silkscreen_index_in_Original_Silkscreen; // 延伸線段需接在第幾個原始線段中
             for (int j = 0; j < Boarder_Dots_size; j++)
             {
                 // 比較各合法線段長度，選擇較短者
@@ -2321,6 +2320,7 @@ vector<vector<Segment>> Add_Excess_Silkscreen_For_Boarder_Condition(vector<vecto
                     min_length = temp_length;
                     Extended_Silkscreen = Extended_Silkscreen_Candidate.at(j);
                     Extended_Silkscreen_index = j;
+                    Extended_Silkscreen_index_in_Original_Silkscreen = Boarder_Dots_index_in_Assembly.at(j);
                 }
             }
             vector<Segment> Inverted_Extended_Silkscreen;
@@ -2333,11 +2333,11 @@ vector<vector<Segment>> Add_Excess_Silkscreen_For_Boarder_Condition(vector<vecto
                     swap(Extended_Silkscreen.at(j).theta_1, Extended_Silkscreen.at(j).theta_2);
                     Inverted_Extended_Silkscreen.push_back(Extended_Silkscreen.at(j));
                 }
-                Silkscreen.at(Extended_Silkscreen_index).insert(Silkscreen.at(Extended_Silkscreen_index).begin(), Extended_Silkscreen.begin(), Extended_Silkscreen.end());
+                Silkscreen.at(Extended_Silkscreen_index_in_Original_Silkscreen).insert(Silkscreen.at(Extended_Silkscreen_index_in_Original_Silkscreen).begin(), Inverted_Extended_Silkscreen.begin(), Inverted_Extended_Silkscreen.end());
             }
             else
             {
-                Silkscreen.at(Extended_Silkscreen_index).insert(Silkscreen.at(Extended_Silkscreen_index).end(), Extended_Silkscreen.begin(), Extended_Silkscreen.end());
+                Silkscreen.at(Extended_Silkscreen_index_in_Original_Silkscreen).insert(Silkscreen.at(Extended_Silkscreen_index_in_Original_Silkscreen).end(), Extended_Silkscreen.begin(), Extended_Silkscreen.end());
             }
         }
     }

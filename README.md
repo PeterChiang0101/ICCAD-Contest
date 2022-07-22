@@ -18,11 +18,12 @@ BUGsss
 - [x] 圓與直線交點斜率
 - [x] 外擴圓心
 - [x] 大於180度之Segment尚未完成
-- [ ] 完成Scorer第三部分
+- [x] 完成Scorer第三部分
 - [ ] 一個凹陷過於尖，會導致崩潰(兩點外擴皆在assembly內，無結果)
 - [ ] 絲印外擴，如無結果，push_back原始assembly point的值
 - [ ] 製作Segment版本intersection()
 - [x] Arc 修正, Copper需正確運作
+- [x] 判斷assembly極值是否被silkscreen覆蓋，並滿足題目要求
 
 low priority:
 
@@ -215,6 +216,14 @@ int main(); // 主程式
 ```
 
 ## Algorithms
+
+2022/7/20
+
+fix bugs in boarder condition, case c satisifies the needs, not sure other cases will or not pass the boarder condidition.
+
+Peter
+
+---
 
 2022/7/19
 
