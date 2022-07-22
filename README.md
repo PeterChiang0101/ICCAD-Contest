@@ -8,7 +8,7 @@ BUGsss
 - [x] 多出多餘的絲印，右上兩線段未切割 (剩餘一圓弧)
 - [x] debug scorer fourth quarter
 - [x] Scorer "Read_Silkscreen" 在CaseA會重複最後一個silkscreen
-- [ ] Case C 少一線段
+- [x] Case C 少一線段 (fixed at 7/22, accuracy problem)
 
 ---
 
@@ -217,7 +217,7 @@ int main(); // 主程式
 
 ## Algorithms
 
-2022/7/20
+2022/7/22
 
 fix bugs in boarder condition, case c satisifies the needs, not sure other cases will or not pass the boarder condidition.
 
@@ -695,6 +695,14 @@ assembly : vector<segment>, store the assembly details
 Peter
 
 ## Optimization
+
+2022/7/22
+
+fix case c missing line at left-bottom corner
+
+Peter
+
+---
 
 2022/7/19
 

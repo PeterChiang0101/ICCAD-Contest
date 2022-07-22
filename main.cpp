@@ -489,7 +489,6 @@ vector<Point> Arc_Point_Tuning(const vector<Segment> Assembly, const bool is_ass
 
     Segment first_line, second_line;
 
-    float silkscreen_assembly_gap;
     float radius;
     float radius_silkscreen;
 
@@ -1145,7 +1144,7 @@ void Write_File_Copper(const vector<Copper> coppers)
     }
 }
 
-vector<Segment> Final_Silkscreen(vector<Segment> Silkscreen_Original, vector<Copper> Coppers) // 未切割的絲印 與 銅箔
+vector<Segment> Final_Silkscreen(vector<Segment> Silkscreen_Original, vector<Copper> Coppers) // 未切割的絲印 與 外擴的銅箔
 {
     vector<Segment> Silkscreen_Cut_Complete; // 切割完成的完整絲印
     vector<Segment> Silkscreen_Cut_Part;     // 切割完成的一條絲印
@@ -1154,10 +1153,6 @@ vector<Segment> Final_Silkscreen(vector<Segment> Silkscreen_Original, vector<Cop
     for (int i = 0; i < Silkscreen_Org_Size; i++)
     {
         Silkscreen_Cut_Part.clear();
-        if (i == 16)
-        {
-            int a = 0;
-        }
         Silkscreen_Cut_Part = Cut_Silkscreen_by_Copper(Silkscreen_Original.at(i), Coppers);
         int Silkscreen_Cut_Part_Size = Silkscreen_Cut_Part.size();
         for (int j = 0; j < Silkscreen_Cut_Part_Size; j++)
@@ -1651,19 +1646,19 @@ vector<Segment> Segment_Sort(Segment Silkscreen_Piece, vector<Segment> total_cop
 
     if (Sort_as_Line)
     {
-        if (Silkscreen_Piece.x1 < Silkscreen_Piece.x2)
+        if (Silkscreen_Piece.x1 - Silkscreen_Piece.x2 < -0.00001)
         {
             sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_increase_Segment);
         }
-        else if (Silkscreen_Piece.x1 > Silkscreen_Piece.x2)
+        else if (Silkscreen_Piece.x1 - Silkscreen_Piece.x2 > 0.00001)
         {
             sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_decrease_Segment);
         }
-        else if (Silkscreen_Piece.y1 < Silkscreen_Piece.y2)
+        else if (Silkscreen_Piece.y1 - Silkscreen_Piece.y2 < -0.00001)
         {
             sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_increase_Segment);
         }
-        else if (Silkscreen_Piece.y1 > Silkscreen_Piece.y2)
+        else if (Silkscreen_Piece.y1 - Silkscreen_Piece.y2 > 0.00001)
         {
             sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_decrease_Segment);
         }
@@ -1746,7 +1741,7 @@ vector<Segment> Segment_Sort(Segment Silkscreen_Piece, vector<Segment> total_cop
 bool sort_increase_Segment(const Segment L1, const Segment L2)
 {
 
-    if (L1.x1 == L2.x1)
+    if (abs(L1.x1 - L2.x1) < 0.00001)
     {
         return (L1.y1 < L2.y1);
     }
@@ -1758,7 +1753,7 @@ bool sort_increase_Segment(const Segment L1, const Segment L2)
 bool sort_decrease_Segment(const Segment L1, const Segment L2)
 {
 
-    if (L1.x1 == L2.x1)
+    if (abs(L1.x1 - L2.x1) < 0.00001)
     {
         return (L1.y1 > L2.y1);
     }
@@ -1798,15 +1793,15 @@ vector<Point> Point_Sort(const Segment Silkscreen_Piece, vector<Point> Intersect
 
     if (Sort_as_Line)
     {
-        if ((Intersection_Points.at(0).x) > (Intersection_Points.at(final_point).x))
+        if ((Intersection_Points.at(0).x) - (Intersection_Points.at(final_point).x) > 0.00001)
         {
             sort(Intersection_Points.begin(), Intersection_Points.end(), sort_decrease_points);
         }
-        else if ((Intersection_Points.at(0).x) < (Intersection_Points.at(final_point).x))
+        else if ((Intersection_Points.at(0).x) - (Intersection_Points.at(final_point).x) < -0.00001)
         {
             sort(Intersection_Points.begin(), Intersection_Points.end(), sort_increase_points);
         }
-        else if ((Intersection_Points.at(0).y) < (Intersection_Points.at(final_point).y))
+        else if ((Intersection_Points.at(0).y) - (Intersection_Points.at(final_point).y) < -0.00001)
         {
             sort(Intersection_Points.begin(), Intersection_Points.end(), sort_increase_points);
         }
@@ -1861,7 +1856,7 @@ vector<Point> Point_Sort(const Segment Silkscreen_Piece, vector<Point> Intersect
 
 bool sort_decrease_points(const Point p1, const Point p2)
 {
-    if (p1.x != p2.x)
+    if (abs(p1.x - p2.x) > 0.00001)
     {
         return (p1.x > p2.x);
     }
@@ -1872,7 +1867,7 @@ bool sort_decrease_points(const Point p1, const Point p2)
 }
 bool sort_increase_points(const Point p1, const Point p2)
 {
-    if (p1.x != p2.x)
+    if (abs(p1.x - p2.x) > 0.00001)
     {
         return (p1.x < p2.x);
     }
@@ -2060,8 +2055,9 @@ vector<vector<Segment>> Add_Excess_Silkscreen_For_Boarder_Condition(vector<vecto
             vector<Point> Boarder_Dots;                 // 在此銅箔上的點
             vector<bool> Boarder_Dots_is_First_Point;   // 在此銅箔上的點是否為第一點
             vector<int> Boarder_Dots_index_in_Assembly; // 在此銅箔上的點在assembly的index
+            int Silkscreen_size = Silkscreen.size();
 
-            for (int j = 0; j < Silkscreen.size(); j++)
+            for (int j = 0; j < Silkscreen_size; j++)
             {
                 Point temp;
                 temp.x = Silkscreen.at(j).at(0).x1; // 連續線段的第一個點
@@ -2096,10 +2092,11 @@ vector<vector<Segment>> Add_Excess_Silkscreen_For_Boarder_Condition(vector<vecto
             vector<vector<Segment>> Extended_Silkscreen_Candidate; // 延伸的silkscreen
             vector<Segment> Extended_Silkscreen_Front;             // 延伸的silkscreen
             vector<Segment> Extended_Silkscreen_Back;              // 延伸的silkscreen
+            int Singal_Copper_Expanded_size = Copper_Expanded.at(i).segment.size();
 
             for (int j = 0; j < Boarder_Dots_size; j++) // 找到點位於copper的哪一個線段上
             {
-                for (int k = 0; k < Copper_Expanded.at(i).segment.size(); k++)
+                for (int k = 0; k < Singal_Copper_Expanded_size; k++)
                 {
                     if (Copper_Expanded.at(i).segment.at(k).is_line) // 直線
                     {
@@ -2126,7 +2123,7 @@ vector<vector<Segment>> Add_Excess_Silkscreen_For_Boarder_Condition(vector<vecto
                 }
                 bool first_line = true;
 
-                for (int k = Boarder_Dots_index;; (k) ? k-- : k = Copper_Expanded.at(i).segment.size() - 1) // 往前找
+                for (int k = Boarder_Dots_index;; (k) ? k-- : k = Singal_Copper_Expanded_size - 1) // 往前找
                 {
                     Point First;
                     Point Second;
@@ -2208,7 +2205,7 @@ vector<vector<Segment>> Add_Excess_Silkscreen_For_Boarder_Condition(vector<vecto
 
                 first_line = true;
 
-                for (int k = Boarder_Dots_index;; (k == Copper_Expanded.at(i).segment.size() - 1) ? k = 0 : k++) // 往後找
+                for (int k = Boarder_Dots_index;; (k == Singal_Copper_Expanded_size) ? k = 0 : k++) // 往後找
                 {
                     Point First;
                     Point Second;
