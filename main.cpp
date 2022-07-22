@@ -1646,19 +1646,19 @@ vector<Segment> Segment_Sort(Segment Silkscreen_Piece, vector<Segment> total_cop
 
     if (Sort_as_Line)
     {
-        if (Silkscreen_Piece.x1 - Silkscreen_Piece.x2 < -0.00001)
+        if (Silkscreen_Piece.x1 - Silkscreen_Piece.x2 < -Subtraction_Tolerance)
         {
             sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_increase_Segment);
         }
-        else if (Silkscreen_Piece.x1 - Silkscreen_Piece.x2 > 0.00001)
+        else if (Silkscreen_Piece.x1 - Silkscreen_Piece.x2 > Subtraction_Tolerance)
         {
             sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_decrease_Segment);
         }
-        else if (Silkscreen_Piece.y1 - Silkscreen_Piece.y2 < -0.00001)
+        else if (Silkscreen_Piece.y1 - Silkscreen_Piece.y2 < -Subtraction_Tolerance)
         {
             sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_increase_Segment);
         }
-        else if (Silkscreen_Piece.y1 - Silkscreen_Piece.y2 > 0.00001)
+        else if (Silkscreen_Piece.y1 - Silkscreen_Piece.y2 > Subtraction_Tolerance)
         {
             sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_decrease_Segment);
         }
@@ -1741,7 +1741,7 @@ vector<Segment> Segment_Sort(Segment Silkscreen_Piece, vector<Segment> total_cop
 bool sort_increase_Segment(const Segment L1, const Segment L2)
 {
 
-    if (abs(L1.x1 - L2.x1) < 0.00001)
+    if (abs(L1.x1 - L2.x1) < Subtraction_Tolerance)
     {
         return (L1.y1 < L2.y1);
     }
@@ -1753,7 +1753,7 @@ bool sort_increase_Segment(const Segment L1, const Segment L2)
 bool sort_decrease_Segment(const Segment L1, const Segment L2)
 {
 
-    if (abs(L1.x1 - L2.x1) < 0.00001)
+    if (abs(L1.x1 - L2.x1) < Subtraction_Tolerance)
     {
         return (L1.y1 > L2.y1);
     }
@@ -1793,15 +1793,15 @@ vector<Point> Point_Sort(const Segment Silkscreen_Piece, vector<Point> Intersect
 
     if (Sort_as_Line)
     {
-        if ((Intersection_Points.at(0).x) - (Intersection_Points.at(final_point).x) > 0.00001)
+        if ((Intersection_Points.at(0).x) - (Intersection_Points.at(final_point).x) > Subtraction_Tolerance)
         {
             sort(Intersection_Points.begin(), Intersection_Points.end(), sort_decrease_points);
         }
-        else if ((Intersection_Points.at(0).x) - (Intersection_Points.at(final_point).x) < -0.00001)
+        else if ((Intersection_Points.at(0).x) - (Intersection_Points.at(final_point).x) < -Subtraction_Tolerance)
         {
             sort(Intersection_Points.begin(), Intersection_Points.end(), sort_increase_points);
         }
-        else if ((Intersection_Points.at(0).y) - (Intersection_Points.at(final_point).y) < -0.00001)
+        else if ((Intersection_Points.at(0).y) - (Intersection_Points.at(final_point).y) < -Subtraction_Tolerance)
         {
             sort(Intersection_Points.begin(), Intersection_Points.end(), sort_increase_points);
         }
@@ -1856,7 +1856,7 @@ vector<Point> Point_Sort(const Segment Silkscreen_Piece, vector<Point> Intersect
 
 bool sort_decrease_points(const Point p1, const Point p2)
 {
-    if (abs(p1.x - p2.x) > 0.00001)
+    if (abs(p1.x - p2.x) > Subtraction_Tolerance)
     {
         return (p1.x > p2.x);
     }
@@ -1867,7 +1867,7 @@ bool sort_decrease_points(const Point p1, const Point p2)
 }
 bool sort_increase_points(const Point p1, const Point p2)
 {
-    if (abs(p1.x - p2.x) > 0.00001)
+    if (abs(p1.x - p2.x) > Subtraction_Tolerance)
     {
         return (p1.x < p2.x);
     }

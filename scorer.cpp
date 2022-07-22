@@ -172,7 +172,7 @@ double Scorer::first_quarter() // const vector<Segment> Assembly, const vector<S
     return (Answer_1 > 0.25) ? 0.25 : Answer_1; //大於0.25只算0.25
 }
 
-//finish verification, done on 2022/7/9
+// finish verification, done on 2022/7/9
 double Scorer::second_quarter() // const vector<Segment>Assembly, const vector<Segment> silkscreen)
 {
     double part_1{0}, part_2{0}, Second_Score{0}, total_perimeter{0}, total_silkscreen{0};
@@ -357,24 +357,24 @@ double Scorer::third_quarter() // const vector<vector<Segment>> copper, const ve
                 {
                     min_distance = min(min(min(Point_to_Arc_MinDist(B1, silkscreen.at(i)), Point_to_Arc_MinDist(B2, silkscreen.at(i))), disMin(B1, B2, A1)), disMin(B1, B2, A2));
 
-                if (disMin(B1, B2, circle_center_A) > rA)
-                {
-                    S_ps = intersection_between_CentersLine_and_Arc(this->silkscreen.at(i), circle_center_A + orth_Cswap(B1 - B2));
-                    for (size_t i = 0; i < S_ps.size(); i++)
+                    if (disMin(B1, B2, circle_center_A) > rA)
                     {
-                        if (i == 0)
+                        S_ps = intersection_between_CentersLine_and_Arc(this->silkscreen.at(i), circle_center_A + orth_Cswap(B1 - B2));
+                        for (size_t i = 0; i < S_ps.size(); i++)
                         {
-                            min_tmp = disMin(B1, B2, S_ps.at(0));
+                            if (i == 0)
+                            {
+                                min_tmp = disMin(B1, B2, S_ps.at(0));
+                            }
+                            else
+                            {
+                                if (disMin(B1, B2, S_ps.at(i)) < min_tmp)
+                                    min_tmp = disMin(B1, B2, S_ps.at(i));
+                            }
                         }
-                        else
-                        {
-                            if (disMin(B1, B2, S_ps.at(i)) < min_tmp)
-                                min_tmp = disMin(B1, B2, S_ps.at(i));
-                        }
+                        if (!S_ps.empty())
+                            min_distance = min(min_distance, min_tmp);
                     }
-                    if (!S_ps.empty())
-                        min_distance = min(min_distance, min_tmp);
-                }
                 }
                 else if (this->silkscreen.at(i).is_line == 0 && this->copper.at(j).at(k).is_line == 0)
                 {
@@ -586,7 +586,7 @@ double Scorer::fourth_quarter() // const vector<Segment> assembly, const vector<
                         min_distance = min(min_distance, rA - dist(B2, circle_center_A));
                 }*/
                 if (disMin(B1, B2, circle_center_A) > rA)
-                {   
+                {
                     S_ps = intersection_between_CentersLine_and_Arc(this->silkscreen[i], circle_center_A + orth_Cswap(B1 - B2));
                     for (size_t i = 0; i < S_ps.size(); i++)
                     {
@@ -608,7 +608,7 @@ double Scorer::fourth_quarter() // const vector<Segment> assembly, const vector<
             {
                 min_distance = 999999999;
                 if (circle_center_A == circle_center_B)
-                {   //兩個圓弧構成之連心線與圓弧焦點關係
+                { //兩個圓弧構成之連心線與圓弧焦點關係
                     if (Concentric_Circle_On_Arc(silkscreen[i], assembly[j]) == 1)
                     {
                         if (rA > rB)
@@ -694,8 +694,9 @@ double Scorer::fourth_quarter() // const vector<Segment> assembly, const vector<
     return Fourth_Score;
 }
 
-double Scorer::Total_score()
+double Scorer::Total_score(bool Detail)
 {
+    ShowDetail = Detail;
     double total_score = 0;
     cout << "Score Detail:" << endl
          << endl;
@@ -723,7 +724,7 @@ double Scorer::Total_score()
     return total_score;
 }
 
-vector<Segment> Scorer::Read_Silkscreen(fstream &Input_File)// 讀取絲印
+vector<Segment> Scorer::Read_Silkscreen(fstream &Input_File) // 讀取絲印
 {
     Input_Output A;
     vector<Segment> Silkscreen;
@@ -739,7 +740,7 @@ vector<Segment> Scorer::Read_Silkscreen(fstream &Input_File)// 讀取絲印
             continue_num.push_back(continue_count);
             continue;
         }
-        else if (line != "")//防止讀到換行空格
+        else if (line != "") //防止讀到換行空格
         {
             part = A.String_to_Line(line);
             continue_num.back() = (++continue_count);
@@ -824,7 +825,7 @@ Point operator+(Point a, Point b)
     return v;
 }
 
-Point operator*(double c, Point a)//@overload,伸縮
+Point operator*(double c, Point a) //@overload,伸縮
 {
     Point v;
     v.x = c * a.x;
@@ -832,7 +833,7 @@ Point operator*(double c, Point a)//@overload,伸縮
     return v;
 }
 
-Point operator/(Point a, double c)//@overload,伸縮
+Point operator/(Point a, double c) //@overload,伸縮
 {
     Point v;
     v.x = a.x / c;
@@ -872,7 +873,7 @@ Point orth_CCswap(Point a) //垂直逆時鍾(向量)
     return v;
 }
 
-double Point_to_Arc_MinDist(Point pp, Segment Arc)//點到圓弧之最短距離
+double Point_to_Arc_MinDist(Point pp, Segment Arc) //點到圓弧之最短距離
 {
     Point p1, p2, pc, ex_p;
     p1.x = Arc.x1;
@@ -908,7 +909,7 @@ double Point_to_Arc_MinDist(Point pp, Segment Arc)//點到圓弧之最短距離
 }
 
 vector<Point> intersection_between_CentersLine_and_Arc(Segment Arc, Point Center) // the other arc's center
-{// 圓心線對Arc的交點
+{                                                                                 // 圓心線對Arc的交點
     Point centerpoint, A;
     Point v1, v2;
     Point tmp;
@@ -942,7 +943,7 @@ vector<Point> intersection_between_CentersLine_and_Arc(Segment Arc, Point Center
     return intersect;
 }
 
-Point find_arbitary_point_on_arc(Segment Arc)//找出Arc兩端外圓上一點
+Point find_arbitary_point_on_arc(Segment Arc) //找出Arc兩端外圓上一點
 {
 
     Point middlepoint; // A,B中點
@@ -974,7 +975,7 @@ Point find_arbitary_point_on_arc(Segment Arc)//找出Arc兩端外圓上一點
         return middlepoint + (dist(middlepoint, centerpoint) + radius) / dist(middlepoint, centerpoint) * v1;
 }
 
-bool On_Arc(Segment Arc, Point p)//判斷點P是否在Arc上 
+bool On_Arc(Segment Arc, Point p) //判斷點P是否在Arc上
 {
     Segment AB, BC, OP;
     Point ar_p;
@@ -999,7 +1000,7 @@ bool On_Arc(Segment Arc, Point p)//判斷點P是否在Arc上
         return false;
 }
 
-bool Concentric_Circle_On_Arc(Segment Arc1, Segment Arc2)//同心圓對兩Arc端點射線，在Arc是否有交點
+bool Concentric_Circle_On_Arc(Segment Arc1, Segment Arc2) //同心圓對兩Arc端點射線，在Arc是否有交點
 {
     Point A1, A2, B1, B2;
     Point Center;

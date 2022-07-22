@@ -37,7 +37,7 @@ public:
     double second_quarter();//const vector<Segment>, const vector<Segment>);
     double third_quarter();//const vector<vector<Segment>>, const vector<Segment>);
     double fourth_quarter();//const vector<Segment>, const vector<Segment>);
-    double Total_score();
+    double Total_score(bool Detail);
     Scorer& setAssembly(const vector<Segment>);
     Scorer& setCopper(const vector<vector<Segment>>);
     Scorer& setSilkscreen(const vector<Segment>);
@@ -53,6 +53,7 @@ private:
     vector<Segment> silkscreen;
     vector<Segment> Assembly_push_out;
     vector<Segment> Read_Silkscreen(fstream &);
+    bool ShowDetail = false;
 };
 
 #endif
