@@ -29,8 +29,8 @@ low priority:
 
 - [ ] Find_Continuous_Segment 可記錄連續線段的開頭位置，節省資料用量
 - [x] vector[i] 可用 .at(i)
-- [ ] 評分器
-- [ ] 優化圓弧外擴
+- [x] 評分器
+- [x] 優化圓弧外擴
 - [ ] 自主產生題目程式
 - [ ] 分class
 - [ ] vector 換成 list
@@ -695,6 +695,18 @@ assembly : vector<segment>, store the assembly details
 Peter
 
 ## Optimization
+
+2022/7/24
+
+unified the output of the four parts of scorer
+
+ShowDetail in scorer work as intended
+
+add arc & arc point tuning in class inputoutput
+
+Peter
+
+---
 
 2022/7/22
 
