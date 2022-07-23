@@ -13,6 +13,7 @@ Copper Arc_Boundary_Meas(Segment);
 Segment Arc_Boundary_Meas_for_Assembly(Segment);
 vector<Point> Arc_Point_Tuning(const vector<Segment>, const bool, vector<Point>, float, float);
 Point first_intersection_between_line_and_arc_for_arc_tuning(Segment, Point, Point);
+Point first_intersection_between_arc_and_arc_for_arc_tuning(Segment, Segment);
 float Dot(Point, Point);
 /////////////////End Function Declaration////////
 
@@ -229,114 +230,174 @@ vector<Point> Input_Output::Arc_Point_Tuning(const vector<Segment> Assembly, con
 
     Segment first_line, second_line;
 
-    float silkscreen_assembly_gap;
     float radius;
+    float radius_1, radius_2;
     float radius_silkscreen;
+    float radius_1_silkscreen, radius_2_silkscreen;
 
     bool concave; // true for concave, false for convex
 
+    bool first_concave, second_concave;
+
     Segment Pushout_Circle;
+
+    Segment Pushout_Circle_1, Pushout_Circle_2;
 
     Point first_point, second_point;
 
     Point Intersection_Points;
-
+    float gap;
     if (is_assembly)
-        for (size_t i = 0; i < size; i++)
+        gap = assemblygap;
+    else
+        gap = coppergap;
+
+    for (size_t i = 0; i < size; i++)
+    {
+        if (i == 0)
+            first_line = Assembly.at(size - 1);
+        else
+            first_line = Assembly.at(i - 1);
+        second_line = Assembly.at(i);
+
+        if (!first_line.is_line && second_line.is_line) // 第一個是圓弧 第二個是線段
         {
-            if (i == 0)
-                first_line = Assembly.at(size - 1);
+            radius = hypot(first_line.x2 - first_line.center_x, first_line.y2 - first_line.center_y);
+            radius_silkscreen = hypot(Extended_Points.at(i).x - first_line.center_x, Extended_Points.at(i).y - first_line.center_y);
+            if (radius_silkscreen > radius)
+                concave = false; // 凸
             else
-                first_line = Assembly.at(i - 1);
-            second_line = Assembly.at(i);
+                concave = true; // 凹
+            Pushout_Circle.center_x = first_line.center_x;
+            Pushout_Circle.center_y = first_line.center_y;
+            Pushout_Circle.direction = first_line.direction;
+            Pushout_Circle.theta_1 = first_line.theta_1;
+            Pushout_Circle.theta_2 = first_line.theta_1;
 
-            if (!first_line.is_line && second_line.is_line) // 第一個是圓弧 第二個是線段
+            first_point.x = Extended_Points.at(i).x;
+            first_point.y = Extended_Points.at(i).y;
+            if (i != size - 1)
             {
-                radius = hypot(first_line.x2 - first_line.center_x, first_line.y2 - first_line.center_y);
-                radius_silkscreen = hypot(Extended_Points.at(i).x - first_line.center_x, Extended_Points.at(i).y - first_line.center_y);
-                if (radius_silkscreen > radius)
-                    concave = false; // 凸
-                else
-                    concave = true; // 凹
-                Pushout_Circle.center_x = first_line.center_x;
-                Pushout_Circle.center_y = first_line.center_y;
-                Pushout_Circle.direction = first_line.direction;
-                Pushout_Circle.theta_1 = first_line.theta_1;
-                Pushout_Circle.theta_2 = first_line.theta_1;
-
-                first_point.x = Extended_Points.at(i).x;
-                first_point.y = Extended_Points.at(i).y;
-                if (i != size - 1)
-                {
-                    second_point.x = Extended_Points.at(i + 1).x;
-                    second_point.y = Extended_Points.at(i + 1).y;
-                }
-                else
-                {
-                    second_point.x = Extended_Points.at(0).x;
-                    second_point.y = Extended_Points.at(0).y;
-                }
-
-                if (concave)
-                {
-                    Pushout_Circle.x1 = Pushout_Circle.x2 = first_line.center_x + (1 - assemblygap / radius) * (first_line.x2 - first_line.center_x);
-                    Pushout_Circle.y1 = Pushout_Circle.y2 = first_line.center_y + (1 - assemblygap / radius) * (first_line.y2 - first_line.center_y);
-                }
-                else
-                {
-                    Pushout_Circle.x1 = Pushout_Circle.x2 = first_line.center_x + (1 + assemblygap / radius) * (first_line.x2 - first_line.center_x);
-                    Pushout_Circle.y1 = Pushout_Circle.y2 = first_line.center_y + (1 + assemblygap / radius) * (first_line.y2 - first_line.center_y);
-                }
-
-                Intersection_Points = first_intersection_between_line_and_arc_for_arc_tuning(Pushout_Circle, first_point, second_point);
-
-                Extended_Points.at(i).x = Intersection_Points.x;
-                Extended_Points.at(i).y = Intersection_Points.y;
+                second_point.x = Extended_Points.at(i + 1).x;
+                second_point.y = Extended_Points.at(i + 1).y;
             }
-            if (first_line.is_line && !second_line.is_line) // 第一個是線段 第二個是圓弧
+            else
             {
-                radius = hypot(second_line.x1 - second_line.center_x, second_line.y1 - second_line.center_y);
-                radius_silkscreen = hypot(second_line.x1 - second_line.center_x, second_line.y1 - second_line.center_y);
-                if (radius_silkscreen > radius)
-                    concave = false; // 凸
-                else
-                    concave = true; // 凹
-                Pushout_Circle.center_x = second_line.center_x;
-                Pushout_Circle.center_y = second_line.center_y;
-                Pushout_Circle.direction = second_line.direction;
-                Pushout_Circle.theta_1 = second_line.theta_1;
-                Pushout_Circle.theta_2 = second_line.theta_1;
-
-                if (i != 0)
-                {
-                    first_point.x = Extended_Points.at(i - 1).x;
-                    first_point.y = Extended_Points.at(i - 1).y;
-                }
-                else
-                {
-                    first_point.x = Extended_Points.at(size - 1).x;
-                    first_point.y = Extended_Points.at(size - 1).y;
-                }
-                second_point.x = Extended_Points.at(i).x;
-                second_point.y = Extended_Points.at(i).y;
-
-                if (concave)
-                {
-                    Pushout_Circle.x1 = Pushout_Circle.x2 = second_line.center_x + (1 - assemblygap / radius) * (second_line.x1 - second_line.center_x);
-                    Pushout_Circle.y1 = Pushout_Circle.y2 = second_line.center_y + (1 - assemblygap / radius) * (second_line.y1 - second_line.center_y);
-                }
-                else
-                {
-                    Pushout_Circle.x1 = Pushout_Circle.x2 = second_line.center_x + (1 + assemblygap / radius) * (second_line.x1 - second_line.center_x);
-                    Pushout_Circle.y1 = Pushout_Circle.y2 = second_line.center_y + (1 + assemblygap / radius) * (second_line.y1 - second_line.center_y);
-                }
-
-                Intersection_Points = first_intersection_between_line_and_arc_for_arc_tuning(Pushout_Circle, first_point, second_point);
-
-                Extended_Points.at(i).x = Intersection_Points.x;
-                Extended_Points.at(i).y = Intersection_Points.y;
+                second_point.x = Extended_Points.at(0).x;
+                second_point.y = Extended_Points.at(0).y;
             }
+
+            if (concave)
+            {
+                Pushout_Circle.x1 = Pushout_Circle.x2 = first_line.center_x + (1 - gap / radius) * (first_line.x2 - first_line.center_x);
+                Pushout_Circle.y1 = Pushout_Circle.y2 = first_line.center_y + (1 - gap / radius) * (first_line.y2 - first_line.center_y);
+            }
+            else
+            {
+                Pushout_Circle.x1 = Pushout_Circle.x2 = first_line.center_x + (1 + gap / radius) * (first_line.x2 - first_line.center_x);
+                Pushout_Circle.y1 = Pushout_Circle.y2 = first_line.center_y + (1 + gap / radius) * (first_line.y2 - first_line.center_y);
+            }
+
+            Intersection_Points = first_intersection_between_line_and_arc_for_arc_tuning(Pushout_Circle, first_point, second_point);
+
+            Extended_Points.at(i).x = Intersection_Points.x;
+            Extended_Points.at(i).y = Intersection_Points.y;
         }
+        else if (first_line.is_line && !second_line.is_line) // 第一個是線段 第二個是圓弧
+        {
+            radius = hypot(second_line.x1 - second_line.center_x, second_line.y1 - second_line.center_y);
+            radius_silkscreen = hypot(Extended_Points.at(i).x - second_line.center_x, Extended_Points.at(i).y - second_line.center_y);
+            if (radius_silkscreen > radius)
+                concave = false; // 凸
+            else
+                concave = true; // 凹
+            Pushout_Circle.center_x = second_line.center_x;
+            Pushout_Circle.center_y = second_line.center_y;
+            Pushout_Circle.direction = second_line.direction;
+            Pushout_Circle.theta_1 = second_line.theta_1;
+            Pushout_Circle.theta_2 = second_line.theta_1;
+
+            if (i != 0)
+            {
+                first_point.x = Extended_Points.at(i - 1).x;
+                first_point.y = Extended_Points.at(i - 1).y;
+            }
+            else
+            {
+                first_point.x = Extended_Points.at(size - 1).x;
+                first_point.y = Extended_Points.at(size - 1).y;
+            }
+            second_point.x = Extended_Points.at(i).x;
+            second_point.y = Extended_Points.at(i).y;
+
+            if (concave)
+            {
+                Pushout_Circle.x1 = Pushout_Circle.x2 = second_line.center_x + (1 - gap / radius) * (second_line.x1 - second_line.center_x);
+                Pushout_Circle.y1 = Pushout_Circle.y2 = second_line.center_y + (1 - gap / radius) * (second_line.y1 - second_line.center_y);
+            }
+            else
+            {
+                Pushout_Circle.x1 = Pushout_Circle.x2 = second_line.center_x + (1 + gap / radius) * (second_line.x1 - second_line.center_x);
+                Pushout_Circle.y1 = Pushout_Circle.y2 = second_line.center_y + (1 + gap / radius) * (second_line.y1 - second_line.center_y);
+            }
+
+            Intersection_Points = first_intersection_between_line_and_arc_for_arc_tuning(Pushout_Circle, second_point, first_point);
+
+            Extended_Points.at(i).x = Intersection_Points.x;
+            Extended_Points.at(i).y = Intersection_Points.y;
+        }
+        else if (!first_line.is_line && !second_line.is_line)
+        {
+            radius_1 = hypot(first_line.x2 - first_line.center_x, first_line.y2 - first_line.center_y);
+            radius_2 = hypot(second_line.x1 - second_line.center_x, second_line.y1 - second_line.center_y);
+            radius_1_silkscreen = hypot(Extended_Points.at(i).x - first_line.center_x, Extended_Points.at(i).y - first_line.center_y);
+            radius_2_silkscreen = hypot(Extended_Points.at(i).x - second_line.center_x, Extended_Points.at(i).y - second_line.center_y);
+            if (radius_1_silkscreen > radius_1)
+                first_concave = false; // 凸
+            else
+                first_concave = true; // 凹
+            Pushout_Circle_1.center_x = first_line.center_x;
+            Pushout_Circle_1.center_y = first_line.center_y;
+            Pushout_Circle_1.direction = first_line.direction;
+            Pushout_Circle_1.theta_1 = first_line.theta_1;
+            Pushout_Circle_1.theta_2 = first_line.theta_1;
+            if (first_concave)
+            {
+                Pushout_Circle_1.x1 = Pushout_Circle_1.x2 = first_line.center_x + (1 - gap / radius_1) * (first_line.x2 - first_line.center_x);
+                Pushout_Circle_1.y1 = Pushout_Circle_1.y2 = first_line.center_y + (1 - gap / radius_1) * (first_line.y2 - first_line.center_y);
+            }
+            else
+            {
+                Pushout_Circle_1.x1 = Pushout_Circle_1.x2 = first_line.center_x + (1 + gap / radius_1) * (first_line.x2 - first_line.center_x);
+                Pushout_Circle_1.y1 = Pushout_Circle_1.y2 = first_line.center_y + (1 + gap / radius_1) * (first_line.y2 - first_line.center_y);
+            }
+
+            if (radius_2_silkscreen > radius_2)
+                second_concave = false; // 凸
+            else
+                second_concave = true; // 凹
+            Pushout_Circle_2.center_x = second_line.center_x;
+            Pushout_Circle_2.center_y = second_line.center_y;
+            Pushout_Circle_2.direction = second_line.direction;
+            Pushout_Circle_2.theta_1 = second_line.theta_1;
+            Pushout_Circle_2.theta_2 = second_line.theta_1;
+
+            if (second_concave)
+            {
+                Pushout_Circle_2.x1 = Pushout_Circle_2.x2 = second_line.center_x + (1 - gap / radius_2) * (second_line.x1 - second_line.center_x);
+                Pushout_Circle_2.y1 = Pushout_Circle_2.y2 = second_line.center_y + (1 - gap / radius_2) * (second_line.y1 - second_line.center_y);
+            }
+            else
+            {
+                Pushout_Circle_2.x1 = Pushout_Circle_2.x2 = second_line.center_x + (1 + gap / radius_2) * (second_line.x1 - second_line.center_x);
+                Pushout_Circle_2.y1 = Pushout_Circle_2.y2 = second_line.center_y + (1 + gap / radius_2) * (second_line.y1 - second_line.center_y);
+            }
+
+            Intersection_Points = first_intersection_between_arc_and_arc_for_arc_tuning(Pushout_Circle_1, Pushout_Circle_2);
+            Extended_Points.at(i).x = Intersection_Points.x;
+            Extended_Points.at(i).y = Intersection_Points.y;
+        }
+    }
     return Extended_Points;
 }
 
@@ -397,6 +458,49 @@ Point Input_Output::first_intersection_between_line_and_arc_for_arc_tuning(Segme
         P2.y = Line_First_Point.y + t2 * d.y;
 
         return (min(abs(t1), abs(t2)) == t1) ? P1 : P2;
+    }
+    return Point();
+}
+
+Point Input_Output::first_intersection_between_arc_and_arc_for_arc_tuning(Segment Arc1, Segment Arc2)
+{
+    float d = hypot(Arc1.center_x - Arc2.center_x, Arc1.center_y - Arc2.center_y); // 兩圓中心距離
+    float r1 = hypot(Arc1.x2 - Arc1.center_x, Arc1.y2 - Arc1.center_y);            // 圓1半徑
+    float r2 = hypot(Arc2.x2 - Arc2.center_x, Arc2.y2 - Arc2.center_y);            // 圓2半徑
+
+    if (d > r1 + r2) // 兩圓相距太遠，沒有交點
+        return Point();
+    if (d < abs(r1 - r2)) // 兩圓相距太近，沒有交點
+        return Point();
+    if (d == 0 && r1 != r2) // 同心圓，沒有交點
+        return Point();
+    if (d == 0 && r1 == r2) // 圓完全重疊，需判斷
+    {
+        Point P;
+        P.x = Arc1.x2;
+        P.y = Arc1.y2;
+        P.Next_Arc = true;
+        return P;
+    }
+    else
+    {
+        float a = (r1 * r1 - r2 * r2 + d * d) / (2 * d);
+        float h = sqrt(r1 * r1 - a * a);
+        float x0 = Arc1.center_x + a * (Arc2.center_x - Arc1.center_x) / d;
+        float y0 = Arc1.center_y + a * (Arc2.center_y - Arc1.center_y) / d;
+        float x1 = x0 + h * (Arc2.center_y - Arc1.center_y) / d;
+        float y1 = y0 - h * (Arc2.center_x - Arc1.center_x) / d;
+        float x2 = x0 - h * (Arc2.center_y - Arc1.center_y) / d;
+        float y2 = y0 + h * (Arc2.center_x - Arc1.center_x) / d;
+        Point P1;
+        P1.x = x1;
+        P1.y = y1;
+        Point P2;
+        P2.x = x2;
+        P2.y = y2;
+        float P1_distance = hypot(P1.x - Arc1.x2, P1.y - Arc1.x2);
+        float P2_distance = hypot(P2.x - Arc1.x2, P2.y - Arc1.x2);
+        return (abs(P1_distance) < abs(P2_distance)) ? P1 : P2;
     }
     return Point();
 }
