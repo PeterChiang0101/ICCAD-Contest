@@ -173,7 +173,7 @@ double Scorer::first_quarter() // const vector<Segment> Assembly, const vector<S
     << endl;
     cout << "total_area:" << total_area 
     << endl;
-    if(total_area >= Rectangular_area) cout << "first quarter wrong total_area >= Rectangular_area"
+    if(total_area >= Rectangular_area && showDetail) cout << "first quarter wrong total_area >= Rectangular_area"
          << endl
          << endl;
 
@@ -253,8 +253,8 @@ double Scorer::second_quarter() // const vector<Segment>Assembly, const vector<S
     cout << "Part_1 score: " << part_1 << endl
          << "Part_2 Score: " << part_2 << endl
          << endl;
-    if(total_perimeter > total_silkscreen) 
-        cout << "second quarter part_1 wrong ttotal_perimeter > total_silkscreen";
+    if(total_perimeter > total_silkscreen && showDetail) 
+        cout << "second quarter part_1 wrong total_perimeter > total_silkscreen";
         cout << endl
         << endl;
     return Second_Score;
