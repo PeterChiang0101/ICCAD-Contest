@@ -759,10 +759,6 @@ Point first_intersection_between_arc_and_arc_for_arc_tuning(Segment Arc1, Segmen
         Point P2;
         P2.x = x2;
         P2.y = y2;
-        float P1_Arc1_Theta = atan2(P1.y - Arc1.center_y, P1.x - Arc1.center_x);
-        float P1_Arc2_Theta = atan2(P1.y - Arc2.center_y, P1.x - Arc2.center_x);
-        float P2_Arc1_Theta = atan2(P2.y - Arc1.center_y, P2.x - Arc1.center_x);
-        float P2_Arc2_Theta = atan2(P2.y - Arc2.center_y, P2.x - Arc2.center_x);
         float P1_distance = hypot(P1.x - Arc1.x2, P1.y - Arc1.x2);
         float P2_distance = hypot(P2.x - Arc1.x2, P2.y - Arc1.x2);
         return (abs(P1_distance) < abs(P2_distance)) ? P1 : P2;
