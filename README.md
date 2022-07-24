@@ -24,12 +24,14 @@ BUGsss
 - [ ] 製作Segment版本intersection()
 - [x] Arc 修正, Copper需正確運作
 - [x] 判斷assembly極值是否被silkscreen覆蓋，並滿足題目要求
+- [ ] point_in_polygon() 先判斷點是否在arc極值內，再使用arc_points for迴圈，減少run time
+- [ ] Delete_Short_Silkscreen() fit_boarder_condition() 執行順序不明
 
 low priority:
 
 - [ ] Find_Continuous_Segment 可記錄連續線段的開頭位置，節省資料用量
 - [x] vector[i] 可用 .at(i)
-- [ ] 評分器
+- [x] 評分器
 - [ ] 優化圓弧外擴
 - [ ] 自主產生題目程式
 - [ ] 分class
@@ -695,6 +697,18 @@ assembly : vector<segment>, store the assembly details
 Peter
 
 ## Optimization
+
+2022/7/24
+
+create struct and parameter file
+
+split functions into four classes
+
+discuss some issues to avoid errors and improve runtime
+
+Peter Macoto Gray
+
+---
 
 2022/7/22
 

@@ -3,7 +3,7 @@
 
 #include <bits/stdc++.h>
 #include "Segment.h"
-#include "Copper.h"
+#include "Graph.h"
 
 using namespace std;
 
@@ -15,17 +15,20 @@ class FileIO
 public:
     float File_to_Parameter(const string str); // 讀入參數
 
-    vector<Segment> Read_Assembly(fstream &);
+    Graph Read_Assembly(fstream &);
 
-    vector<vector<Segment>> Read_Copper(fstream &);
+    vector<Graph> Read_Copper(fstream &);
 
     void Write_File(const vector<Segment>);
 
-    void Write_File(const vector<vector<Segment>>, char **argv);
+    void Write_File(const vector<Graph>, char **argv);
 
-    void Write_File_Copper(const vector<Copper>); // debugging function
+    void Write_File_Copper(const vector<Graph>); // debugging function
 
 private:
+    Segment String_to_Line(string);           // 讀取時建立線段
+    vector<string> split(const string &, const char &); // 拆分文字
+    Segment Arc_Boundary_Meas_for_Assembly(Segment); // 計算圓弧邊界
 };
 
 #endif // FILEIO_H
