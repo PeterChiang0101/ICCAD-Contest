@@ -26,6 +26,7 @@ BUGsss
 - [x] 判斷assembly極值是否被silkscreen覆蓋，並滿足題目要求
 - [ ] point_in_polygon() 先判斷點是否在arc極值內，再使用arc_points for迴圈，減少run time
 - [ ] Delete_Short_Silkscreen() fit_boarder_condition() 執行順序不明
+- [ ] 可偷線段 減少長度 減少數量差異 第二部分拿高分
 
 low priority:
 
