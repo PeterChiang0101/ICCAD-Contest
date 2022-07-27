@@ -103,10 +103,6 @@ flowchart LR
 
     a0([open file])
     a1([File_to_Parameter])
-    a2([Read_Assembly])
-    a3([Read_Copper])
-    a4([Assembly_Buffer])
-    a5([Copper_Buffer])
     a6([Write_File])
     a7([Fit_Boarder_Condition])
 
@@ -117,13 +113,17 @@ flowchart LR
         end 
 
         subgraph assembly
+        a2([Read_Assembly])
         c1([Point_Extension])
         c2([Point_to_Line])
+        a4([Assembly_Buffer])
         end
 
         subgraph copper
+        a3([Read_Copper])
         d1([Point_Extension])
         d2([Copper_Point_to_Line])
+        a5([Copper_Buffer])
         end
 
         subgraph cut_assembly
@@ -217,6 +217,17 @@ Copper Arc_Boundary_Meas(Segment);
 
 int main(); // 主程式
 ```
+
+## OOD (Object-Oriented Design)
+
+2022/7/27
+
+finish FileIO.h
+
+Peter
+
+---
+---
 
 ## Algorithms
 
@@ -696,6 +707,9 @@ assembly : vector<segment>, store the assembly details
 ```
 
 Peter
+
+---
+---
 
 ## Optimization
 

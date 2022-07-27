@@ -9,7 +9,7 @@ using namespace std;
 #ifndef GRAPH_H
 #define GRAPH_H
 
-struct Graph // 外擴Copper
+struct Graph // Copper Assembly共用
 {
     float x_min, x_max, y_min, y_max;
     vector<Segment> segment;

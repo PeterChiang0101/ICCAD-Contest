@@ -72,6 +72,84 @@ Graph FileIO::Read_Assembly(fstream &Input_File) // 讀取assembly，轉換為ve
     return Assembly;
 }
 
+vector<Graph> FileIO::Read_Copper(fstream &Input_File) // 讀取copper，轉換為二維vector
+{
+    Graph copper;
+    vector<Graph> copper_pack;
+    Segment part;
+    vector<string> split_return;
+    string line;
+    while (getline(Input_File, line))
+    {
+        if (line.find("copper") != string::npos)
+        {
+            copper_pack.push_back(copper);
+            copper.segment.clear();
+        }
+        else
+        {
+            part = String_to_Line(line);
+            copper.segment.push_back(part);
+        }
+    }
+    copper_pack.push_back(copper);
+    return copper_pack;
+}
+
+void FileIO::Write_File(const Graph Silkscreen)
+{
+    fstream Output;
+
+    Output.open(OUTPUT_PATH, ios::out);
+    // Output << "silkscreen" << endl;
+    const size_t size = Silkscreen.segment.size();
+    for (size_t i = 0; i < size; i++)
+    {
+        if (i == 0 || Silkscreen.segment.at(i).x1 != Silkscreen.segment.at(i - 1).x2 || Silkscreen.segment.at(i).y1 != Silkscreen.segment.at(i - 1).y2) // 第一條線，或線段不連續
+            Output << "silkscreen" << endl;
+
+        if (Silkscreen.segment.at(i).is_line)
+        {
+            Output << "line," << fixed << setprecision(4) << Silkscreen.segment.at(i).x1 << "," << Silkscreen.segment.at(i).y1 << "," << Silkscreen.segment.at(i).x2 << "," << Silkscreen.segment.at(i).y2 << endl;
+        }
+        else
+        {
+            Output << "arc," << fixed << setprecision(4) << Silkscreen.segment.at(i).x1 << "," << Silkscreen.segment.at(i).y1 << "," << Silkscreen.segment.at(i).x2 << "," << Silkscreen.segment.at(i).y2 << "," << Silkscreen.segment.at(i).center_x << "," << Silkscreen.segment.at(i).center_y << "," << (Silkscreen.segment.at(i).is_CCW ? "CCW" : "CW") << endl;
+        }
+    }
+}
+
+void FileIO::Write_File(const vector<Graph> Silkscreen, char **argv)
+{
+    fstream Output;
+
+    Output.open(argv[2], ios::out);
+
+    if (!Output)
+    {
+        cout << "Error: Cannot open file" << endl;
+        Output.open(OUTPUT_PATH, ios::out); // 如果未指定路徑，使用預設路徑
+    }
+
+    const size_t size = Silkscreen.size();
+    for (size_t i = 0; i < size; i++)
+    {
+        Output << "silkscreen" << endl;
+        int conti_size = Silkscreen.at(i).segment.size();
+        for (int j = 0; j < conti_size; j++)
+        {
+            if (Silkscreen.at(i).segment.at(j).is_line)
+            {
+                Output << "line," << fixed << setprecision(4) << Silkscreen.at(i).segment.at(j).x1 << "," << Silkscreen.at(i).segment.at(j).y1 << "," << Silkscreen.at(i).segment.at(j).x2 << "," << Silkscreen.at(i).segment.at(j).y2 << endl;
+            }
+            else
+            {
+                Output << "arc," << fixed << setprecision(4) << Silkscreen.at(i).segment.at(j).x1 << "," << Silkscreen.at(i).segment.at(j).y1 << "," << Silkscreen.at(i).segment.at(j).x2 << "," << Silkscreen.at(i).segment.at(j).y2 << "," << Silkscreen.at(i).segment.at(j).center_x << "," << Silkscreen.at(i).segment.at(j).center_y << "," << (Silkscreen.at(i).segment.at(j).is_CCW ? "CCW" : "CW") << endl;
+            }
+        }
+    }
+}
+
 Segment FileIO::String_to_Line(string line) // 讀取時建立線段
 {
     vector<string> Splited;
