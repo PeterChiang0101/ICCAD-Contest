@@ -6,8 +6,8 @@ using namespace std;
 
 int main()
 {
-     // Scorer s("./PublicCase/PublicCase_B.txt", "./PublicCase/PublicCase_B_Ans.txt");
+     // Scorer s("./PublicCase/PublicCase_C.txt", "./PublicCase/PublicCase_C_Ans.txt");
      Scorer s("./TestingCase/test_C.txt", "./TestingCase/test_C_Ans.txt");
-     cout << setprecision(4) << fixed << s.Total_score() << endl;
+     cout << setprecision(4) << fixed << s.Total_score(1) << endl;
      return 0;
 }

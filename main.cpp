@@ -84,6 +84,8 @@ vector<Point> Arc_Point_Tuning(const vector<Segment>, const bool, vector<Point>)
 
 Point first_intersection_between_line_and_arc_for_arc_tuning(Segment, Point, Point);
 
+Point first_intersection_between_arc_and_arc_for_arc_tuning(Segment, Segment);
+
 vector<Segment> Point_to_Line(vector<Point>, vector<Segment>);
 
 Copper Copper_Point_to_Line(vector<Point>, vector<Segment>);
@@ -490,11 +492,17 @@ vector<Point> Arc_Point_Tuning(const vector<Segment> Assembly, const bool is_ass
     Segment first_line, second_line;
 
     float radius;
+    float radius_1, radius_2;
     float radius_silkscreen;
+    float radius_1_silkscreen, radius_2_silkscreen;
 
     bool concave; // true for concave, false for convex
 
+    bool first_concave, second_concave;
+
     Segment Pushout_Circle;
+
+    Segment Pushout_Circle_1, Pushout_Circle_2;
 
     Point first_point, second_point;
 
@@ -599,6 +607,57 @@ vector<Point> Arc_Point_Tuning(const vector<Segment> Assembly, const bool is_ass
             Extended_Points.at(i).x = Intersection_Points.x;
             Extended_Points.at(i).y = Intersection_Points.y;
         }
+        else if (!first_line.is_line && !second_line.is_line)
+        {
+            radius_1 = hypot(first_line.x2 - first_line.center_x, first_line.y2 - first_line.center_y);
+            radius_2 = hypot(second_line.x1 - second_line.center_x, second_line.y1 - second_line.center_y);
+            radius_1_silkscreen = hypot(Extended_Points.at(i).x - first_line.center_x, Extended_Points.at(i).y - first_line.center_y);
+            radius_2_silkscreen = hypot(Extended_Points.at(i).x - second_line.center_x, Extended_Points.at(i).y - second_line.center_y);
+            if (radius_1_silkscreen > radius_1)
+                first_concave = false; // 凸
+            else
+                first_concave = true; // 凹
+            Pushout_Circle_1.center_x = first_line.center_x;
+            Pushout_Circle_1.center_y = first_line.center_y;
+            Pushout_Circle_1.direction = first_line.direction;
+            Pushout_Circle_1.theta_1 = first_line.theta_1;
+            Pushout_Circle_1.theta_2 = first_line.theta_1;
+            if (first_concave)
+            {
+                Pushout_Circle_1.x1 = Pushout_Circle_1.x2 = first_line.center_x + (1 - gap / radius_1) * (first_line.x2 - first_line.center_x);
+                Pushout_Circle_1.y1 = Pushout_Circle_1.y2 = first_line.center_y + (1 - gap / radius_1) * (first_line.y2 - first_line.center_y);
+            }
+            else
+            {
+                Pushout_Circle_1.x1 = Pushout_Circle_1.x2 = first_line.center_x + (1 + gap / radius_1) * (first_line.x2 - first_line.center_x);
+                Pushout_Circle_1.y1 = Pushout_Circle_1.y2 = first_line.center_y + (1 + gap / radius_1) * (first_line.y2 - first_line.center_y);
+            }
+
+            if (radius_2_silkscreen > radius_2)
+                second_concave = false; // 凸
+            else
+                second_concave = true; // 凹
+            Pushout_Circle_2.center_x = second_line.center_x;
+            Pushout_Circle_2.center_y = second_line.center_y;
+            Pushout_Circle_2.direction = second_line.direction;
+            Pushout_Circle_2.theta_1 = second_line.theta_1;
+            Pushout_Circle_2.theta_2 = second_line.theta_1;
+
+            if (second_concave)
+            {
+                Pushout_Circle_2.x1 = Pushout_Circle_2.x2 = second_line.center_x + (1 - gap / radius_2) * (second_line.x1 - second_line.center_x);
+                Pushout_Circle_2.y1 = Pushout_Circle_2.y2 = second_line.center_y + (1 - gap / radius_2) * (second_line.y1 - second_line.center_y);
+            }
+            else
+            {
+                Pushout_Circle_2.x1 = Pushout_Circle_2.x2 = second_line.center_x + (1 + gap / radius_2) * (second_line.x1 - second_line.center_x);
+                Pushout_Circle_2.y1 = Pushout_Circle_2.y2 = second_line.center_y + (1 + gap / radius_2) * (second_line.y1 - second_line.center_y);
+            }
+
+            Intersection_Points = first_intersection_between_arc_and_arc_for_arc_tuning(Pushout_Circle_1, Pushout_Circle_2);
+            Extended_Points.at(i).x = Intersection_Points.x;
+            Extended_Points.at(i).y = Intersection_Points.y;
+        }
     }
     return Extended_Points;
 }
@@ -660,6 +719,49 @@ Point first_intersection_between_line_and_arc_for_arc_tuning(Segment Arc, Point 
         P2.y = Line_First_Point.y + t2 * d.y;
 
         return (min(abs(t1), abs(t2)) == t1) ? P1 : P2;
+    }
+    return Point();
+}
+
+Point first_intersection_between_arc_and_arc_for_arc_tuning(Segment Arc1, Segment Arc2)
+{
+    float d = hypot(Arc1.center_x - Arc2.center_x, Arc1.center_y - Arc2.center_y); // 兩圓中心距離
+    float r1 = hypot(Arc1.x2 - Arc1.center_x, Arc1.y2 - Arc1.center_y);            // 圓1半徑
+    float r2 = hypot(Arc2.x2 - Arc2.center_x, Arc2.y2 - Arc2.center_y);            // 圓2半徑
+
+    if (d > r1 + r2) // 兩圓相距太遠，沒有交點
+        return Point();
+    if (d < abs(r1 - r2)) // 兩圓相距太近，沒有交點
+        return Point();
+    if (d == 0 && r1 != r2) // 同心圓，沒有交點
+        return Point();
+    if (d == 0 && r1 == r2) // 圓完全重疊，需判斷
+    {
+        Point P;
+        P.x = Arc1.x2;
+        P.y = Arc1.y2;
+        P.Next_Arc = true;
+        return P;
+    }
+    else
+    {
+        float a = (r1 * r1 - r2 * r2 + d * d) / (2 * d);
+        float h = sqrt(r1 * r1 - a * a);
+        float x0 = Arc1.center_x + a * (Arc2.center_x - Arc1.center_x) / d;
+        float y0 = Arc1.center_y + a * (Arc2.center_y - Arc1.center_y) / d;
+        float x1 = x0 + h * (Arc2.center_y - Arc1.center_y) / d;
+        float y1 = y0 - h * (Arc2.center_x - Arc1.center_x) / d;
+        float x2 = x0 - h * (Arc2.center_y - Arc1.center_y) / d;
+        float y2 = y0 + h * (Arc2.center_x - Arc1.center_x) / d;
+        Point P1;
+        P1.x = x1;
+        P1.y = y1;
+        Point P2;
+        P2.x = x2;
+        P2.y = y2;
+        float P1_distance = hypot(P1.x - Arc1.x2, P1.y - Arc1.x2);
+        float P2_distance = hypot(P2.x - Arc1.x2, P2.y - Arc1.x2);
+        return (abs(P1_distance) < abs(P2_distance)) ? P1 : P2;
     }
     return Point();
 }
@@ -1646,19 +1748,19 @@ vector<Segment> Segment_Sort(Segment Silkscreen_Piece, vector<Segment> total_cop
 
     if (Sort_as_Line)
     {
-        if (Silkscreen_Piece.x1 - Silkscreen_Piece.x2 < -0.00001)
+        if (Silkscreen_Piece.x1 - Silkscreen_Piece.x2 < -Subtraction_Tolerance)
         {
             sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_increase_Segment);
         }
-        else if (Silkscreen_Piece.x1 - Silkscreen_Piece.x2 > 0.00001)
+        else if (Silkscreen_Piece.x1 - Silkscreen_Piece.x2 > Subtraction_Tolerance)
         {
             sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_decrease_Segment);
         }
-        else if (Silkscreen_Piece.y1 - Silkscreen_Piece.y2 < -0.00001)
+        else if (Silkscreen_Piece.y1 - Silkscreen_Piece.y2 < -Subtraction_Tolerance)
         {
             sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_increase_Segment);
         }
-        else if (Silkscreen_Piece.y1 - Silkscreen_Piece.y2 > 0.00001)
+        else if (Silkscreen_Piece.y1 - Silkscreen_Piece.y2 > Subtraction_Tolerance)
         {
             sort(total_copper_cut_segments.begin(), total_copper_cut_segments.end(), sort_decrease_Segment);
         }
@@ -1741,7 +1843,7 @@ vector<Segment> Segment_Sort(Segment Silkscreen_Piece, vector<Segment> total_cop
 bool sort_increase_Segment(const Segment L1, const Segment L2)
 {
 
-    if (abs(L1.x1 - L2.x1) < 0.00001)
+    if (abs(L1.x1 - L2.x1) < Subtraction_Tolerance)
     {
         return (L1.y1 < L2.y1);
     }
@@ -1753,7 +1855,7 @@ bool sort_increase_Segment(const Segment L1, const Segment L2)
 bool sort_decrease_Segment(const Segment L1, const Segment L2)
 {
 
-    if (abs(L1.x1 - L2.x1) < 0.00001)
+    if (abs(L1.x1 - L2.x1) < Subtraction_Tolerance)
     {
         return (L1.y1 > L2.y1);
     }
@@ -1793,15 +1895,15 @@ vector<Point> Point_Sort(const Segment Silkscreen_Piece, vector<Point> Intersect
 
     if (Sort_as_Line)
     {
-        if ((Intersection_Points.at(0).x) - (Intersection_Points.at(final_point).x) > 0.00001)
+        if ((Intersection_Points.at(0).x) - (Intersection_Points.at(final_point).x) > Subtraction_Tolerance)
         {
             sort(Intersection_Points.begin(), Intersection_Points.end(), sort_decrease_points);
         }
-        else if ((Intersection_Points.at(0).x) - (Intersection_Points.at(final_point).x) < -0.00001)
+        else if ((Intersection_Points.at(0).x) - (Intersection_Points.at(final_point).x) < -Subtraction_Tolerance)
         {
             sort(Intersection_Points.begin(), Intersection_Points.end(), sort_increase_points);
         }
-        else if ((Intersection_Points.at(0).y) - (Intersection_Points.at(final_point).y) < -0.00001)
+        else if ((Intersection_Points.at(0).y) - (Intersection_Points.at(final_point).y) < -Subtraction_Tolerance)
         {
             sort(Intersection_Points.begin(), Intersection_Points.end(), sort_increase_points);
         }
@@ -1856,7 +1958,7 @@ vector<Point> Point_Sort(const Segment Silkscreen_Piece, vector<Point> Intersect
 
 bool sort_decrease_points(const Point p1, const Point p2)
 {
-    if (abs(p1.x - p2.x) > 0.00001)
+    if (abs(p1.x - p2.x) > Subtraction_Tolerance)
     {
         return (p1.x > p2.x);
     }
@@ -1867,7 +1969,7 @@ bool sort_decrease_points(const Point p1, const Point p2)
 }
 bool sort_increase_points(const Point p1, const Point p2)
 {
-    if (abs(p1.x - p2.x) > 0.00001)
+    if (abs(p1.x - p2.x) > Subtraction_Tolerance)
     {
         return (p1.x < p2.x);
     }

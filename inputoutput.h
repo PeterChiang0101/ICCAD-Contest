@@ -58,6 +58,7 @@ private:
 
     vector<Point> Arc_Point_Tuning(const vector<Segment>, const bool, vector<Point>, float, float);
     Point first_intersection_between_line_and_arc_for_arc_tuning(Segment, Point, Point);
+    Point first_intersection_between_arc_and_arc_for_arc_tuning(Segment, Segment);
 
     float Dot(Point, Point);
 };
