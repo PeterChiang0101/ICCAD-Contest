@@ -220,9 +220,17 @@ int main(); // 主程式
 
 ## OOD (Object-Oriented Design)
 
+2022/7/31
+
+finish class Buffer
+
+Peter
+
+---
+
 2022/7/27
 
-finish FileIO.h
+finish class FileIO
 
 Peter
 
