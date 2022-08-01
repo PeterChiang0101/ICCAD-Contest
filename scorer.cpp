@@ -7,7 +7,7 @@
 using namespace std;
 
 #define PI 3.14159265358979323846
-#define eps 1e-8
+#define tolerance 0.001
 #define INPUT_PATH "./TestingCase/test_B.txt"
 #define OUTPUT_PATH "./TestingCase/test_B_Ans.txt"
 
@@ -63,7 +63,7 @@ void Scorer::open_file()
     Assembly_push_out = A.Assembly_Buffer(this->assembly, this->coppergap, this->assemblygap);
 }
 
-// untest 2022/7/7
+// test passed 2022/07/19
 double Scorer::first_quarter() // const vector<Segment> Assembly, const vector<Segment> silkscreen)
 {
     Input_Output A1;
@@ -162,17 +162,40 @@ double Scorer::first_quarter() // const vector<Segment> Assembly, const vector<S
     }
     total_area /= 2; //修正項
     Answer_1 = (2 - Rectangular_area / (total_area)) * 0.25;
-    cout << "First Score:" << Answer_1 << endl
-         << endl;
-    cout << "Rectangular_area:" << Rectangular_area << endl;
-    cout << "total_area:" << total_area << endl
-         << endl
-         << endl;
+
+    if (ShowDetail)
+    {
+        cout << "First Part: ";
+        if (total_area >= Rectangular_area)
+        {
+            cout << "FAIL" << endl;
+            cout << "Reason: first quarter wrong total_area >= Rectangular_area " << endl
+                 << endl;
+        }
+        else
+        {
+            cout << "PASS" << endl
+                 << endl;
+        }
+
+        cout << "Score:";
+        if (Answer_1 > 0.25)
+            cout << 0.25 << endl
+                 << "over 0.25\n";
+        else
+            cout << Answer_1
+                 << endl
+                 << endl;
+        cout << "Rectangular_area:" << Rectangular_area << endl;
+        cout << "total_area:" << total_area << endl
+             << endl
+             << endl;
+    }
 
     return (Answer_1 > 0.25) ? 0.25 : Answer_1; //大於0.25只算0.25
 }
 
-//finish verification, done on 2022/7/9
+// finish verification, done on 2022/7/9
 double Scorer::second_quarter() // const vector<Segment>Assembly, const vector<Segment> silkscreen)
 {
     double part_1{0}, part_2{0}, Second_Score{0}, total_perimeter{0}, total_silkscreen{0};
@@ -240,13 +263,17 @@ double Scorer::second_quarter() // const vector<Segment>Assembly, const vector<S
     part_2 = (1 - (number_diff / (double)(this->assembly.size() + this->copper.size())) > 1) ? 1 : (1 - (number_diff / (double)(this->assembly.size() + this->copper.size())));
     Second_Score = part_1 * 0.15 + part_2 * 0.10;
     // print the result of second quarter
-    cout << "Second Score: " << Second_Score << endl
-         << endl;
-    cout << "Part_1 score: " << part_1 << endl
-         << "Part_2 Score: " << part_2 << endl
-         << endl
-         << endl;
-
+    if (ShowDetail)
+    {
+        cout << "Second Part: No Restriction" << endl
+             << endl;
+        cout << "Score: " << Second_Score << endl
+             << endl;
+        cout << "Part_1 score: " << part_1 << endl
+             << "Part_2 Score: " << part_2 << endl
+             << endl
+             << endl;
+    }
     return Second_Score;
 }
 
@@ -286,6 +313,8 @@ double Scorer::third_quarter() // const vector<vector<Segment>> copper, const ve
     bool min_copper_used = false;
     Point circle_center_A, circle_center_B;
     vector<Point> A_ps, S_ps;
+
+    bool pass_monitor = true;
 
     min_distance_sum = 0;
 
@@ -357,27 +386,28 @@ double Scorer::third_quarter() // const vector<vector<Segment>> copper, const ve
                 {
                     min_distance = min(min(min(Point_to_Arc_MinDist(B1, silkscreen.at(i)), Point_to_Arc_MinDist(B2, silkscreen.at(i))), disMin(B1, B2, A1)), disMin(B1, B2, A2));
 
-                if (disMin(B1, B2, circle_center_A) > rA)
-                {
-                    S_ps = intersection_between_CentersLine_and_Arc(this->silkscreen.at(i), circle_center_A + orth_Cswap(B1 - B2));
-                    for (size_t i = 0; i < S_ps.size(); i++)
+                    if (disMin(B1, B2, circle_center_A) > rA)
                     {
-                        if (i == 0)
+                        S_ps = intersection_between_CentersLine_and_Arc(this->silkscreen.at(i), circle_center_A + orth_Cswap(B1 - B2));
+                        for (size_t i = 0; i < S_ps.size(); i++)
                         {
-                            min_tmp = disMin(B1, B2, S_ps.at(0));
+                            if (i == 0)
+                            {
+                                min_tmp = disMin(B1, B2, S_ps.at(0));
+                            }
+                            else
+                            {
+                                if (disMin(B1, B2, S_ps.at(i)) < min_tmp)
+                                    min_tmp = disMin(B1, B2, S_ps.at(i));
+                            }
                         }
-                        else
-                        {
-                            if (disMin(B1, B2, S_ps.at(i)) < min_tmp)
-                                min_tmp = disMin(B1, B2, S_ps.at(i));
-                        }
+                        if (!S_ps.empty())
+                            min_distance = min(min_distance, min_tmp);
                     }
-                    if (!S_ps.empty())
-                        min_distance = min(min_distance, min_tmp);
-                }
                 }
                 else if (this->silkscreen.at(i).is_line == 0 && this->copper.at(j).at(k).is_line == 0)
                 {
+                    min_distance = 999999999;
                     if (circle_center_A == circle_center_B)
                     {
                         if (Concentric_Circle_On_Arc(silkscreen[i], copper.at(j).at(k)) == 1)
@@ -415,6 +445,22 @@ double Scorer::third_quarter() // const vector<vector<Segment>> copper, const ve
                         min_distance = min(min(Point_to_Arc_MinDist(B1, silkscreen[i]), Point_to_Arc_MinDist(B2, silkscreen[i])), min_distance);
                     else if ((A1 != A2) && (B1 == B2))
                         min_distance = min(min(Point_to_Arc_MinDist(A1, copper.at(j).at(k)), Point_to_Arc_MinDist(A2, copper.at(j).at(k))), min_distance);
+                }
+
+                if ((min_distance < L_copper && min_distance > L_copper - tolerance)) // || (min_distance > L_copper && min_distance < L_copper + tolerance))
+                    min_distance = L_copper;
+                else if (min_distance < L_copper - tolerance)
+                {
+                    pass_monitor = false;
+                    cout << "Error: i(silkscreen) = " << i << ", j(copper) = " << j << ", k = " << k << " coppergap: " << L_copper << " min_distance: " << min_distance << endl;
+                    cout << "Silksreen: (" << silkscreen[i].x1 << "," << silkscreen[i].y1 << ") -> (" << silkscreen[i].x2 << "," << silkscreen[i].y2 << ") is_line = " << silkscreen[i].is_line;
+                    if (silkscreen[i].is_line == 0)
+                        cout << " center: (" << silkscreen[i].center_x << "," << silkscreen[i].center_y << ")";
+                    cout << "     Copper: (" << copper[j][k].x1 << "," << copper[j][k].y1 << ") -> (" << copper[j][k].x2 << "," << copper[j][k].y2 << ") is_line = " << copper[j][k].is_line;
+                    if (copper[j][k].is_line == 0)
+                        cout << " center: (" << copper[j][k].center_x << "," << copper[j][k].center_y << ")" << endl;
+                    else
+                        cout << endl;
                 }
 
                 if (k == 0 || min_dist_result > min_distance) // find the smallest "min_distance"
@@ -461,11 +507,20 @@ double Scorer::third_quarter() // const vector<vector<Segment>> copper, const ve
     T_copper = min_distance_sum / (double)this->continue_num.size();
     Third_Score = (1 - (T_copper - L_copper) * 10 / L_copper) * 0.25;
     // print the score of the third_quarter
-    cout << "Third Score: " << Third_Score << endl
-         << endl;
-    cout << "T_copper: " << T_copper << endl
-         << endl
-         << endl;
+    if (ShowDetail)
+    {
+        cout << "Third Part: ";
+        if (pass_monitor)
+            cout << "PASS" << endl;
+        else
+            cout << "FAIL" << endl;
+        cout << endl;
+        cout << "Score: " << Third_Score << endl
+             << endl;
+        cout << "T_copper: " << T_copper << endl
+             << endl
+             << endl;
+    }
     return (Third_Score > 0.25) ? 0.25 : Third_Score;
 }
 
@@ -487,6 +542,8 @@ double Scorer::fourth_quarter() // const vector<Segment> assembly, const vector<
     int group = 0;
     int count_number = 0;
     bool brk = false;
+
+    bool pass_monitor = true;
 
     min_distance_sum = 0;
     vector<Point> A_ps, S_ps;
@@ -570,7 +627,7 @@ double Scorer::fourth_quarter() // const vector<Segment> assembly, const vector<
                         min_distance = min(min_distance, rA - dist(B2, circle_center_A));
                 }*/
                 if (disMin(B1, B2, circle_center_A) > rA)
-                {   
+                {
                     S_ps = intersection_between_CentersLine_and_Arc(this->silkscreen[i], circle_center_A + orth_Cswap(B1 - B2));
                     for (size_t i = 0; i < S_ps.size(); i++)
                     {
@@ -590,8 +647,9 @@ double Scorer::fourth_quarter() // const vector<Segment> assembly, const vector<
             }
             else if (this->silkscreen[i].is_line == 0 && assembly[j].is_line == 0)
             {
+                min_distance = 999999999;
                 if (circle_center_A == circle_center_B)
-                {   //兩個圓弧構成之連心線與圓弧焦點關係
+                { //兩個圓弧構成之連心線與圓弧焦點關係
                     if (Concentric_Circle_On_Arc(silkscreen[i], assembly[j]) == 1)
                     {
                         if (rA > rB)
@@ -630,6 +688,23 @@ double Scorer::fourth_quarter() // const vector<Segment> assembly, const vector<
                 // else if ((A1 == A2) && (B1 == B2))
                 // min_distance = min_tmp;
             }
+
+            if ((min_distance < L_outline && min_distance > L_outline - tolerance)) // || (min_distance > L_outline && min_distance < L_outline + tolerance))
+                min_distance = L_outline;
+            else if (min_distance < L_outline - tolerance)
+            {
+                pass_monitor = false;
+                cout << "Error: i(silkscreen) = " << i << ", j(assembly) = " << j << " assemblygap: " << L_outline << " min_distance: " << min_distance << endl;
+                cout << "Silksreen: (" << silkscreen[i].x1 << "," << silkscreen[i].y1 << ") -> (" << silkscreen[i].x2 << "," << silkscreen[i].y2 << ") is_line = " << silkscreen[i].is_line;
+                if (silkscreen[i].is_line == 0)
+                    cout << " center: (" << silkscreen[i].center_x << "," << silkscreen[i].center_y << ")";
+                cout << "     Assembly: (" << assembly[j].x1 << "," << assembly[j].y1 << ") -> (" << assembly[j].x2 << "," << assembly[j].y2 << ") is_line = " << assembly[j].is_line;
+                if (assembly[j].is_line == 0)
+                    cout << " center: (" << assembly[j].center_x << "," << assembly[j].center_y << ")" << endl;
+                else
+                    cout << endl;
+            }
+
             if (j == 0 || shortest_min > min_distance)
                 shortest_min = min_distance;
         }
@@ -651,19 +726,32 @@ double Scorer::fourth_quarter() // const vector<Segment> assembly, const vector<
 
     if (Fourth_Score < 0)
         Fourth_Score = 0;
-
-    cout << "Fourth Score: " << Fourth_Score << endl
-         << endl;
-    cout << "T_outline: " << T_outline << endl
-         << endl;
+    if (ShowDetail)
+    {
+        cout << "Fourth Part: ";
+        if (pass_monitor)
+            cout << "PASS" << endl;
+        else
+            cout << "FAIL" << endl;
+        cout << endl;
+        cout << "Score: " << Fourth_Score << endl
+             << endl;
+        cout << "T_outline: " << T_outline << endl
+             << endl
+             << endl;
+    }
     return Fourth_Score;
 }
 
-double Scorer::Total_score()
+double Scorer::Total_score(bool Print_Detail)
 {
+    ShowDetail = Print_Detail;
     double total_score = 0;
-    cout << "Score Detail:" << endl
-         << endl;
+    if (ShowDetail)
+        cout << "=========================" << endl
+             << "      Score Detail       " << endl
+             << "=========================" << endl
+             << endl;
     double First_Score = round(first_quarter() * 10000) / 10000;
     First_Score = (First_Score > 0) ? First_Score : 0;
     double Second_Score = round(second_quarter() * 10000) / 10000;
@@ -672,23 +760,22 @@ double Scorer::Total_score()
     Third_Score = (Third_Score > 0) ? Third_Score : 0;
     double Fourth_Score = round(fourth_quarter() * 10000) / 10000;
     Fourth_Score = (Fourth_Score > 0) ? Fourth_Score : 0;
-    cout << "First Score: " << setprecision(4) << fixed << First_Score << endl
-         << endl;
-    cout << "Second Score: " << setprecision(4) << fixed << Second_Score << endl
-         << endl;
-    cout << "Third Score: " << setprecision(4) << fixed << Third_Score << endl
-         << endl;
-    cout << "Fourth Score: " << setprecision(4) << fixed << Fourth_Score << endl
-         << endl;
-
-    cout << "End of Score Detail" << endl
-         << endl;
-    cout << "Total Score: ";
+    if (ShowDetail)
+        cout << "=========================" << endl
+             << "   End of Score Detail   " << endl
+             << "=========================" << endl
+             << endl;
+    cout << setw(14) << left << "First Score: " << setprecision(4) << fixed << First_Score << endl;
+    cout << setw(14) << left << "Second Score: " << setprecision(4) << fixed << Second_Score << endl;
+    cout << setw(14) << left << "Third Score: " << setprecision(4) << fixed << Third_Score << endl;
+    cout << setw(14) << left << "Fourth Score: " << setprecision(4) << fixed << Fourth_Score << endl;
+    cout << endl
+         << "Total Score: ";
     total_score = First_Score + Second_Score + Third_Score + Fourth_Score;
     return total_score;
 }
 
-vector<Segment> Scorer::Read_Silkscreen(fstream &Input_File)// 讀取絲印
+vector<Segment> Scorer::Read_Silkscreen(fstream &Input_File) // 讀取絲印
 {
     Input_Output A;
     vector<Segment> Silkscreen;
@@ -704,7 +791,7 @@ vector<Segment> Scorer::Read_Silkscreen(fstream &Input_File)// 讀取絲印
             continue_num.push_back(continue_count);
             continue;
         }
-        else if (line != "")//防止讀到換行空格
+        else if (line != "") //防止讀到換行空格
         {
             part = A.String_to_Line(line);
             continue_num.back() = (++continue_count);
@@ -763,9 +850,9 @@ double disMin(Point A, Point B, Point P) //點P到線段AB的最短距離
 {
     double r = ((P.x - A.x) * (B.x - A.x) + (P.y - A.y) * (B.y - A.y)) / dis2(A, B);
     if (r <= 0)
-        return sqrt(dis2(A, P));
+        return dist(A, P);
     else if (r >= 1)
-        return sqrt(dis2(B, P));
+        return dist(B, P);
     else
     {
         double AC = r * sqrt(dis2(A, B));
@@ -789,7 +876,7 @@ Point operator+(Point a, Point b)
     return v;
 }
 
-Point operator*(double c, Point a)//@overload,伸縮
+Point operator*(double c, Point a) //@overload,伸縮
 {
     Point v;
     v.x = c * a.x;
@@ -797,7 +884,7 @@ Point operator*(double c, Point a)//@overload,伸縮
     return v;
 }
 
-Point operator/(Point a, double c)//@overload,伸縮
+Point operator/(Point a, double c) //@overload,伸縮
 {
     Point v;
     v.x = a.x / c;
@@ -837,7 +924,7 @@ Point orth_CCswap(Point a) //垂直逆時鍾(向量)
     return v;
 }
 
-double Point_to_Arc_MinDist(Point pp, Segment Arc)//點到圓弧之最短距離
+double Point_to_Arc_MinDist(Point pp, Segment Arc) //點到圓弧之最短距離
 {
     Point p1, p2, pc, ex_p;
     p1.x = Arc.x1;
@@ -856,16 +943,23 @@ double Point_to_Arc_MinDist(Point pp, Segment Arc)//點到圓弧之最短距離
     if (On_Arc(Arc, ex_p) || p1 == p2)
     {
         if (dist(pp, pc) > radius)
+        {
             return dist(pp, pc) - radius;
+        }
+
         else
+        {
             return radius - dist(pp, pc);
+        }
     }
     else
+    {
         return min(dist(pp, p1), dist(pp, p2));
+    }
 }
 
 vector<Point> intersection_between_CentersLine_and_Arc(Segment Arc, Point Center) // the other arc's center
-{// 圓心線對Arc的交點
+{                                                                                 // 圓心線對Arc的交點
     Point centerpoint, A;
     Point v1, v2;
     Point tmp;
@@ -899,7 +993,7 @@ vector<Point> intersection_between_CentersLine_and_Arc(Segment Arc, Point Center
     return intersect;
 }
 
-Point find_arbitary_point_on_arc(Segment Arc)//找出Arc兩端外圓上一點
+Point find_arbitary_point_on_arc(Segment Arc) //找出Arc兩端外圓上一點
 {
 
     Point middlepoint; // A,B中點
@@ -931,7 +1025,7 @@ Point find_arbitary_point_on_arc(Segment Arc)//找出Arc兩端外圓上一點
         return middlepoint + (dist(middlepoint, centerpoint) + radius) / dist(middlepoint, centerpoint) * v1;
 }
 
-bool On_Arc(Segment Arc, Point p)//判斷點P是否在Arc上 
+bool On_Arc(Segment Arc, Point p) //判斷點P是否在Arc上
 {
     Segment AB, BC, OP;
     Point ar_p;
@@ -956,7 +1050,7 @@ bool On_Arc(Segment Arc, Point p)//判斷點P是否在Arc上
         return false;
 }
 
-bool Concentric_Circle_On_Arc(Segment Arc1, Segment Arc2)//同心圓對兩Arc端點射線，在Arc是否有交點
+bool Concentric_Circle_On_Arc(Segment Arc1, Segment Arc2) //同心圓對兩Arc端點射線，在Arc是否有交點
 {
     Point A1, A2, B1, B2;
     Point Center;
