@@ -1,5 +1,5 @@
-//Silkscreen.cpp 
-//Implementation of Silkscreen Buffer and Modify the Silkscreen
+// Silkscreen.cpp
+// Implementation of Silkscreen Buffer and Modify the Silkscreen
 #include <bits/stdc++.h>
 #include "Silkscreen.h"
 #include "Point.h"
@@ -8,61 +8,587 @@
 #include "Parameter.h"
 
 using namespace std;
-//Silkscreen_Assembly not founded.
+// Silkscreen_Assembly not founded.
 
-Graph Silkscreen::Untuned_Silkscreen(Graph Silkscreen_Original, vector<Graph> Coppers) // 未切割的絲印 與 外擴的銅箔
+// constructor
+Silkscreen::Silkscreen(float Coppergap, float Silkscreenlen) : coppergap{Coppergap}, silkscreenlen{Silkscreenlen}
+{
+}
+//-----------------------------------Untuned Silkscreen-----------------------------------
+// 未切割的絲印 與 外擴的銅箔
+Graph Silkscreen::Untuned_Silkscreen(Graph Silkscreen_Original, vector<Graph> Coppers)
 {
     Graph Silkscreen_Cut_Complete; // 切割完成的完整絲印
     Graph Silkscreen_Cut_Part;     // 切割完成的一條絲印
-    int Silkscreen_Org_Size = Silkscreen_Original.size();
+    size_t Silkscreen_Org_Size = Silkscreen_Original.segment.size();
 
-    for (int i = 0; i < Silkscreen_Org_Size; i++)
+    for (size_t i = 0; i < Silkscreen_Org_Size; i++)
     {
         Silkscreen_Cut_Part.segment.clear();
-        Silkscreen_Cut_Part = Cut_Silkscreen_by_Copper(Silkscreen_Original.at(i), Coppers);
-        int Silkscreen_Cut_Part_Size = Silkscreen_Cut_Part.size();
-        for (int j = 0; j < Silkscreen_Cut_Part_Size; j++)
+        Silkscreen_Cut_Part = Cut_Silkscreen_by_Copper(Silkscreen_Original.segment.at(i), Coppers);
+        size_t Silkscreen_Cut_Part_Size = Silkscreen_Cut_Part.segment.size();
+        for (size_t j = 0; j < Silkscreen_Cut_Part_Size; j++)
         {
-            if (Silkscreen_Cut_Part.at(j).is_line)
-            {
-                Silkscreen_Cut_Part.at(j).x_min = min(Silkscreen_Cut_Part.at(j).x1, Silkscreen_Cut_Part.at(j).x2);
-                Silkscreen_Cut_Part.at(j).x_max = max(Silkscreen_Cut_Part.at(j).x1, Silkscreen_Cut_Part.at(j).x2);
-                Silkscreen_Cut_Part.at(j).y_min = min(Silkscreen_Cut_Part.at(j).y1, Silkscreen_Cut_Part.at(j).y2);
-                Silkscreen_Cut_Part.at(j).y_max = max(Silkscreen_Cut_Part.at(j).y1, Silkscreen_Cut_Part.at(j).y2);
+            if (Silkscreen_Cut_Part.segment.at(j).is_line)
+            { // find the Min/Max of the single segment
+                Silkscreen_Cut_Part.segment.at(j).detail.x_min = min(Silkscreen_Cut_Part.segment.at(j).x1, Silkscreen_Cut_Part.segment.at(j).x2);
+                Silkscreen_Cut_Part.segment.at(j).detail.x_max = max(Silkscreen_Cut_Part.segment.at(j).x1, Silkscreen_Cut_Part.segment.at(j).x2);
+                Silkscreen_Cut_Part.segment.at(j).detail.y_min = min(Silkscreen_Cut_Part.segment.at(j).y1, Silkscreen_Cut_Part.segment.at(j).y2);
+                Silkscreen_Cut_Part.segment.at(j).detail.y_max = max(Silkscreen_Cut_Part.segment.at(j).y1, Silkscreen_Cut_Part.segment.at(j).y2);
             }
             else
             {
-                Silkscreen_Cut_Part.at(j) = Arc_Boundary_Meas_for_Assembly(Silkscreen_Cut_Part.at(j));
+                Silkscreen_Cut_Part.segment.at(j) = Arc_Boundary_Meas_for_Assembly(Silkscreen_Cut_Part.segment.at(j));
             }
         }
-        Silkscreen_Cut_Complete.insert(Silkscreen_Cut_Complete.end(), Silkscreen_Cut_Part.begin(), Silkscreen_Cut_Part.end());
+        // TODO: find the Min/Max of the whole silkscreen.
+        Silkscreen_Cut_Complete.segment.insert(Silkscreen_Cut_Complete.segment.end(), Silkscreen_Cut_Part.segment.begin(), Silkscreen_Cut_Part.segment.end());
     }
     return Silkscreen_Cut_Complete;
 }
+// not complete yet
+Graph Silkscreen::Cut_Silkscreen_by_Copper(Segment Silkscreen_Piece, vector<Graph> Coppers)
+{
+    size_t Copper_size = Coppers.size();
+    Graph Single_Silkscreen_Cut_Complete;
+    Graph total_copper_cut_segments; // 取所有須切割區域的聯集
+    Graph copper_cut_segments;       // 一個copper所遮住這條絲印的部分
+    Segment A_Line;
 
-vector<vector<Segment>> Silkscreen::Delete_Short_Silkscreen(vector<Segment> Silkscreen)
+    // 僅處理直線極值，需增加圓弧極值
+
+    // Single_Silkscreen_Cut_Complete.push_back(Silkscreen_Piece);
+    for (size_t i = 0; i < Copper_size; i++) // 每次處理一個copper
+    {
+        if (Silkscreen_Piece.detail.x_min > Coppers.at(i).x_max || Silkscreen_Piece.detail.x_max < Coppers.at(i).x_min || Silkscreen_Piece.detail.y_min > Coppers.at(i).y_max || Silkscreen_Piece.detail.y_max < Coppers.at(i).y_min) // 如果這條絲印不在這個copper的區域內
+            continue;
+        copper_cut_segments = silkscreen_cut_single_copper(Silkscreen_Piece, Coppers.at(i));                                       // 絲印與單一copper的交集線段
+        total_copper_cut_segments.segment.insert(total_copper_cut_segments.segment.end(), copper_cut_segments.segment.begin(), copper_cut_segments.segment.end()); // 線段之間可能有交集
+    }
+    total_copper_cut_segments = Segment_Sort(Silkscreen_Piece, total_copper_cut_segments); // 將線段排序
+
+    size_t total_segment = total_copper_cut_segments.segment.size(); // 聯集完
+
+    if (total_segment == 2) // 只有頭跟尾，不需要切割
+    {
+        Single_Silkscreen_Cut_Complete.segment.push_back(Silkscreen_Piece);
+        return Single_Silkscreen_Cut_Complete;
+    }
+    if (Silkscreen_Piece.is_line)
+        A_Line.is_line = true;
+    else
+    {
+        A_Line.is_line = false;
+        A_Line.center_x = Silkscreen_Piece.center_x;
+        A_Line.center_y = Silkscreen_Piece.center_y;
+        A_Line.is_CCW = Silkscreen_Piece.is_CCW;
+    }
+
+    for (int i = 1; i < total_segment; i++)
+    {
+        if (total_copper_cut_segments.segment.at(i).x1 == total_copper_cut_segments.segment.at(i - 1).x2 && total_copper_cut_segments.segment.at(i).y1 == total_copper_cut_segments.segment.at(i - 1).y2) // 共點
+            continue;
+
+        A_Line.x1 = total_copper_cut_segments.segment.at(i - 1).x2;
+        A_Line.y1 = total_copper_cut_segments.segment.at(i - 1).y2;
+        A_Line.x2 = total_copper_cut_segments.segment.at(i).x1;
+        A_Line.y2 = total_copper_cut_segments.segment.at(i).y1;
+        Single_Silkscreen_Cut_Complete.segment.push_back(A_Line); // 最終切完的結果
+    }
+    return Single_Silkscreen_Cut_Complete; // 回傳切割完的結果
+}
+// not complete yet
+Graph Silkscreen::silkscreen_cut_single_copper(Segment Silkscreen_Piece, Graph Single_Copper) // 切割與單一銅箔交會的絲印
+{
+    size_t Copper_Line_size = Single_Copper.segment.size();
+    vector<vector<Point>> Arc_Dots;
+    vector<Point> Copper_Points;
+    vector<Point> Intersection_Points;
+    Point first_point, last_point;
+    Point Point_Intersect;
+    bool first_inside, last_inside;
+
+    first_point.x = Silkscreen_Piece.x1;
+    first_point.y = Silkscreen_Piece.y1;
+    last_point.x = Silkscreen_Piece.x2;
+    last_point.y = Silkscreen_Piece.y2;
+
+    Copper_Points = Line_to_Point(Single_Copper);
+    Arc_Dots = Arc_Optimization(Single_Copper);
+
+    first_inside = point_in_polygon(first_point, Copper_Points, Arc_Dots);
+    last_inside = point_in_polygon(last_point, Copper_Points, Arc_Dots);
+
+    Intersection_Points.push_back(first_point);
+    for (int i = 0; i < Copper_Line_size; i++)
+    {
+        Point first_copper_point, second_copper_point;
+        vector<Point> Intersection_Points_temp;
+        first_copper_point.x = Single_Copper.segment.at(i).x1;
+        first_copper_point.y = Single_Copper.segment.at(i).y1;
+        second_copper_point.x = Single_Copper.segment.at(i).x2;
+        second_copper_point.y = Single_Copper.segment.at(i).y2;
+        if (Silkscreen_Piece.is_line && Single_Copper.segment.at(i).is_line) // 如果絲印是線段，銅箔也是線段
+        {
+            Point_Intersect = intersection(first_point, last_point, first_copper_point, second_copper_point); // 線與線交會點
+            if (Point_Intersect.x != INFINITY && Point_Intersect.y != INFINITY)
+                Intersection_Points.push_back(Point_Intersect);
+        }
+        else if (Silkscreen_Piece.is_line && !Single_Copper.segment.at(i).is_line) // 如果絲印是線段，銅箔是圓弧
+        {
+            // 計算線與圓弧的交會點
+            Intersection_Points_temp = intersection_between_line_and_arc(Single_Copper.segment.at(i), first_point, last_point);
+            Intersection_Points.insert(Intersection_Points.end(), Intersection_Points_temp.begin(), Intersection_Points_temp.end());
+        }
+        else if (!Silkscreen_Piece.is_line && Single_Copper.segment.at(i).is_line) // 如果絲印是圓弧，銅箔是線段
+        {
+            // 計算線與圓弧的交會點
+            Intersection_Points_temp = intersection_between_line_and_arc(Silkscreen_Piece, first_copper_point, second_copper_point);
+            Intersection_Points.insert(Intersection_Points.end(), Intersection_Points_temp.begin(), Intersection_Points_temp.end());
+        }
+        else if (!Silkscreen_Piece.is_line && !Single_Copper.segment.at(i).is_line) // 如果絲印是圓弧，銅箔也是圓弧
+        {
+            Intersection_Points_temp = intersection_between_arc_and_arc(Silkscreen_Piece, Single_Copper.segment.at(i));
+            Intersection_Points.insert(Intersection_Points.end(), Intersection_Points_temp.begin(), Intersection_Points_temp.end());
+        }
+    }
+    Intersection_Points.push_back(last_point);
+
+    Intersection_Points = Point_Sort(Silkscreen_Piece, Intersection_Points);
+
+    Graph Cut_Lines;
+    Segment A_Line;
+    size_t Intersection_Points_size = Intersection_Points.size();
+
+    for (size_t i = 0; i < Intersection_Points_size; i++) // 量出需要被切割的線段
+    {
+        if ((i == 0 && !first_inside) || (i == Intersection_Points_size - 1 && !last_inside))
+            continue; // 兩端點在外面可以直接略過
+        A_Line.x1 = Intersection_Points.at(i).x;
+        A_Line.y1 = Intersection_Points.at(i).y;
+        i++;
+        A_Line.x2 = Intersection_Points.at(i).x;
+        A_Line.y2 = Intersection_Points.at(i).y;
+        // for Arc
+        if (!Silkscreen_Piece.is_line)
+        {
+            A_Line.is_line = false;
+            A_Line.center_x = Silkscreen_Piece.center_x;
+            A_Line.center_y = Silkscreen_Piece.center_y;
+            A_Line.detail.theta_1 = atan2(A_Line.y1 - A_Line.center_y, A_Line.x1 - A_Line.center_x);
+            A_Line.detail.theta_2 = -5; // simplied,set to unreachable number.
+            A_Line.is_CCW = Silkscreen_Piece.is_CCW;
+        }
+        else
+        {
+            A_Line.is_line = true;
+        }
+        Cut_Lines.segment.push_back(A_Line);
+    }
+
+    return Cut_Lines;
+}
+
+Segment Silkscreen::Arc_Boundary_Meas_for_Assembly(const Segment Arc)
+{
+    Segment A_Arc;
+    A_Arc = Arc;
+    float first_angle, second_angle;
+    float radius = hypot(Arc.x1 - Arc.center_x, Arc.y1 - Arc.center_y);
+    first_angle = Arc.detail.theta_1;
+    second_angle = Arc.detail.theta_2;
+    if (first_angle == second_angle)
+    {
+        A_Arc.detail.x_min = Arc.center_x - radius;
+        A_Arc.detail.x_max = Arc.center_x + radius;
+        A_Arc.detail.y_min = Arc.center_y - radius;
+        A_Arc.detail.y_max = Arc.center_y + radius;
+        return A_Arc;
+    }
+
+    if (Arc.is_CCW)
+    {
+        swap(first_angle, second_angle);
+    }
+    if (first_angle > second_angle)
+    {
+        A_Arc.detail.x_max = (first_angle >= 0 && second_angle <= 0) ? Arc.center_x + radius : max(max(Arc.x1, Arc.x2), Arc.center_x);
+        A_Arc.detail.x_min = min(min(Arc.x1, Arc.x2), Arc.center_x);
+        A_Arc.detail.y_max = (first_angle >= PI / 2 && second_angle <= PI / 2) ? Arc.center_y + radius : max(max(Arc.y1, Arc.y2), Arc.center_y);
+        A_Arc.detail.y_min = (first_angle >= -PI / 2 && second_angle <= -PI / 2) ? Arc.center_y - radius : min(min(Arc.y1, Arc.y2), Arc.center_y);
+    }
+    else if (second_angle < 0) // first < second < 0
+    {
+        A_Arc.detail.x_max = Arc.center_x + radius;
+        A_Arc.detail.x_min = Arc.center_x - radius;
+        A_Arc.detail.y_max = Arc.center_y + radius;
+        A_Arc.detail.y_min = (first_angle >= -PI / 2 || second_angle <= -PI / 2) ? Arc.center_y - radius : min(min(Arc.y1, Arc.y2), Arc.center_y);
+    }
+    else if (first_angle >= 0) // 0 <= first < second
+    {
+        A_Arc.detail.x_max = Arc.center_x + radius;
+        A_Arc.detail.x_min = Arc.center_x - radius;
+        A_Arc.detail.y_max = (first_angle >= PI / 2 || second_angle <= PI / 2) ? Arc.center_y + radius : max(max(Arc.y1, Arc.y2), Arc.center_y);
+        A_Arc.detail.y_min = Arc.center_y - radius;
+    }
+    else // first < 0 < second
+    {
+        A_Arc.detail.x_max = max(max(Arc.x1, Arc.x2), Arc.center_x);
+        A_Arc.detail.x_min = Arc.center_x - radius;
+        A_Arc.detail.y_max = (second_angle <= PI / 2) ? Arc.center_y + radius : max(max(Arc.y1, Arc.y2), Arc.center_y);
+        A_Arc.detail.y_min = (first_angle >= -PI / 2) ? Arc.center_y - radius : min(min(Arc.y1, Arc.y2), Arc.center_y);
+    }
+
+    /*A_Arc.x_max = (first >= 0 && second <= 0) ? Arc.center_x + radius : max(max(Arc.x1, Arc.x2), Arc.center_x);
+    A_Arc.x_min = (first >= PI && second <= PI) ? Arc.center_x - radius : min(min(Arc.x1, Arc.x2), Arc.center_x);
+    A_Arc.y_max = (first >= PI / 2 && second <= PI / 2) ? Arc.center_y + radius : max(max(Arc.y1, Arc.y2), Arc.center_y);
+    A_Arc.y_min = (first >= -PI / 2 && second <= -PI / 2) ? Arc.center_y - radius : min(min(Arc.y1, Arc.y2), Arc.center_y);*/
+
+    return A_Arc;
+}
+
+vector<Point> Silkscreen::intersection_between_arc_and_arc(const Segment Arc1, const Segment Arc2)
+{
+    float d = hypot(Arc1.center_x - Arc2.center_x, Arc1.center_y - Arc2.center_y); // 兩圓中心距離
+    float r1 = hypot(Arc1.x2 - Arc1.center_x, Arc1.y2 - Arc1.center_y);            // 圓1半徑
+    float r2 = hypot(Arc2.x2 - Arc2.center_x, Arc2.y2 - Arc2.center_y);            // 圓2半徑
+
+    if (d > r1 + r2) // 兩圓相距太遠，沒有交點
+        return vector<Point>();
+    if (d < abs(r1 - r2)) // 兩圓相距太近，沒有交點
+        return vector<Point>();
+    if (d == 0 && r1 != r2) // 同心圓，沒有交點
+        return vector<Point>();
+    if (d == 0 && r1 == r2) // 圓完全重疊，需判斷
+    {
+    }
+    else
+    {
+        float a = (r1 * r1 - r2 * r2 + d * d) / (2 * d);
+        float h = sqrt(r1 * r1 - a * a);
+        float x0 = Arc1.center_x + a * (Arc2.center_x - Arc1.center_x) / d;
+        float y0 = Arc1.center_y + a * (Arc2.center_y - Arc1.center_y) / d;
+        float x1 = x0 + h * (Arc2.center_y - Arc1.center_y) / d;
+        float y1 = y0 - h * (Arc2.center_x - Arc1.center_x) / d;
+        float x2 = x0 - h * (Arc2.center_y - Arc1.center_y) / d;
+        float y2 = y0 + h * (Arc2.center_x - Arc1.center_x) / d;
+        Point P1;
+        P1.x = x1;
+        P1.y = y1;
+        Point P2;
+        P2.x = x2;
+        P2.y = y2;
+        float P1_Arc1_Theta = atan2(P1.y - Arc1.center_y, P1.x - Arc1.center_x);
+        float P1_Arc2_Theta = atan2(P1.y - Arc2.center_y, P1.x - Arc2.center_x);
+        float P2_Arc1_Theta = atan2(P2.y - Arc1.center_y, P2.x - Arc1.center_x);
+        float P2_Arc2_Theta = atan2(P2.y - Arc2.center_y, P2.x - Arc2.center_x);
+        vector<Point> Intersection_Points;
+        if (P1.x == P2.x && P1.y == P2.y) // 兩圓交點重疊，只有一個交點，不要回傳
+        {
+        }
+        else
+        {
+            if (Point_Inside_Arc(P1_Arc1_Theta, Arc1.detail.theta_1, Arc1.detail.theta_2, Arc1.is_CCW) && Point_Inside_Arc(P1_Arc2_Theta, Arc2.detail.theta_1, Arc2.detail.theta_2, Arc2.is_CCW))
+                Intersection_Points.push_back(P1);
+            if (Point_Inside_Arc(P2_Arc1_Theta, Arc1.detail.theta_1, Arc1.detail.theta_2, Arc1.is_CCW) && Point_Inside_Arc(P2_Arc2_Theta, Arc2.detail.theta_1, Arc2.detail.theta_2, Arc2.is_CCW))
+                Intersection_Points.push_back(P2);
+            // 需判斷點是否在圓弧，用 Point_Inside_Arc 函式
+        }
+        return Intersection_Points;
+    }
+    return vector<Point>();
+}
+// Sorting function:Segment and Point
+Graph Silkscreen::Segment_Sort(Segment Silkscreen_Piece, Graph total_copper_cut_segments)
+{
+    // 由 x1 or y1 小至大排序
+    // 開頭Segment 為 Silkscreen_Piece.x1, Silkscreen_Piece.y1, Silkscreen_Piece.x1, Silkscreen_Piece.y1
+    // 排序
+    // 結尾Segment 為 Silkscreen_Piece.x2, Silkscreen_Piece.y2, Silkscreen_Piece.x2, Silkscreen_Piece.y2
+    Graph Cut_Silkscreen;
+    Segment Start_point, End_point;
+    bool Sort_as_Line = false; // Determine whether can use line sorting case or not.
+    bool Seperate_x_dir = true;
+
+    Start_point.x1 = Start_point.x2 = Silkscreen_Piece.x1;
+    Start_point.y1 = Start_point.y2 = Silkscreen_Piece.y1;
+
+    End_point.x1 = End_point.x2 = Silkscreen_Piece.x2;
+    End_point.y1 = End_point.y2 = Silkscreen_Piece.y2;
+    Cut_Silkscreen.segment.push_back(Start_point);
+    // Determine whether can be sorted as line segments.
+    if (Silkscreen_Piece.is_line)
+    {
+        Sort_as_Line = true;
+    }
+    else
+    {
+        if ((Silkscreen_Piece.detail.theta_1 >= 0 && Silkscreen_Piece.detail.theta_2 >= 0) || (Silkscreen_Piece.detail.theta_1 <= 0 && Silkscreen_Piece.detail.theta_2 <= 0))
+        { // Segment Arc is either in upper semicircle or upper semicircle -> determine by X1 and X2.
+            Sort_as_Line = true;
+        }
+    }
+
+    if (Sort_as_Line)
+    {
+        if (Silkscreen_Piece.x1 - Silkscreen_Piece.x2 < -Subtraction_Tolerance)
+        {
+            sort(total_copper_cut_segments.segment.begin(), total_copper_cut_segments.segment.end(), sort_increase_Segment);
+        }
+        else if (Silkscreen_Piece.x1 - Silkscreen_Piece.x2 > Subtraction_Tolerance)
+        {
+            sort(total_copper_cut_segments.segment.begin(), total_copper_cut_segments.segment.end(), sort_decrease_Segment);
+        }
+        else if (Silkscreen_Piece.y1 - Silkscreen_Piece.y2 < -Subtraction_Tolerance)
+        {
+            sort(total_copper_cut_segments.segment.begin(), total_copper_cut_segments.segment.end(), sort_increase_Segment);
+        }
+        else if (Silkscreen_Piece.y1 - Silkscreen_Piece.y2 > Subtraction_Tolerance)
+        {
+            sort(total_copper_cut_segments.segment.begin(), total_copper_cut_segments.segment.end(), sort_decrease_Segment);
+        }
+        else
+        { // ERROR STATUS: X1=X2, Y1=Y2;Action: sort_increase_Segment
+            sort(total_copper_cut_segments.segment.begin(), total_copper_cut_segments.segment.end(), sort_increase_Segment);
+            cerr << "ERROR STATUS:Silkscreen_Piece points are the same." << endl;
+        }
+    }
+    else
+    {
+        size_t across_neg_x = 0; // find the cloest point of X-axis
+        // Sort Segment by direction, regradless the Segment across the x-axis
+        if (Silkscreen_Piece.is_CCW) // CCW
+        {
+            sort(total_copper_cut_segments.segment.begin(), total_copper_cut_segments.segment.end(), sort_increase_Arc);
+        }
+        else // CW
+        {
+            sort(total_copper_cut_segments.segment.begin(), total_copper_cut_segments.segment.end(), sort_decrease_Arc);
+        }
+
+        // Use theta and direction to determine across the negative x-asix
+        if ((Silkscreen_Piece.detail.theta_1 > 0) && (Silkscreen_Piece.detail.theta_2 < 0))
+        {
+            if (Silkscreen_Piece.is_CCW)
+            {
+                Seperate_x_dir = true; // Seperate by PI (rad)
+            }
+            else
+            {
+                Seperate_x_dir = false; // Seperate by 0 (rad)
+            }
+        }
+        else if ((Silkscreen_Piece.detail.theta_2 > 0) && (Silkscreen_Piece.detail.theta_1 < 0))
+        {
+            if (Silkscreen_Piece.is_CCW)
+            {
+                Seperate_x_dir = false; // Seperate by 0 (rad)
+            }
+            else
+            {
+                Seperate_x_dir = true; // Seperate by PI (rad)
+            }
+        }
+        else
+        { // ERROR STATUS
+            cerr << "ERROR STATUS:Initialize may required to identify the \'theta\'." << endl;
+        }
+
+        if (Seperate_x_dir)
+        { // find the first segment across the negative x direction
+            for (size_t i = 0; i < total_copper_cut_segments.segment.size(); i++)
+            {
+
+                if (Silkscreen_Piece.is_CCW && total_copper_cut_segments.segment.at(i).detail.theta_1 > 0)
+                {
+                    across_neg_x = i;
+                    break;
+                }
+                else if (!Silkscreen_Piece.is_CCW && total_copper_cut_segments.segment.at(i).detail.theta_1 < 0)
+                {
+                    across_neg_x = i;
+                    break;
+                }
+            }
+            if (Seperate_x_dir > 0)
+            { // rearrange the segments for those that across the negative x-asix
+                total_copper_cut_segments.segment.insert(total_copper_cut_segments.segment.end(), total_copper_cut_segments.segment.begin(), total_copper_cut_segments.segment.begin() + across_neg_x);
+                total_copper_cut_segments.segment.erase(total_copper_cut_segments.segment.begin(), total_copper_cut_segments.segment.begin() + across_neg_x);
+            }
+        }
+    }
+    Cut_Silkscreen.segment.insert(Cut_Silkscreen.segment.end(), total_copper_cut_segments.segment.begin(), total_copper_cut_segments.segment.end());
+    Cut_Silkscreen.segment.push_back(End_point);
+
+    return Cut_Silkscreen;
+}
+
+bool Silkscreen::sort_increase_Segment(const Segment L1, const Segment L2)
+{
+
+    if (abs(L1.x1 - L2.x1) < Subtraction_Tolerance)
+    {
+        return (L1.y1 < L2.y1);
+    }
+    else
+    {
+        return (L1.x1 < L2.x1);
+    }
+}
+bool Silkscreen::sort_decrease_Segment(const Segment L1, const Segment L2)
+{
+
+    if (abs(L1.x1 - L2.x1) < Subtraction_Tolerance)
+    {
+        return (L1.y1 > L2.y1);
+    }
+    else
+    {
+        return (L1.x1 > L2.x1);
+    }
+}
+
+bool Silkscreen::sort_decrease_Arc(const Segment L1, const Segment L2)
+{
+    return (L1.detail.theta_1 < L2.detail.theta_1);
+}
+
+bool Silkscreen::sort_increase_Arc(const Segment L1, const Segment L2)
+{
+    return (L1.detail.theta_1 > L2.detail.theta_1);
+}
+
+vector<Point> Silkscreen::Point_Sort(const Segment Silkscreen_Piece, vector<Point> Intersection_Points)
+{
+    // Warning!! this version will modify the input array and return it back.
+    size_t final_point = Intersection_Points.size() - 1;
+    bool Sort_as_Line = false;
+
+    if (Silkscreen_Piece.is_line)
+    {
+        Sort_as_Line = true;
+    }
+    else
+    {
+        if ((Silkscreen_Piece.detail.theta_1 >= 0 && Silkscreen_Piece.detail.theta_2 >= 0) || (Silkscreen_Piece.detail.theta_1 <= 0 && Silkscreen_Piece.detail.theta_2 <= 0))
+        {
+            Sort_as_Line = true;
+        }
+    }
+
+    if (Sort_as_Line)
+    {
+        if ((Intersection_Points.at(0).x) - (Intersection_Points.at(final_point).x) > Subtraction_Tolerance)
+        {
+            sort(Intersection_Points.begin(), Intersection_Points.end(), sort_decrease_points);
+        }
+        else if ((Intersection_Points.at(0).x) - (Intersection_Points.at(final_point).x) < -Subtraction_Tolerance)
+        {
+            sort(Intersection_Points.begin(), Intersection_Points.end(), sort_increase_points);
+        }
+        else if ((Intersection_Points.at(0).y) - (Intersection_Points.at(final_point).y) < -Subtraction_Tolerance)
+        {
+            sort(Intersection_Points.begin(), Intersection_Points.end(), sort_increase_points);
+        }
+        else
+        {
+            sort(Intersection_Points.begin(), Intersection_Points.end(), sort_decrease_points);
+        }
+    }
+    else
+    {
+        // find the X-axis
+        double X_axis = Silkscreen_Piece.center_y;
+        vector<Point> upper_points, lower_points;
+        // Seperate points into upper and lower semicircle
+        for (size_t i = 0; i < Intersection_Points.size(); i++)
+        {
+            if (Intersection_Points.at(i).y > X_axis)
+            {
+                upper_points.push_back(Intersection_Points.at(i));
+            }
+            else
+            {
+                lower_points.push_back(Intersection_Points.at(i));
+            }
+        }
+
+        if (Silkscreen_Piece.is_CCW) // CCW
+        {
+            sort(upper_points.begin(), upper_points.end(), sort_decrease_points); // upper
+            sort(lower_points.begin(), lower_points.end(), sort_increase_points); // lower
+        }
+        else // CW
+        {
+            sort(upper_points.begin(), upper_points.end(), sort_increase_points); // upper
+            sort(lower_points.begin(), lower_points.end(), sort_decrease_points); // lower
+        }
+
+        Intersection_Points.clear();
+        if (Silkscreen_Piece.detail.theta_1 > 0 && Silkscreen_Piece.detail.theta_2 < 0)
+        {
+            Intersection_Points = upper_points;
+            Intersection_Points.insert(Intersection_Points.end(), lower_points.begin(), lower_points.end());
+        }
+        else
+        {
+            Intersection_Points = lower_points;
+            Intersection_Points.insert(Intersection_Points.end(), upper_points.begin(), upper_points.end());
+        }
+    }
+    return Intersection_Points;
+}
+
+bool Silkscreen::sort_decrease_points(const Point p1, const Point p2)
+{
+    if (abs(p1.x - p2.x) > Subtraction_Tolerance)
+    {
+        return (p1.x > p2.x);
+    }
+    else
+    {
+        return (p1.y > p2.y);
+    }
+}
+bool Silkscreen::sort_increase_points(const Point p1, const Point p2)
+{
+    if (abs(p1.x - p2.x) > Subtraction_Tolerance)
+    {
+        return (p1.x < p2.x);
+    }
+    else
+    {
+        return (p1.y < p2.y);
+    }
+}
+//-----------------------------------End Untuned_Silkscreen -----------------------------------
+//-----------------------------------Delete short Silkscreen and its dependencies-----------------------------------
+
+vector<Graph> Silkscreen::Delete_Short_Silkscreen(Graph Silkscreen) //刪除過短的絲印,可能會刪到Assembly極值絲印
 {
     float len;
-    vector<vector<Segment>> All_Continuous;
+    vector<Graph> All_Continuous;
     All_Continuous = Find_Continuous_Segment(Silkscreen);
-    int Continue_size = All_Continuous.size();
-    for (int i = 0; i < Continue_size; i++)
+    size_t Continue_size = All_Continuous.size();
+    for (size_t i = 0; i < Continue_size; i++)
     {
-        int A_Continuous_Segment_size = All_Continuous.at(i).size();
+        size_t A_Continuous_Segment_size = All_Continuous.at(i).segment.size();
         len = 0;
-        for (int j = 0; j < A_Continuous_Segment_size; j++)
+        // the following for loop can be replaced with:
+        // len = Calculate_Silkscreen_length(All_Continuous.at(i));
+        for (size_t j = 0; j < A_Continuous_Segment_size; j++)
         {
-            if (All_Continuous.at(i).at(j).is_line)
+            if (All_Continuous.at(i).segment.at(j).is_line)
             {
-                len += hypot(All_Continuous.at(i).at(j).x2 - All_Continuous.at(i).at(j).x1, All_Continuous.at(i).at(j).y2 - All_Continuous.at(i).at(j).y1);
+                len += hypot(All_Continuous.at(i).segment.at(j).x2 - All_Continuous.at(i).segment.at(j).x1, All_Continuous.at(i).segment.at(j).y2 - All_Continuous.at(i).segment.at(j).y1);
             }
             else // arc
             {
-                float circumference = hypot(All_Continuous.at(i).at(j).x2 - All_Continuous.at(i).at(j).center_x, All_Continuous.at(i).at(j).y2 - All_Continuous.at(i).at(j).center_y);
+                float circumference = hypot(All_Continuous.at(i).segment.at(j).x2 - All_Continuous.at(i).segment.at(j).center_x, All_Continuous.at(i).segment.at(j).y2 - All_Continuous.at(i).segment.at(j).center_y);
                 float angle_1, angle_2, angle_between;
-                angle_1 = All_Continuous.at(i).at(j).theta_1;
-                angle_2 = All_Continuous.at(i).at(j).theta_2;
-                if (All_Continuous.at(i).at(j).direction)
+                angle_1 = All_Continuous.at(i).segment.at(j).detail.theta_1;
+                angle_2 = All_Continuous.at(i).segment.at(j).detail.theta_2;
+                if (All_Continuous.at(i).segment.at(j).is_CCW)
                     swap(angle_1, angle_2);
                 angle_between = angle_1 - angle_2;
                 if (angle_between <= 0)
@@ -84,6 +610,49 @@ vector<vector<Segment>> Silkscreen::Delete_Short_Silkscreen(vector<Segment> Silk
     return All_Continuous;
 }
 
+vector<Graph> Silkscreen::Find_Continuous_Segment(Graph Silkscreen)
+{
+    vector<Graph> continue_segment;
+    Graph continue_temp;
+    size_t Silkscreen_size = Silkscreen.segment.size();
+    if (Silkscreen_size == 0)
+    {
+        cout << "Error: Find_Continuous_Segment: Silkscreen is empty" << endl;
+        return continue_segment;
+    }
+    // set the continue_segment X_min, X_max, Y_min and Y_max to -5000(unused variables)
+    continue_temp.x_min = continue_temp.x_max = (float)-5000;
+    continue_temp.y_min = continue_temp.y_max = (float)-5000;
+
+    for (size_t i = 0; i < Silkscreen_size; i++)
+    {
+        if (i == Silkscreen_size - 1)
+        {
+            continue_temp.segment.push_back(Silkscreen.segment.at(i));
+
+            if ((Silkscreen.segment.at(i).x2 == Silkscreen.segment.at(0).x1) && (Silkscreen.segment.at(i).y2 == Silkscreen.segment.at(0).y1)) // 如果最後一條線是連接到第一條線的，則加入
+            {
+                continue_temp.segment.insert(continue_temp.segment.end(), continue_segment.at(0).segment.begin(), continue_segment.at(0).segment.end());
+                continue_segment.erase(continue_segment.begin());
+            }
+            continue_segment.push_back(continue_temp);
+        }
+        else
+        {
+            continue_temp.segment.push_back(Silkscreen.segment.at(i));
+            if ((Silkscreen.segment.at(i).x2 != Silkscreen.segment.at(i + 1).x1) || (Silkscreen.segment.at(i).y2 != Silkscreen.segment.at(i + 1).y1))
+            {
+                // continue_temp.segment.push_back(Silkscreen.segment.at(i));
+                continue_segment.push_back(continue_temp);
+                // clear the continue segment
+                continue_temp.segment.clear();
+            }
+        }
+    }
+    return continue_segment;
+}
+// -----------------------------------END Delete short Silkscreen function-----------------------------------
+// ----------------------------------- fit_boarder_condition and its dependencies -----------------------------------
 vector<Graph> Silkscreen::fit_boarder_condition(vector<Graph> Silkscreen, Graph Uncut_Silkscreen, Graph Assembly, vector<Graph> Copper_Expanded)
 {
     size_t Assembly_size = Assembly.segment.size();
@@ -401,7 +970,7 @@ vector<Graph> Silkscreen::Add_Excess_Silkscreen_For_Boarder_Condition(vector<Gra
                         break;
                     }
 
-                    if (!silkscreen_cut_single_copper(temp, Fake_Copper_for_Assembly).empty()) // 線段經過assembly的內部
+                    if (!silkscreen_cut_single_copper(temp, Fake_Copper_for_Assembly).segment.empty()) // 線段經過assembly的內部
                     {
                         Qualified_Dots_Front = false;
                         break;
@@ -484,7 +1053,7 @@ vector<Graph> Silkscreen::Add_Excess_Silkscreen_For_Boarder_Condition(vector<Gra
                         break;
                     }
 
-                    if (!silkscreen_cut_single_copper(temp, Fake_Copper_for_Assembly).empty()) // 線段經過assembly的內部
+                    if (!silkscreen_cut_single_copper(temp, Fake_Copper_for_Assembly).segment.empty()) // 線段經過assembly的內部
                     {
                         Qualified_Dots_Back = false;
                         break;
@@ -852,21 +1421,21 @@ vector<Point> Silkscreen::intersection_between_line_and_arc(Segment Arc, Point L
     return vector<Point>();
 }
 
-float Silkscreen::Calculate_Silkscreen_length(const Graph& Silkscreen)
+float Silkscreen::Calculate_Silkscreen_length(const Graph &Silkscreen)
 {
     float len;
-    int size = Silkscreen.size();
-    for (int i = 0; i < size; i++)
+    size_t size = Silkscreen.segment.size();
+    for (size_t i = 0; i < size; i++)
     {
-        if (Silkscreen.at(i).is_line)
-            len += hypot(Silkscreen.at(i).x2 - Silkscreen.at(i).x1, Silkscreen.at(i).y2 - Silkscreen.at(i).y1);
+        if (Silkscreen.segment.at(i).is_line)
+            len += hypot(Silkscreen.segment.at(i).x2 - Silkscreen.segment.at(i).x1, Silkscreen.segment.at(i).y2 - Silkscreen.segment.at(i).y1);
         else // arc
         {
-            float circumference = hypot(Silkscreen.at(i).x2 - Silkscreen.at(i).center_x, Silkscreen.at(i).y2 - Silkscreen.at(i).center_y);
+            float circumference = hypot(Silkscreen.segment.at(i).x2 - Silkscreen.segment.at(i).center_x, Silkscreen.segment.at(i).y2 - Silkscreen.segment.at(i).center_y);
             float angle_1, angle_2, angle_between;
-            angle_1 = Silkscreen.at(i).theta_1;
-            angle_2 = Silkscreen.at(i).theta_2;
-            if (Silkscreen.at(i).direction)
+            angle_1 = Silkscreen.segment.at(i).detail.theta_1;
+            angle_2 = Silkscreen.segment.at(i).detail.theta_2;
+            if (Silkscreen.segment.at(i).is_CCW)
                 swap(angle_1, angle_2);
             angle_between = angle_1 - angle_2;
             if (angle_between <= 0)
@@ -878,3 +1447,4 @@ float Silkscreen::Calculate_Silkscreen_length(const Graph& Silkscreen)
     }
     return len;
 }
+// -----------------------------------End fit_boarder_condition and its dependencies -----------------------------------
