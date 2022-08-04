@@ -11,4 +11,10 @@ struct Point
     bool Next_Arc; // if the point connected to arc
 };
 
+struct Point_ID
+{
+    int ID{-1};//record the detaol of point intersection segment
+    Point point;
+};
+
 #endif // POINT_H

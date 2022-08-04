@@ -7,10 +7,18 @@
 #ifndef SILKSCREEN_H
 #define SILKSCREEN_H
 
+struct Intersection
+{
+    int copper_ID{0}; //record which copper is intersected.
+    int copper_segment{0};// the segment of intersected copper
+    size_t cont_silkscreen{0};
+    Point intersection_point;
+};
+
 class Silkscreen
 {
 public:
-    Silkscreen(float, float); //constructor, fill the silkscreengap and gaps parameters
+    Silkscreen(float); //constructor, fill the silkscreengap and gaps parameters
     vector<Graph> Silkscreen_Assembly(const Graph, const Graph, const vector<Graph>);
     //                                      assembly    silkscreen      copper
 
@@ -19,6 +27,8 @@ private:
     float coppergap;
     //float assemblygap; ?
     float silkscreenlen;
+    vector<Graph> Copper_cut_segments;//contain which copper cuts silkscreen line.
+    vector<Intersection> intersect_points;//record the intersection points of the copper and the silkscreen
     //----------Untuned Silkscreen--------->main.cpp : Final_Silkscreen()
     Graph Untuned_Silkscreen(const Graph, const vector<Graph>);
     Graph Cut_Silkscreen_by_Copper(const Segment, const vector<Graph>);
@@ -30,13 +40,14 @@ private:
     bool sort_decrease_Segment(const Segment, const Segment);
     bool sort_decrease_Arc(const Segment, const Segment);
     bool sort_increase_Arc(const Segment, const Segment);
-    vector<Point> Point_Sort(const Segment, vector<Point>);
-    bool sort_decrease_points(const Point, const Point);
-    bool sort_increase_points(const Point, const Point);
+    vector<Point_ID> Point_Sort(const Segment, vector<Point_ID>);
+    bool sort_decrease_points(const Point_ID, const Point_ID);
+    bool sort_increase_points(const Point_ID, const Point_ID);
 
     //-----------Delete_Short_Silkscreen functions----------
     vector<Graph> Delete_Short_Silkscreen(Graph);
     vector<Graph> Find_Continuous_Segment(Graph);
+    void Find_Intersection_Copper_Silkscreen(const vector<Graph>);
 
     //----------Fit boarder condition functions----------
     vector<Graph> fit_boarder_condition(vector<Graph>, Graph, Graph, vector<Graph>);
@@ -59,7 +70,7 @@ private:
 /*
 add sort arc tolerance
 use `Calculate_Silkscreen_length` in `Delete_Short_Silkscreen`
-
+silkscreen_cut_single_copper 需要用到“Graph"資料型態 (用Segment)
 
 
 */
