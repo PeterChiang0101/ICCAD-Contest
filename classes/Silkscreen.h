@@ -3,6 +3,7 @@
 
 #include "Graph.h"
 #include "Segment.h"
+#include "VectorOp.h"
 
 #ifndef SILKSCREEN_H
 #define SILKSCREEN_H
@@ -15,6 +16,9 @@ public:
     //                                      assembly    silkscreen      copper
 
 private:
+    VectorOp V_Op; // vector operator
+    vector<Segment> silkscreen_cut_single_copper(Segment, Graph);//not added to silkscreen.cpp (resvered)
+    vector<Segment> Cut_Silkscreen_by_Copper(const Segment, const vector<Graph>);//not added to silkscreen.cpp (reserved)
     float coppergap;
     float assemblygap;
     float silkscreenlen;
@@ -23,9 +27,22 @@ private:
     // in main.cpp : Final_Silkscreen()
     Graph Untuned_Silkscreen(const Graph, const vector<Graph>);
     ///////Delete_Short_Silkscreen///////
-    vector<Graph> Delete_Short_Silkscreen(Graph); // delete 長度小於題目限制之silkscreen，回傳的資料中，連續線段在同一vector裡
-    vector<Graph> Silkscreen::Find_Continuous_Segment(Graph); //find 頭尾相連的silkscreen
-    ///////Delete_short_Silkscreen///////
+    vector<Graph> Delete_Short_Silkscreen(Graph);
+
+    vector<Graph> Silkscreen::Find_Continuous_Segment(Graph);
+    ///////Delete_short_Silkscreen///////    
+
+    vector<Graph> fit_boarder_condition(vector<Graph>, Graph, Graph, vector<Graph>); //me
+    vector<Graph> Add_Excess_Silkscreen_For_Boarder_Condition(vector<Graph>, Point, vector<Graph>, int, Graph);
+    vector<vector<Point>> Arc_Optimization(Graph);
+    vector<Point> Arc_to_Poly(Segment);
+    vector<Point> Line_to_Point(const Graph);
+    bool point_in_polygon(Point, vector<Point>, vector<vector<Point>>);
+    float interpolate_x(float, Point, Point);
+    bool Point_Inside_Arc(float, float, float, bool);
+    Point intersection(Point, Point, Point, Point);
+    bool In_Between_Lines(Point, Point, Point);
+    vector<Point> intersection_between_line_and_arc(Segment, Point, Point);
     vector<Graph> fit_boarder_condition(vector<Graph>, Graph, Graph, vector<Graph>);
     vector<vector<Segment>> Add_Excess_Silkscreen_For_Boarder_Condition(vector<vector<Segment>> Silkscreen, Point extremum, vector<Copper> Copper_Expanded, int side, vector<Segment> Assembly);
     float Calculate_Silkscreen_length(const Graph&);//calculate the length of the Silkscreen
