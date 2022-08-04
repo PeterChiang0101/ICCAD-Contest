@@ -24,7 +24,7 @@ public:
 
 private:
     VectorOp V_Op; // vector operator
-    float coppergap;
+    //float coppergap;
     //float assemblygap; ?
     float silkscreenlen;
     vector<Graph> Copper_cut_segments;//contain which copper cuts silkscreen line.
