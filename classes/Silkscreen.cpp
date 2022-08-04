@@ -658,7 +658,6 @@ vector<Graph> Silkscreen::Delete_Short_Silkscreen(Graph Silkscreen) //刪除過�
     return All_Continuous;
 }
 
-
 vector<Graph> Silkscreen::Find_Continuous_Segment(Graph Silkscreen)
 {
     vector<Graph> continue_segment;
