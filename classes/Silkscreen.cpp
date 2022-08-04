@@ -2,9 +2,17 @@
 //Implementation of Silkscreen Buffer and Modify the Silkscreen
 #include <bits/stdc++.h>
 #include "Silkscreen.h"
+#include "Parameter.h"
 
 using namespace std;
 //Silkscreen_Assembly not founded.
+
+Silkscreen::Silkscreen(float silkscreen, float assembly, float copper)
+{
+    assemblygap = assembly;
+    coppergap = copper;
+    silkscreenlen = silkscreen;
+}
 
 Graph Silkscreen::Untuned_Silkscreen(Graph Silkscreen_Original, vector<Graph> Coppers) // 未切割的絲印 與 外擴的銅箔
 {
@@ -36,29 +44,29 @@ Graph Silkscreen::Untuned_Silkscreen(Graph Silkscreen_Original, vector<Graph> Co
     return Silkscreen_Cut_Complete;
 }
 
-vector<vector<Segment>> Silkscreen::Delete_Short_Silkscreen(vector<Segment> Silkscreen)
+vector<Graph> Silkscreen::Delete_Short_Silkscreen(Graph Silkscreen)
 {
     float len;
-    vector<vector<Segment>> All_Continuous;
+    vector<Graph> All_Continuous;
     All_Continuous = Find_Continuous_Segment(Silkscreen);
     int Continue_size = All_Continuous.size();
     for (int i = 0; i < Continue_size; i++)
     {
-        int A_Continuous_Segment_size = All_Continuous.at(i).size();
+        int A_Continuous_Segment_size = All_Continuous.at(i).segment.size();
         len = 0;
         for (int j = 0; j < A_Continuous_Segment_size; j++)
         {
-            if (All_Continuous.at(i).at(j).is_line)
+            if (All_Continuous.at(i).segment.at(j).is_line)
             {
-                len += hypot(All_Continuous.at(i).at(j).x2 - All_Continuous.at(i).at(j).x1, All_Continuous.at(i).at(j).y2 - All_Continuous.at(i).at(j).y1);
+                len += hypot(All_Continuous.at(i).segment.at(j).x2 - All_Continuous.at(i).segment.at(j).x1, All_Continuous.at(i).segment.at(j).y2 - All_Continuous.at(i).segment.at(j).y1);
             }
             else // arc
             {
-                float circumference = hypot(All_Continuous.at(i).at(j).x2 - All_Continuous.at(i).at(j).center_x, All_Continuous.at(i).at(j).y2 - All_Continuous.at(i).at(j).center_y);
+                float circumference = hypot(All_Continuous.at(i).segment.at(j).x2 - All_Continuous.at(i).segment.at(j).center_x, All_Continuous.at(i).segment.at(j).y2 - All_Continuous.at(i).segment.at(j).center_y);
                 float angle_1, angle_2, angle_between;
-                angle_1 = All_Continuous.at(i).at(j).theta_1;
-                angle_2 = All_Continuous.at(i).at(j).theta_2;
-                if (All_Continuous.at(i).at(j).direction)
+                angle_1 = All_Continuous.at(i).segment.at(j).detail.theta_1;
+                angle_2 = All_Continuous.at(i).segment.at(j).detail.theta_2;
+                if (All_Continuous.at(i).segment.at(j).is_CCW)
                     swap(angle_1, angle_2);
                 angle_between = angle_1 - angle_2;
                 if (angle_between <= 0)
@@ -78,6 +86,53 @@ vector<vector<Segment>> Silkscreen::Delete_Short_Silkscreen(vector<Segment> Silk
         }
     }
     return All_Continuous;
+}
+
+vector<Graph> Silkscreen::Find_Continuous_Segment(Graph Silkscreen)
+{
+    vector<Graph> continue_segment;
+    Graph continue_temp;
+    size_t Silkscreen_size = Silkscreen.segment.size();
+    if (Silkscreen_size == 0)
+    {
+        cout << "Error: Find_Continuous_Segment: Silkscreen is empty" << endl;
+        return continue_segment;
+    }
+
+    for (size_t i = 0; i < Silkscreen_size; i++)
+    {
+        if (i == Silkscreen_size - 1)
+        {
+            continue_temp.segment.push_back(Silkscreen.segment.at(i));
+
+            if ((Silkscreen.segment.at(i).x2 == Silkscreen.segment.at(0).x1) && (Silkscreen.segment.at(i).y2 == Silkscreen.segment.at(0).y1)) // 如果最後一條線是連接到第一條線的，則加入
+            {
+                continue_temp.segment.insert(continue_temp.segment.end(), continue_segment.at(0).segment.begin(), continue_segment.at(0).segment.end());
+                continue_segment.erase(continue_segment.begin());
+            }
+            continue_segment.push_back(continue_temp);
+        }
+        else
+        {
+            if ((Silkscreen.segment.at(i).x2 == Silkscreen.segment.at(i + 1).x1) && (Silkscreen.segment.at(i).y2 == Silkscreen.segment.at(i + 1).y1))
+            {
+                continue_temp.segment.push_back(Silkscreen.segment.at(i));
+            }
+            else
+            {
+                continue_temp.segment.push_back(Silkscreen.segment.at(i));
+                continue_segment.push_back(continue_temp);
+                // clear the continue (initailize continue_temp)
+                continue_temp.segment.clear();
+                continue_temp.x_max = 0;
+                continue_temp.y_max = 0;
+                continue_temp.x_min = 0;
+                continue_temp.y_min = 0;
+
+            }
+        }
+    }
+    return continue_segment;
 }
 
 vector<Graph> Silkscreen::fit_boarder_condition(vector<Graph> Silkscreen, Graph Uncut_Silkscreen, Graph Assembly, vector<Graph> Copper_Expanded)

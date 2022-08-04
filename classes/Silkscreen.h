@@ -23,8 +23,8 @@ private:
     // in main.cpp : Final_Silkscreen()
     Graph Untuned_Silkscreen(const Graph, const vector<Graph>);
     ///////Delete_Short_Silkscreen///////
-    vector<Graph> Delete_Short_Silkscreen(Graph);
-    vector<Graph> Silkscreen::Find_Continuous_Segment(Graph);
+    vector<Graph> Delete_Short_Silkscreen(Graph); // delete 長度小於題目限制之silkscreen，回傳的資料中，連續線段在同一vector裡
+    vector<Graph> Silkscreen::Find_Continuous_Segment(Graph); //find 頭尾相連的silkscreen
     ///////Delete_short_Silkscreen///////
     vector<Graph> fit_boarder_condition(vector<Graph>, Graph, Graph, vector<Graph>);
     vector<vector<Segment>> Add_Excess_Silkscreen_For_Boarder_Condition(vector<vector<Segment>> Silkscreen, Point extremum, vector<Copper> Copper_Expanded, int side, vector<Segment> Assembly);
