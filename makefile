@@ -17,12 +17,27 @@ testcase3_out_dir = ./TestingCase/test_C_Ans.txt
 
 testcase_all: testcase1 testcase2 testcase3
 
-testcase1: testing.exe
+testcase1: separated
 	$(output_name) $(testcase1_dir) $(testcase1_out_dir)
-testcase2: testing.exe
+testcase2: separated
 	$(output_name) $(testcase2_dir) $(testcase2_out_dir)
-testcase3: testing.exe
+testcase3: separated
 	$(output_name) $(testcase3_dir) $(testcase3_out_dir)
+
+separated: new_main.cpp VectorOp.o FileIO.o Buffer.o Silkscreen.o
+	g++ -Wall -o $(output_name) new_main.cpp ./classes/*.o
+
+VectorOp.o: ./classes/VectorOp.cpp ./classes/VectorOp.h
+	g++ -Wall -c -o ./classes/VectorOp.o ./classes/VectorOp.cpp
+
+FileIO.o: ./classes/FileIO.cpp ./classes/FileIO.h
+	g++ -Wall -c -o ./classes/FileIO.o ./classes/FileIO.cpp
+
+Buffer.o: ./classes/Buffer.cpp ./classes/Buffer.h
+	g++ -Wall -c -o ./classes/Buffer.o ./classes/Buffer.cpp
+
+Silkscreen.o: ./classes/Silkscreen.cpp ./classes/Silkscreen.h
+	g++ -Wall -c -o ./classes/Silkscreen.o ./classes/Silkscreen.cpp
 
 testing.exe:main.cpp
 	g++ -std=c++0x -Wall -o $(output_name) main.cpp 
@@ -38,4 +53,4 @@ Segment.o:Segment.cpp Segment.h
 
 .PHONY: clean
 clean:
-	$(remove_command) $(output_name) scorer.o Segment.o
+	$(remove_command) $(output_name) scorer.o Segment.o .\classes\*.o 

@@ -36,13 +36,7 @@ private:
     Segment Arc_Boundary_Meas_for_Assembly(const Segment);
     vector<Point> intersection_between_arc_and_arc(const Segment, const Segment);
     Graph Segment_Sort(Segment, Graph);
-    bool sort_increase_Segment(const Segment, const Segment);
-    bool sort_decrease_Segment(const Segment, const Segment);
-    bool sort_decrease_Arc(const Segment, const Segment);
-    bool sort_increase_Arc(const Segment, const Segment);
     vector<Point_ID> Point_Sort(const Segment, vector<Point_ID>);
-    bool sort_decrease_points(const Point_ID, const Point_ID);
-    bool sort_increase_points(const Point_ID, const Point_ID);
 
     //-----------Delete_Short_Silkscreen functions----------
     vector<Graph> Delete_Short_Silkscreen(Graph);

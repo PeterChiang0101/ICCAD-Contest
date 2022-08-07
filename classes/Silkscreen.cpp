@@ -9,24 +9,81 @@
 
 using namespace std;
 // Silkscreen_Assembly not founded.
+static bool sort_increase_Segment(const Segment L1, const Segment L2)
+{
+
+    if (abs(L1.x1 - L2.x1) < Subtraction_Tolerance)
+    {
+        return (L1.y1 < L2.y1);
+    }
+    else
+    {
+        return (L1.x1 < L2.x1);
+    }
+}
+static bool sort_decrease_Segment(const Segment L1, const Segment L2)
+{
+
+    if (abs(L1.x1 - L2.x1) < Subtraction_Tolerance)
+    {
+        return (L1.y1 > L2.y1);
+    }
+    else
+    {
+        return (L1.x1 > L2.x1);
+    }
+}
+
+static bool sort_decrease_Arc(const Segment L1, const Segment L2)
+{
+    return (L1.detail.theta_1 < L2.detail.theta_1);
+}
+
+static bool sort_increase_Arc(const Segment L1, const Segment L2)
+{
+    return (L1.detail.theta_1 > L2.detail.theta_1);
+}
+
+static bool sort_decrease_points(const Point_ID p1, const Point_ID p2)
+{
+    if (abs(p1.point.x - p2.point.x) > Subtraction_Tolerance)
+    {
+        return (p1.point.x > p2.point.x);
+    }
+    else
+    {
+        return (p1.point.y > p2.point.y);
+    }
+}
+static bool sort_increase_points(const Point_ID p1, const Point_ID p2)
+{
+    if (abs(p1.point.x - p2.point.x) > Subtraction_Tolerance)
+    {
+        return (p1.point.x < p2.point.x);
+    }
+    else
+    {
+        return (p1.point.y < p2.point.y);
+    }
+}
 
 // constructor
-Silkscreen::Silkscreen(float Silkscreenlen) :silkscreenlen{Silkscreenlen}
+Silkscreen::Silkscreen(float Silkscreenlen) : silkscreenlen{Silkscreenlen}
 {
 }
-//combine the flow of function call into one function call.
+// combine the flow of function call into one function call.
 vector<Graph> Silkscreen::Silkscreen_Assembly(const Graph assembly, const Graph silkscreen, const vector<Graph> copper)
 {
     Graph copper_cut_silkscreen;
     vector<Graph> cont_silkscreen, Boarder_Condition;
 
-    //output the untuned silkscreen(cut by copper)
+    // output the untuned silkscreen(cut by copper)
     copper_cut_silkscreen = Untuned_Silkscreen(silkscreen, copper);
-    //delete too short silkscreen
+    // delete too short silkscreen
     cont_silkscreen = Delete_Short_Silkscreen(copper_cut_silkscreen);
-    //additional silkscreen to cover the whole assembly edge
+    // additional silkscreen to cover the whole assembly edge
     Boarder_Condition = fit_boarder_condition(cont_silkscreen, silkscreen, assembly, copper);
-    
+
     return Boarder_Condition;
 }
 //-----------------------------------Untuned Silkscreen-----------------------------------
@@ -78,10 +135,10 @@ Graph Silkscreen::Cut_Silkscreen_by_Copper(Segment Silkscreen_Piece, vector<Grap
     {
         if (Silkscreen_Piece.detail.x_min > Coppers.at(i).x_max || Silkscreen_Piece.detail.x_max < Coppers.at(i).x_min || Silkscreen_Piece.detail.y_min > Coppers.at(i).y_max || Silkscreen_Piece.detail.y_max < Coppers.at(i).y_min) // 如果這條絲印不在這個copper的區域內
             continue;
-        copper_cut_segments = silkscreen_cut_single_copper(Silkscreen_Piece, Coppers.at(i)); // 絲印與單一copper的交集線段
-        copper_cut_segments.x_max = (float)i;//record the copper id into x_max 
+        copper_cut_segments = silkscreen_cut_single_copper(Silkscreen_Piece, Coppers.at(i));                                                                       // 絲印與單一copper的交集線段
+        copper_cut_segments.x_max = (float)i;                                                                                                                      // record the copper id into x_max
         total_copper_cut_segments.segment.insert(total_copper_cut_segments.segment.end(), copper_cut_segments.segment.begin(), copper_cut_segments.segment.end()); // 線段之間可能有交集
-        Copper_cut_segments.at(i).segment.insert(Copper_cut_segments.at(i).segment.end(),copper_cut_segments.segment.begin(),copper_cut_segments.segment.end());//
+        // Copper_cut_segments.at(i).segment.insert(Copper_cut_segments.at(i).segment.end(), copper_cut_segments.segment.begin(), copper_cut_segments.segment.end()); //
         // use the Xmax the record the copper id.
     }
     total_copper_cut_segments = Segment_Sort(Silkscreen_Piece, total_copper_cut_segments); // 將線段排序
@@ -112,11 +169,11 @@ Graph Silkscreen::Cut_Silkscreen_by_Copper(Segment Silkscreen_Piece, vector<Grap
         A_Line.y1 = total_copper_cut_segments.segment.at(i - 1).y2;
         A_Line.x2 = total_copper_cut_segments.segment.at(i).x1;
         A_Line.y2 = total_copper_cut_segments.segment.at(i).y1;
-        A_Line.detail.x_max = total_copper_cut_segments.segment.at(i-1).detail.x_max;//the segment of the copper
-        A_Line.detail.x_min = total_copper_cut_segments.x_max;// the ID of the copper
-        A_Line.detail.y_max = total_copper_cut_segments.segment.at(i-1).detail.x_max;//the segment of the copper
-        A_Line.detail.y_min = total_copper_cut_segments.x_max;// the ID of the copper
-        Single_Silkscreen_Cut_Complete.segment.push_back(A_Line); // 最終切完的結果
+        A_Line.detail.x_max = total_copper_cut_segments.segment.at(i - 1).detail.x_max; // the segment of the copper
+        A_Line.detail.x_min = total_copper_cut_segments.x_max;                          // the ID of the copper
+        A_Line.detail.y_max = total_copper_cut_segments.segment.at(i).detail.x_max; // the segment of the copper
+        A_Line.detail.y_min = total_copper_cut_segments.x_max;                          // the ID of the copper
+        Single_Silkscreen_Cut_Complete.segment.push_back(A_Line);                       // 最終切完的結果
     }
     return Single_Silkscreen_Cut_Complete; // 回傳切割完的結果
 }
@@ -131,12 +188,12 @@ Graph Silkscreen::silkscreen_cut_single_copper(Segment Silkscreen_Piece, Graph S
     Point_ID first_point, last_point;
     Point_ID Point_Intersect;
     bool first_inside, last_inside;
-    //record the start and end points of silkscreen
+    // record the start and end points of silkscreen
     first_point.point.x = Silkscreen_Piece.x1;
     first_point.point.y = Silkscreen_Piece.y1;
     last_point.point.x = Silkscreen_Piece.x2;
     last_point.point.y = Silkscreen_Piece.y2;
-    //Copper outline points
+    // Copper outline points
     Copper_Points = Line_to_Point(Single_Copper);
     Arc_Dots = Arc_Optimization(Single_Copper);
 
@@ -156,43 +213,45 @@ Graph Silkscreen::silkscreen_cut_single_copper(Segment Silkscreen_Piece, Graph S
         {
             Point_Intersect.point = intersection(first_point.point, last_point.point, first_copper_point, second_copper_point); // 線與線交會點
             if (Point_Intersect.point.x != INFINITY && Point_Intersect.point.y != INFINITY)
+            {
                 Point_Intersect.ID = (int)i;
                 Intersection_Points.push_back(Point_Intersect);
+            }
         }
         else if (Silkscreen_Piece.is_line && !Single_Copper.segment.at(i).is_line) // 如果絲印是線段，銅箔是圓弧
         {
             // 計算線與圓弧的交會點
             Intersection_Points_temp = intersection_between_line_and_arc(Single_Copper.segment.at(i), first_point.point, last_point.point);
-            for(size_t j = 0; j < Intersection_Points_temp.size(); j++)
+            for (size_t j = 0; j < Intersection_Points_temp.size(); j++)
             {
                 Point_Intersect.ID = i;
                 Point_Intersect.point = Intersection_Points_temp.at(j);
                 Intersection_Points.push_back(Point_Intersect);
             }
-            //Intersection_Points.insert(Intersection_Points.end(), Intersection_Points_temp.begin(), Intersection_Points_temp.end());
+            // Intersection_Points.insert(Intersection_Points.end(), Intersection_Points_temp.begin(), Intersection_Points_temp.end());
         }
         else if (!Silkscreen_Piece.is_line && Single_Copper.segment.at(i).is_line) // 如果絲印是圓弧，銅箔是線段
         {
             // 計算線與圓弧的交會點
             Intersection_Points_temp = intersection_between_line_and_arc(Silkscreen_Piece, first_copper_point, second_copper_point);
-            for(size_t j = 0; j < Intersection_Points_temp.size(); j++)
+            for (size_t j = 0; j < Intersection_Points_temp.size(); j++)
             {
                 Point_Intersect.ID = i;
                 Point_Intersect.point = Intersection_Points_temp.at(j);
                 Intersection_Points.push_back(Point_Intersect);
             }
-            //Intersection_Points.insert(Intersection_Points.end(), Intersection_Points_temp.begin(), Intersection_Points_temp.end());
+            // Intersection_Points.insert(Intersection_Points.end(), Intersection_Points_temp.begin(), Intersection_Points_temp.end());
         }
         else if (!Silkscreen_Piece.is_line && !Single_Copper.segment.at(i).is_line) // 如果絲印是圓弧，銅箔也是圓弧
         {
             Intersection_Points_temp = intersection_between_arc_and_arc(Silkscreen_Piece, Single_Copper.segment.at(i));
-            for(size_t j = 0; j < Intersection_Points_temp.size(); j++)
+            for (size_t j = 0; j < Intersection_Points_temp.size(); j++)
             {
                 Point_Intersect.ID = i;
                 Point_Intersect.point = Intersection_Points_temp.at(j);
                 Intersection_Points.push_back(Point_Intersect);
             }
-            //Intersection_Points.insert(Intersection_Points.end(), Intersection_Points_temp.begin(), Intersection_Points_temp.end());
+            // Intersection_Points.insert(Intersection_Points.end(), Intersection_Points_temp.begin(), Intersection_Points_temp.end());
         }
     }
     Intersection_Points.push_back(last_point);
@@ -212,7 +271,7 @@ Graph Silkscreen::silkscreen_cut_single_copper(Segment Silkscreen_Piece, Graph S
         i++;
         A_Line.x2 = Intersection_Points.at(i).point.x;
         A_Line.y2 = Intersection_Points.at(i).point.y;
-        //use the X_max to record the intersection line of copper(Warning!!)
+        // use the X_max to record the intersection line of copper(Warning!!)
         A_Line.detail.x_max = (float)Intersection_Points.at(i).ID;
         // for Arc
         if (!Silkscreen_Piece.is_line)
@@ -468,41 +527,6 @@ Graph Silkscreen::Segment_Sort(Segment Silkscreen_Piece, Graph total_copper_cut_
     return Cut_Silkscreen;
 }
 
-bool Silkscreen::sort_increase_Segment(const Segment L1, const Segment L2)
-{
-
-    if (abs(L1.x1 - L2.x1) < Subtraction_Tolerance)
-    {
-        return (L1.y1 < L2.y1);
-    }
-    else
-    {
-        return (L1.x1 < L2.x1);
-    }
-}
-bool Silkscreen::sort_decrease_Segment(const Segment L1, const Segment L2)
-{
-
-    if (abs(L1.x1 - L2.x1) < Subtraction_Tolerance)
-    {
-        return (L1.y1 > L2.y1);
-    }
-    else
-    {
-        return (L1.x1 > L2.x1);
-    }
-}
-
-bool Silkscreen::sort_decrease_Arc(const Segment L1, const Segment L2)
-{
-    return (L1.detail.theta_1 < L2.detail.theta_1);
-}
-
-bool Silkscreen::sort_increase_Arc(const Segment L1, const Segment L2)
-{
-    return (L1.detail.theta_1 > L2.detail.theta_1);
-}
-
 vector<Point_ID> Silkscreen::Point_Sort(const Segment Silkscreen_Piece, vector<Point_ID> Intersection_Points)
 {
     // Warning!! this version will modify the input array and return it back.
@@ -584,28 +608,6 @@ vector<Point_ID> Silkscreen::Point_Sort(const Segment Silkscreen_Piece, vector<P
     return Intersection_Points;
 }
 
-bool Silkscreen::sort_decrease_points(const Point_ID p1, const Point_ID p2)
-{
-    if (abs(p1.point.x - p2.point.x) > Subtraction_Tolerance)
-    {
-        return (p1.point.x > p2.point.x);
-    }
-    else
-    {
-        return (p1.point.y > p2.point.y);
-    }
-}
-bool Silkscreen::sort_increase_points(const Point_ID p1, const Point_ID p2)
-{
-    if (abs(p1.point.x - p2.point.x) > Subtraction_Tolerance)
-    {
-        return (p1.point.x < p2.point.x);
-    }
-    else
-    {
-        return (p1.point.y < p2.point.y);
-    }
-}
 //-----------------------------------End Untuned_Silkscreen -----------------------------------
 //-----------------------------------Delete short Silkscreen and its dependencies-----------------------------------
 
@@ -653,7 +655,7 @@ vector<Graph> Silkscreen::Delete_Short_Silkscreen(Graph Silkscreen) //刪除過�
             Continue_size--;
         }
     }
-    //find the intersection of continuous silkscreen and coppers.
+    // find the intersection of continuous silkscreen and coppers.
     Find_Intersection_Copper_Silkscreen(All_Continuous);
     return All_Continuous;
 }
@@ -703,24 +705,24 @@ vector<Graph> Silkscreen::Find_Continuous_Segment(Graph Silkscreen)
 void Silkscreen::Find_Intersection_Copper_Silkscreen(const vector<Graph> continuous_silkscreen)
 {
     Intersection part;
-    for(size_t i = 0; i < continuous_silkscreen.size(); i++)
+    for (size_t i = 0; i < continuous_silkscreen.size(); i++)
     {
         size_t continue_silkscreen_graph_size = continuous_silkscreen.at(i).segment.size();
-        //record the copper of the edge(intersected) silkscreen.
-        if(continue_silkscreen_graph_size > 0)//find the continue_silkscreen head and tail
+        // record the copper of the edge(intersected) silkscreen.
+        if (continue_silkscreen_graph_size > 0) // find the continue_silkscreen head and tail
         {
-            //head segment
+            // head segment
             part.copper_segment = (int)continuous_silkscreen.at(i).segment.at(0).detail.x_max;
             part.copper_ID = (int)continuous_silkscreen.at(i).segment.at(0).detail.x_min;
             part.cont_silkscreen = i;
             part.intersection_point.x = continuous_silkscreen.at(i).segment.at(0).x1;
             part.intersection_point.y = continuous_silkscreen.at(i).segment.at(0).y1;
             intersect_points.push_back(part);
-            //tail segment
-            part.copper_segment = (int)continuous_silkscreen.at(i).segment.at(continue_silkscreen_graph_size-1).detail.y_max;
-            part.copper_ID = (int)continuous_silkscreen.at(i).segment.at(continue_silkscreen_graph_size-1).detail.y_min;
-            part.intersection_point.x = continuous_silkscreen.at(i).segment.at(continue_silkscreen_graph_size-1).x2;
-            part.intersection_point.y = continuous_silkscreen.at(i).segment.at(continue_silkscreen_graph_size-1).y2;
+            // tail segment
+            part.copper_segment = (int)continuous_silkscreen.at(i).segment.at(continue_silkscreen_graph_size - 1).detail.y_max;
+            part.copper_ID = (int)continuous_silkscreen.at(i).segment.at(continue_silkscreen_graph_size - 1).detail.y_min;
+            part.intersection_point.x = continuous_silkscreen.at(i).segment.at(continue_silkscreen_graph_size - 1).x2;
+            part.intersection_point.y = continuous_silkscreen.at(i).segment.at(continue_silkscreen_graph_size - 1).y2;
             intersect_points.push_back(part);
         }
     }

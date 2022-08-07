@@ -104,7 +104,6 @@ flowchart LR
     a0([open file])
     a1([File_to_Parameter])
     a6([Write_File])
-    a7([Fit_Boarder_Condition])
 
         subgraph parameter
         b1([assemblygap])
@@ -126,11 +125,12 @@ flowchart LR
         a5([Copper_Buffer])
         end
 
-        subgraph cut_assembly
+        subgraph cut_silkscreen
         e1([Segment_Intersection_Points])
         e2([Point_to_Segment])
         e3([Segment_Overlapping])
         e4([Delete_Short_Silkscreen])
+        a7([Fit_Boarder_Condition])
         end
     end
     

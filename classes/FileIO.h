@@ -13,13 +13,15 @@ using namespace std;
 class FileIO
 {
 public:
-    float File_to_Parameter(const string str); // 讀入參數
-    Graph Read_Assembly(fstream &);
-    vector<Graph> Read_Copper(fstream &);
+    void Read_File(const char *filename);
+    float File_to_Parameter(); // 讀入參數
+    Graph Read_Assembly();
+    vector<Graph> Read_Copper();
     void Write_File(const Graph);                      // 印出未切割的絲
-    void Write_File(const vector<Graph>, char **argv); // 可印出切割後的絲印和原始和外擴的copper
+    void Write_File(const vector<Graph>, const char *filename); // 可印出切割後的絲印和原始和外擴的copper
 
 private:
+    fstream InFile;
     Segment String_to_Line(string);                     // 讀取時建立線段
     vector<string> split(const string &, const char &); // 拆分文字
     Segment Arc_Boundary_Meas_for_Assembly(Segment);    // 計算圓弧邊界

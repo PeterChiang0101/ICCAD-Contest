@@ -9,14 +9,26 @@
 
 using namespace std;
 
-float FileIO::File_to_Parameter(const string str)
+void FileIO::Read_File(const char *filename)
 {
+    InFile.open(filename, ios::in);
+    if (!InFile.is_open())
+    {
+        cout << "File open failed!" << endl;
+        InFile.open(INPUT_PATH, ios::in); // 預設讀取測試檔案
+    }
+}
+
+float FileIO::File_to_Parameter()
+{
+    string parameter_str;
+    InFile >> parameter_str;
     string str_truncate;
-    str_truncate = str.substr(str.find(',') + 1);
+    str_truncate = parameter_str.substr(parameter_str.find(',') + 1);
     return stof(str_truncate);
 }
 
-Graph FileIO::Read_Assembly(fstream &Input_File) // 讀取assembly，轉換為vector
+Graph FileIO::Read_Assembly() // 讀取assembly，轉換為vector
 {
     Graph Assembly;
     Segment part;
@@ -29,9 +41,9 @@ Graph FileIO::Read_Assembly(fstream &Input_File) // 讀取assembly，轉換為ve
     Assembly.y_max = -INFINITY;
     Assembly.segment.clear();
 
-    getline(Input_File, line);
+    getline(InFile, line);
 
-    while (getline(Input_File, line))
+    while (getline(InFile, line))
     {
         if (line.find("copper") != string::npos)
             break;
@@ -72,14 +84,14 @@ Graph FileIO::Read_Assembly(fstream &Input_File) // 讀取assembly，轉換為ve
     return Assembly;
 }
 
-vector<Graph> FileIO::Read_Copper(fstream &Input_File) // 讀取copper，轉換為二維vector
+vector<Graph> FileIO::Read_Copper() // 讀取copper，轉換為二維vector
 {
     Graph copper;
     vector<Graph> copper_pack;
     Segment part;
     vector<string> split_return;
     string line;
-    while (getline(Input_File, line))
+    while (getline(InFile, line))
     {
         if (line.find("copper") != string::npos)
         {
@@ -119,11 +131,11 @@ void FileIO::Write_File(const Graph Silkscreen)
     }
 }
 
-void FileIO::Write_File(const vector<Graph> Silkscreen, char **argv)
+void FileIO::Write_File(const vector<Graph> Silkscreen, const char *filename)
 {
     fstream Output;
 
-    Output.open(argv[2], ios::out);
+    Output.open(filename, ios::out);
 
     if (!Output)
     {
