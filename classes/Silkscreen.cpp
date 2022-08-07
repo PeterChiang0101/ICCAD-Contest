@@ -126,7 +126,7 @@ Graph Silkscreen::Cut_Silkscreen_by_Copper(Segment Silkscreen_Piece, vector<Grap
     Graph total_copper_cut_segments; // 取所有須切割區域的聯集
     Graph copper_cut_segments;       // 一個copper所遮住這條絲印的部分
     Segment A_Line;
-    Copper_cut_segments.resize(Copper_size);
+    // Copper_cut_segments.resize(Copper_size);
 
     // 僅處理直線極值，需增加圓弧極值
 
@@ -171,7 +171,7 @@ Graph Silkscreen::Cut_Silkscreen_by_Copper(Segment Silkscreen_Piece, vector<Grap
         A_Line.y2 = total_copper_cut_segments.segment.at(i).y1;
         A_Line.detail.x_max = total_copper_cut_segments.segment.at(i - 1).detail.x_max; // the segment of the copper
         A_Line.detail.x_min = total_copper_cut_segments.x_max;                          // the ID of the copper
-        A_Line.detail.y_max = total_copper_cut_segments.segment.at(i).detail.x_max; // the segment of the copper
+        A_Line.detail.y_max = total_copper_cut_segments.segment.at(i).detail.x_max;     // the segment of the copper
         A_Line.detail.y_min = total_copper_cut_segments.x_max;                          // the ID of the copper
         Single_Silkscreen_Cut_Complete.segment.push_back(A_Line);                       // 最終切完的結果
     }

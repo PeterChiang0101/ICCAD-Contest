@@ -67,6 +67,7 @@ Graph FileIO::Read_Assembly() // 讀取assembly，轉換為vector
                 part.detail.theta = 0;
                 part.detail.theta_1 = atan2(part.y1 - part.center_y, part.x1 - part.center_x);
                 part.detail.theta_2 = atan2(part.y2 - part.center_y, part.x2 - part.center_x);
+                part.detail.radius = hypot(part.x1 - part.center_x, part.y1 - part.center_y);
                 part = Arc_Boundary_Meas_for_Assembly(part);
             }
             if (part.detail.x_min < Assembly.x_min)
@@ -91,6 +92,12 @@ vector<Graph> FileIO::Read_Copper() // 讀取copper，轉換為二維vector
     Segment part;
     vector<string> split_return;
     string line;
+
+    copper.x_min = INFINITY;
+    copper.x_max = -INFINITY;
+    copper.y_min = INFINITY;
+    copper.y_max = -INFINITY;
+    copper.segment.clear();
     while (getline(InFile, line))
     {
         if (line.find("copper") != string::npos)
@@ -101,6 +108,32 @@ vector<Graph> FileIO::Read_Copper() // 讀取copper，轉換為二維vector
         else
         {
             part = String_to_Line(line);
+            if (part.is_line)
+            {
+                part.detail.theta = atan2(part.y2 - part.y1, part.x2 - part.x1);
+                part.detail.theta_1 = 0;
+                part.detail.theta_2 = 0;
+                part.detail.x_min = min(part.x1, part.x2);
+                part.detail.x_max = max(part.x1, part.x2);
+                part.detail.y_min = min(part.y1, part.y2);
+                part.detail.y_max = max(part.y1, part.y2);
+            }
+            else
+            {
+                part.detail.theta = 0;
+                part.detail.theta_1 = atan2(part.y1 - part.center_y, part.x1 - part.center_x);
+                part.detail.theta_2 = atan2(part.y2 - part.center_y, part.x2 - part.center_x);
+                part.detail.radius = hypot(part.x1 - part.center_x, part.y1 - part.center_y);
+                part = Arc_Boundary_Meas_for_Assembly(part);
+            }
+            if (part.detail.x_min < copper.x_min)
+                copper.x_min = part.detail.x_min;
+            if (part.detail.x_max > copper.x_max)
+                copper.x_max = part.detail.x_max;
+            if (part.detail.y_min < copper.y_min)
+                copper.y_min = part.detail.y_min;
+            if (part.detail.y_max > copper.y_max)
+                copper.y_max = part.detail.y_max;
             copper.segment.push_back(part);
         }
     }
