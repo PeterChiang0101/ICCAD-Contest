@@ -29,8 +29,6 @@ public:
     static bool sort_increase_points(const Point_ID p1, const Point_ID p2);
 private:
     VectorOp V_Op; // vector operator
-    //float coppergap;
-    //float assemblygap; ?
     float silkscreenlen;
     vector<Graph> Copper_cut_segments;//contain which copper cuts silkscreen line.
     vector<Intersection> intersect_points;//record the intersection points of the copper and the silkscreen
@@ -61,6 +59,10 @@ private:
     bool In_Between_Lines(Point, Point, Point);
     vector<Point> intersection_between_line_and_arc(Segment, Point, Point);
     float Calculate_Silkscreen_length(const Graph&);//calculate the length of the Silkscreen
+
+    //----------Convert the Graph_ID to Graph--------
+    Graph Graph_ID_converter (const Graph_ID&);
+    Graph_ID Graph_converter (const Graph&, const size_t);
 };
 
 #endif // SILKSCREEN_H

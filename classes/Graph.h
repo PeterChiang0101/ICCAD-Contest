@@ -15,4 +15,11 @@ struct Graph // Copper Assembly共用
     vector<Segment> segment;
 };
 
+struct Graph_ID //record the ID of the copper
+{
+    size_t CopperID;// copper id (temp)
+    float x_min, x_max, y_min, y_max;
+    vector<Segment> segment;
+}; 
+
 #endif // GRAPH_H
