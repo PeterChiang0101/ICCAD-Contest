@@ -8,8 +8,8 @@
 #include "Parameter.h"
 
 using namespace std;
-// Silkscreen_Assembly not founded.
-static bool sort_increase_Segment(const Segment L1, const Segment L2)
+
+bool Silkscreen::sort_increase_Segment(const Segment L1, const Segment L2)
 {
 
     if (abs(L1.x1 - L2.x1) < Subtraction_Tolerance)
@@ -21,7 +21,7 @@ static bool sort_increase_Segment(const Segment L1, const Segment L2)
         return (L1.x1 < L2.x1);
     }
 }
-static bool sort_decrease_Segment(const Segment L1, const Segment L2)
+bool Silkscreen::sort_decrease_Segment(const Segment L1, const Segment L2)
 {
 
     if (abs(L1.x1 - L2.x1) < Subtraction_Tolerance)
@@ -34,17 +34,17 @@ static bool sort_decrease_Segment(const Segment L1, const Segment L2)
     }
 }
 
-static bool sort_decrease_Arc(const Segment L1, const Segment L2)
+bool Silkscreen::sort_decrease_Arc(const Segment L1, const Segment L2)
 {
     return (L1.detail.theta_1 < L2.detail.theta_1);
 }
 
-static bool sort_increase_Arc(const Segment L1, const Segment L2)
+bool Silkscreen::sort_increase_Arc(const Segment L1, const Segment L2)
 {
     return (L1.detail.theta_1 > L2.detail.theta_1);
 }
 
-static bool sort_decrease_points(const Point_ID p1, const Point_ID p2)
+bool Silkscreen::sort_decrease_points(const Point_ID p1, const Point_ID p2)
 {
     if (abs(p1.point.x - p2.point.x) > Subtraction_Tolerance)
     {
@@ -55,7 +55,7 @@ static bool sort_decrease_points(const Point_ID p1, const Point_ID p2)
         return (p1.point.y > p2.point.y);
     }
 }
-static bool sort_increase_points(const Point_ID p1, const Point_ID p2)
+bool Silkscreen::sort_increase_points(const Point_ID p1, const Point_ID p2)
 {
     if (abs(p1.point.x - p2.point.x) > Subtraction_Tolerance)
     {
@@ -126,7 +126,6 @@ Graph Silkscreen::Cut_Silkscreen_by_Copper(Segment Silkscreen_Piece, vector<Grap
     Graph total_copper_cut_segments; // 取所有須切割區域的聯集
     Graph copper_cut_segments;       // 一個copper所遮住這條絲印的部分
     Segment A_Line;
-    Copper_cut_segments.resize(Copper_size);
 
     // 僅處理直線極值，需增加圓弧極值
 
@@ -136,7 +135,7 @@ Graph Silkscreen::Cut_Silkscreen_by_Copper(Segment Silkscreen_Piece, vector<Grap
         if (Silkscreen_Piece.detail.x_min > Coppers.at(i).x_max || Silkscreen_Piece.detail.x_max < Coppers.at(i).x_min || Silkscreen_Piece.detail.y_min > Coppers.at(i).y_max || Silkscreen_Piece.detail.y_max < Coppers.at(i).y_min) // 如果這條絲印不在這個copper的區域內
             continue;
         copper_cut_segments = silkscreen_cut_single_copper(Silkscreen_Piece, Coppers.at(i));                                                                       // 絲印與單一copper的交集線段
-        copper_cut_segments.x_max = (float)i;                                                                                                                      // record the copper id into x_max
+        //copper_cut_segments.x_max = (float)i;                                                                                                                      // record the copper id into x_max
         total_copper_cut_segments.segment.insert(total_copper_cut_segments.segment.end(), copper_cut_segments.segment.begin(), copper_cut_segments.segment.end()); // 線段之間可能有交集
         // Copper_cut_segments.at(i).segment.insert(Copper_cut_segments.at(i).segment.end(), copper_cut_segments.segment.begin(), copper_cut_segments.segment.end()); //
         // use the Xmax the record the copper id.
@@ -169,10 +168,10 @@ Graph Silkscreen::Cut_Silkscreen_by_Copper(Segment Silkscreen_Piece, vector<Grap
         A_Line.y1 = total_copper_cut_segments.segment.at(i - 1).y2;
         A_Line.x2 = total_copper_cut_segments.segment.at(i).x1;
         A_Line.y2 = total_copper_cut_segments.segment.at(i).y1;
-        A_Line.detail.x_max = total_copper_cut_segments.segment.at(i - 1).detail.x_max; // the segment of the copper
-        A_Line.detail.x_min = total_copper_cut_segments.x_max;                          // the ID of the copper
-        A_Line.detail.y_max = total_copper_cut_segments.segment.at(i).detail.x_max; // the segment of the copper
-        A_Line.detail.y_min = total_copper_cut_segments.x_max;                          // the ID of the copper
+        //A_Line.detail.x_max = total_copper_cut_segments.segment.at(i - 1).detail.x_max; // the segment of the copper
+        //A_Line.detail.x_min = total_copper_cut_segments.x_max;                          // the ID of the copper
+        //A_Line.detail.y_max = total_copper_cut_segments.segment.at(i).detail.x_max; // the segment of the copper
+        //A_Line.detail.y_min = total_copper_cut_segments.x_max;                          // the ID of the copper
         Single_Silkscreen_Cut_Complete.segment.push_back(A_Line);                       // 最終切完的結果
     }
     return Single_Silkscreen_Cut_Complete; // 回傳切割完的結果
@@ -437,23 +436,23 @@ Graph Silkscreen::Segment_Sort(Segment Silkscreen_Piece, Graph total_copper_cut_
     {
         if (Silkscreen_Piece.x1 - Silkscreen_Piece.x2 < -Subtraction_Tolerance)
         {
-            sort(total_copper_cut_segments.segment.begin(), total_copper_cut_segments.segment.end(), sort_increase_Segment);
+            sort(total_copper_cut_segments.segment.begin(), total_copper_cut_segments.segment.end(), Silkscreen::sort_increase_Segment);
         }
         else if (Silkscreen_Piece.x1 - Silkscreen_Piece.x2 > Subtraction_Tolerance)
         {
-            sort(total_copper_cut_segments.segment.begin(), total_copper_cut_segments.segment.end(), sort_decrease_Segment);
+            sort(total_copper_cut_segments.segment.begin(), total_copper_cut_segments.segment.end(), Silkscreen::sort_decrease_Segment);
         }
         else if (Silkscreen_Piece.y1 - Silkscreen_Piece.y2 < -Subtraction_Tolerance)
         {
-            sort(total_copper_cut_segments.segment.begin(), total_copper_cut_segments.segment.end(), sort_increase_Segment);
+            sort(total_copper_cut_segments.segment.begin(), total_copper_cut_segments.segment.end(), Silkscreen::sort_increase_Segment);
         }
         else if (Silkscreen_Piece.y1 - Silkscreen_Piece.y2 > Subtraction_Tolerance)
         {
-            sort(total_copper_cut_segments.segment.begin(), total_copper_cut_segments.segment.end(), sort_decrease_Segment);
+            sort(total_copper_cut_segments.segment.begin(), total_copper_cut_segments.segment.end(), Silkscreen::sort_decrease_Segment);
         }
         else
         { // ERROR STATUS: X1=X2, Y1=Y2;Action: sort_increase_Segment
-            sort(total_copper_cut_segments.segment.begin(), total_copper_cut_segments.segment.end(), sort_increase_Segment);
+            sort(total_copper_cut_segments.segment.begin(), total_copper_cut_segments.segment.end(), Silkscreen::sort_increase_Segment);
             cerr << "ERROR STATUS:Silkscreen_Piece points are the same." << endl;
         }
     }
@@ -463,11 +462,11 @@ Graph Silkscreen::Segment_Sort(Segment Silkscreen_Piece, Graph total_copper_cut_
         // Sort Segment by direction, regradless the Segment across the x-axis
         if (Silkscreen_Piece.is_CCW) // CCW
         {
-            sort(total_copper_cut_segments.segment.begin(), total_copper_cut_segments.segment.end(), sort_increase_Arc);
+            sort(total_copper_cut_segments.segment.begin(), total_copper_cut_segments.segment.end(), Silkscreen::sort_increase_Arc);
         }
         else // CW
         {
-            sort(total_copper_cut_segments.segment.begin(), total_copper_cut_segments.segment.end(), sort_decrease_Arc);
+            sort(total_copper_cut_segments.segment.begin(), total_copper_cut_segments.segment.end(), Silkscreen::sort_decrease_Arc);
         }
 
         // Use theta and direction to determine across the negative x-asix
@@ -584,13 +583,13 @@ vector<Point_ID> Silkscreen::Point_Sort(const Segment Silkscreen_Piece, vector<P
 
         if (Silkscreen_Piece.is_CCW) // CCW
         {
-            sort(upper_points.begin(), upper_points.end(), sort_decrease_points); // upper
-            sort(lower_points.begin(), lower_points.end(), sort_increase_points); // lower
+            sort(upper_points.begin(), upper_points.end(), Silkscreen::sort_decrease_points); // upper
+            sort(lower_points.begin(), lower_points.end(), Silkscreen::sort_increase_points); // lower
         }
         else // CW
         {
-            sort(upper_points.begin(), upper_points.end(), sort_increase_points); // upper
-            sort(lower_points.begin(), lower_points.end(), sort_decrease_points); // lower
+            sort(upper_points.begin(), upper_points.end(), Silkscreen::sort_increase_points); // upper
+            sort(lower_points.begin(), lower_points.end(), Silkscreen::sort_decrease_points); // lower
         }
 
         Intersection_Points.clear();

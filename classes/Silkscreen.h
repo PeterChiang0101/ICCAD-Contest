@@ -21,7 +21,12 @@ public:
     Silkscreen(float); //constructor, fill the silkscreengap and gaps parameters
     vector<Graph> Silkscreen_Assembly(const Graph, const Graph, const vector<Graph>);
     //                                      assembly    silkscreen      copper
-
+    static bool sort_increase_Segment(const Segment L1, const Segment L2);
+    static bool sort_decrease_Segment(const Segment L1, const Segment L2);
+    static bool sort_decrease_Arc(const Segment L1, const Segment L2);
+    static bool sort_increase_Arc(const Segment L1, const Segment L2);
+    static bool sort_decrease_points(const Point_ID p1, const Point_ID p2);
+    static bool sort_increase_points(const Point_ID p1, const Point_ID p2);
 private:
     VectorOp V_Op; // vector operator
     //float coppergap;
