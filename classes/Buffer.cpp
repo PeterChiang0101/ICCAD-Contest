@@ -454,7 +454,7 @@ Point Buffer::first_intersection_between_line_and_arc_for_arc_tuning(Segment Arc
     float c = dot(f, f) - r * r;
 
     float discriminant = b * b - 4 * a * c;
-    if (discriminant < 0)
+    if (discriminant + Subtraction_Tolerance < 0)
     {
         // no intersection
         return Point();
@@ -464,6 +464,10 @@ Point Buffer::first_intersection_between_line_and_arc_for_arc_tuning(Segment Arc
         // ray didn't totally miss sphere,
         // so there is a solution to
         // the equation.
+        if (discriminant < 0)
+        {
+            discriminant = 0;
+        }
 
         discriminant = sqrt(discriminant);
 

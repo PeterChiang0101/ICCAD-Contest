@@ -20,7 +20,7 @@ int main(int argc, char **argv)
     Graph assembly = File.Read_Assembly();
     vector<Graph> copper = File.Read_Copper();
 
-    Buffer buffer(coppergap, assemblygap);
+    Buffer buffer(assemblygap, coppergap);
     Graph assembly_buffer = buffer.Assembly_Buffer(assembly);
     vector<Graph> copper_buffer = buffer.Copper_Buffer(copper);
 
