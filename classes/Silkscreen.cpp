@@ -87,6 +87,10 @@ bool Silkscreen::sort_increase_points(const Point_ID p1, const Point_ID p2)
         return (p1.point.y < p2.point.y);
     }
 }
+bool Silkscreen::sort_copperID(const Intersection p1, const Intersection p2)
+{
+    return (p1.copper_ID < p2.copper_ID);
+}
 //-----------------------------------Untuned Silkscreen-----------------------------------
 // 未切割的絲印 與 外擴的銅箔
 Graph Silkscreen::Untuned_Silkscreen(Graph Assembly, Graph Silkscreen_Original, vector<Graph> Coppers)
@@ -129,8 +133,7 @@ Graph Silkscreen::Cut_Silkscreen_by_Copper(Segment Silkscreen_Piece, vector<Grap
     Graph Single_Silkscreen_Cut_Complete;
 
     Graph copper_cut_segments;          // 一個copper所遮住這條絲印的部分
-    Graph_ID copper_cut_segments_ID;    // 一個copper所遮住這條絲印的部分,包含copper資訊
-    Graph_ID total_copper_cut_segments; // 取所有須切割區域的聯集
+    Graph total_copper_cut_segments; // 取所有須切割區域的聯集
     Segment A_Line;
 
     // 僅處理直線極值，需增加圓弧極值
@@ -140,9 +143,8 @@ Graph Silkscreen::Cut_Silkscreen_by_Copper(Segment Silkscreen_Piece, vector<Grap
     {
         if (Silkscreen_Piece.detail.x_min > Coppers.at(i).x_max || Silkscreen_Piece.detail.x_max < Coppers.at(i).x_min || Silkscreen_Piece.detail.y_min > Coppers.at(i).y_max || Silkscreen_Piece.detail.y_max < Coppers.at(i).y_min) // 如果這條絲印不在這個copper的區域內
             continue;
-        copper_cut_segments = silkscreen_cut_single_copper(Silkscreen_Piece, Coppers.at(i));                                                                             // 絲印與單一copper的交集線段
-        copper_cut_segments_ID = Graph_converter(copper_cut_segments, i);                                                                                                // convert data type                                                                                                                  // record the copper id into x_max
-        total_copper_cut_segments.segment.insert(total_copper_cut_segments.segment.end(), copper_cut_segments_ID.segment.begin(), copper_cut_segments_ID.segment.end()); // 線段之間可能有交集
+        copper_cut_segments = silkscreen_cut_single_copper(Silkscreen_Piece, Coppers.at(i), i);                                                                          // 絲印與單一copper的交集線段
+        total_copper_cut_segments.segment.insert(total_copper_cut_segments.segment.end(), copper_cut_segments.segment.begin(), copper_cut_segments.segment.end()); // 線段之間可能有交集
     }
     total_copper_cut_segments = Segment_Sort(Silkscreen_Piece, total_copper_cut_segments); // 將線段排序
 
@@ -172,16 +174,16 @@ Graph Silkscreen::Cut_Silkscreen_by_Copper(Segment Silkscreen_Piece, vector<Grap
         A_Line.y1 = total_copper_cut_segments.segment.at(i - 1).y2;
         A_Line.x2 = total_copper_cut_segments.segment.at(i).x1;
         A_Line.y2 = total_copper_cut_segments.segment.at(i).y1;
-        A_Line.detail.SegmentID = total_copper_cut_segments.segment.at(i - 1).detail.SegmentID; // the segment of the copper
-        A_Line.detail.SegmentID = total_copper_cut_segments.segment.at(i).detail.SegmentID;     // the segment of the copper
-        A_Line.detail.CopperID = total_copper_cut_segments.CopperID;                            // the ID of the copper
-        A_Line.detail.CopperID = total_copper_cut_segments.CopperID;                            // the ID of the copper
+        A_Line.detail.SegmentID1 = total_copper_cut_segments.segment.at(i - 1).detail.SegmentID2;// the segment(x1,y1) of the copper
+        A_Line.detail.SegmentID2 = total_copper_cut_segments.segment.at(i).detail.SegmentID1;    // the segment(x2,y2) of the copper
+        A_Line.detail.CopperID1 = total_copper_cut_segments.segment.at(i - 1).detail.CopperID2;  // the Copper ID of (x1,y1)
+        A_Line.detail.CopperID2 = total_copper_cut_segments.segment.at(i).detail.CopperID1;      // the Carbon ID of (x2,y2)
         Single_Silkscreen_Cut_Complete.segment.push_back(A_Line);                               // 最終切完的結果
     }
     return Single_Silkscreen_Cut_Complete; // 回傳切割完的結果
 }
 // not complete yet
-Graph Silkscreen::silkscreen_cut_single_copper(Segment Silkscreen_Piece, Graph Single_Copper) // 切割與單一銅箔交會的絲印
+Graph Silkscreen::silkscreen_cut_single_copper(Segment Silkscreen_Piece, Graph Single_Copper, size_t Copper_ID) // 切割與單一銅箔交會的絲印
 {
     size_t Copper_Line_size = Single_Copper.segment.size();
     vector<vector<Point>> Arc_Dots;
@@ -271,11 +273,12 @@ Graph Silkscreen::silkscreen_cut_single_copper(Segment Silkscreen_Piece, Graph S
             continue; // 兩端點在外面可以直接略過
         A_Line.x1 = Intersection_Points.at(i).point.x;
         A_Line.y1 = Intersection_Points.at(i).point.y;
+        A_Line.detail.SegmentID1 = (size_t)Intersection_Points.at(i).ID;// record the intersection line of copper
         i++;
         A_Line.x2 = Intersection_Points.at(i).point.x;
         A_Line.y2 = Intersection_Points.at(i).point.y;
-        // record the intersection line of copper(Warning!!)
-        A_Line.detail.SegmentID = (size_t)Intersection_Points.at(i).ID;
+        A_Line.detail.SegmentID2 = (size_t)Intersection_Points.at(i).ID;// record the intersection line of copper
+        A_Line.detail.CopperID1 = A_Line.detail.CopperID2 = Copper_ID;//record the intersection copper
         // for Arc
         if (!Silkscreen_Piece.is_line)
         {
@@ -406,9 +409,9 @@ vector<Point> Silkscreen::intersection_between_arc_and_arc(const Segment Arc1, c
     return vector<Point>();
 }
 // Sorting function:Segment and Point
-Graph_ID Silkscreen::Segment_Sort(Segment Silkscreen_Piece, Graph_ID total_copper_cut_segments)
+Graph Silkscreen::Segment_Sort(Segment Silkscreen_Piece, Graph total_copper_cut_segments)
 {
-    Graph_ID Cut_Silkscreen;
+    Graph Cut_Silkscreen;
     Segment Start_point, End_point;
     bool Sort_as_Line = false; // Determine whether can use line sorting case or not.
     bool Seperate_x_dir = true;
@@ -709,20 +712,22 @@ void Silkscreen::Find_Intersection_Copper_Silkscreen()
         if (continue_silkscreen_graph_size > 0) // find the continue_silkscreen head and tail
         {
             // head segment
-            part.copper_segment = (int)silkscreen.at(i).segment.at(0).detail.x_max;
-            part.copper_ID = (int)silkscreen.at(i).segment.at(0).detail.x_min;
+            part.copper_segment = (int)silkscreen.at(i).segment.at(0).detail.SegmentID1;
+            part.copper_ID = (int)silkscreen.at(i).segment.at(0).detail.CopperID1;
             part.cont_silkscreen = i;
             part.intersection_point.x = silkscreen.at(i).segment.at(0).x1;
             part.intersection_point.y = silkscreen.at(i).segment.at(0).y1;
             intersect_points.push_back(part);
             // tail segment
-            part.copper_segment = (int)silkscreen.at(i).segment.at(continue_silkscreen_graph_size - 1).detail.y_max;
-            part.copper_ID = (int)silkscreen.at(i).segment.at(continue_silkscreen_graph_size - 1).detail.y_min;
+            part.copper_segment = (int)silkscreen.at(i).segment.at(continue_silkscreen_graph_size - 1).detail.SegmentID2;
+            part.copper_ID = (int)silkscreen.at(i).segment.at(continue_silkscreen_graph_size - 1).detail.CopperID2;
             part.intersection_point.x = silkscreen.at(i).segment.at(continue_silkscreen_graph_size - 1).x2;
             part.intersection_point.y = silkscreen.at(i).segment.at(continue_silkscreen_graph_size - 1).y2;
             intersect_points.push_back(part);
         }
     }
+    //sort the intersection point by copperID (increase)
+    sort(intersect_points.begin(), intersect_points.end(), Silkscreen::sort_copperID);
 }
 // -----------------------------------END Delete short Silkscreen function-----------------------------------
 // ----------------------------------- fit_boarder_condition and its dependencies -----------------------------------
@@ -1041,7 +1046,7 @@ vector<Graph> Silkscreen::Add_Excess_Silkscreen_For_Boarder_Condition(vector<Gra
                         break;
                     }
 
-                    if (!silkscreen_cut_single_copper(temp, Fake_Copper_for_Assembly).segment.empty()) // 線段經過assembly的內部
+                    if (!silkscreen_cut_single_copper(temp, Fake_Copper_for_Assembly, 0).segment.empty()) // 線段經過assembly的內部
                     {
                         Qualified_Dots_Front = false;
                         break;
@@ -1124,7 +1129,7 @@ vector<Graph> Silkscreen::Add_Excess_Silkscreen_For_Boarder_Condition(vector<Gra
                         break;
                     }
 
-                    if (!silkscreen_cut_single_copper(temp, Fake_Copper_for_Assembly).segment.empty()) // 線段經過assembly的內部
+                    if (!silkscreen_cut_single_copper(temp, Fake_Copper_for_Assembly, 0).segment.empty()) // 線段經過assembly的內部
                     {
                         Qualified_Dots_Back = false;
                         break;
@@ -1517,29 +1522,4 @@ float Silkscreen::Calculate_Silkscreen_length(const Graph &Silkscreen)
         }
     }
     return len;
-}
-// -----------------------------------End fit_boarder_condition and its dependencies -----------------------------------
-Graph Silkscreen::Graph_ID_converter(const Graph_ID &graphID)
-{
-    Graph graph;
-    graph.segment = graphID.segment;
-    graph.x_max = graphID.x_max;
-    graph.x_min = graphID.x_min;
-    graph.y_max = graphID.y_max;
-    graph.y_min = graphID.y_min;
-
-    return graph;
-}
-
-Graph_ID Silkscreen::Graph_converter(const Graph &graph, const size_t ID)
-{
-    Graph_ID graphID;
-    graphID.segment = graph.segment;
-    graphID.x_max = graph.x_max;
-    graphID.x_min = graph.x_min;
-    graphID.y_max = graph.y_max;
-    graphID.y_min = graph.y_min;
-    graphID.CopperID = ID;
-
-    return graphID;
 }
