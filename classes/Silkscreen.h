@@ -9,8 +9,8 @@
 
 struct Intersection
 {
-    int copper_ID{0}; //record which copper is intersected.
-    int copper_segment{0};// the segment of intersected copper
+    int copper_ID{0};      // record which copper is intersected.
+    int copper_segment{0}; // the segment of intersected copper
     size_t cont_silkscreen{0};
     Point intersection_point;
 };
@@ -18,7 +18,7 @@ struct Intersection
 class Silkscreen
 {
 public:
-    Silkscreen(float); //constructor, fill the silkscreengap and gaps parameters
+    Silkscreen(float); // constructor, fill the silkscreengap and gaps parameters
     vector<Graph> Silkscreen_Assembly(const Graph, const Graph, const vector<Graph>);
     //                                      assembly    silkscreen      copper
     static bool sort_increase_Segment(const Segment L1, const Segment L2);
@@ -27,27 +27,30 @@ public:
     static bool sort_increase_Arc(const Segment L1, const Segment L2);
     static bool sort_decrease_points(const Point_ID p1, const Point_ID p2);
     static bool sort_increase_points(const Point_ID p1, const Point_ID p2);
+
 private:
     VectorOp V_Op; // vector operator
     float silkscreenlen;
-    vector<Graph> Copper_cut_segments;//contain which copper cuts silkscreen line.
-    vector<Intersection> intersect_points;//record the intersection points of the copper and the silkscreen
+    vector<Graph> Copper_cut_segments;     // contain which copper cuts silkscreen line.
+    vector<Intersection> intersect_points; // record the intersection points of the copper and the silkscreen
+    vector<Graph> silkscreen;
+
     //----------Untuned Silkscreen--------->main.cpp : Final_Silkscreen()
-    Graph Untuned_Silkscreen(const Graph, const vector<Graph>);
+    Graph Untuned_Silkscreen(const Graph, const Graph, const vector<Graph>);
     Graph Cut_Silkscreen_by_Copper(const Segment, const vector<Graph>);
     Graph silkscreen_cut_single_copper(Segment, Graph);
     Segment Arc_Boundary_Meas_for_Assembly(const Segment);
     vector<Point> intersection_between_arc_and_arc(const Segment, const Segment);
-    Graph Segment_Sort(Segment, Graph);
+    Graph_ID Segment_Sort(Segment, Graph_ID);
     vector<Point_ID> Point_Sort(const Segment, vector<Point_ID>);
 
     //-----------Delete_Short_Silkscreen functions----------
-    vector<Graph> Delete_Short_Silkscreen(Graph);
+    void Delete_Short_Silkscreen(Graph);
     vector<Graph> Find_Continuous_Segment(Graph);
-    void Find_Intersection_Copper_Silkscreen(const vector<Graph>);
+    void Find_Intersection_Copper_Silkscreen();
 
     //----------Fit boarder condition functions----------
-    vector<Graph> fit_boarder_condition(vector<Graph>, Graph, Graph, vector<Graph>);
+    void fit_boarder_condition(Graph, Graph, vector<Graph>);
     vector<Graph> Add_Excess_Silkscreen_For_Boarder_Condition(vector<Graph>, Point, vector<Graph>, int, Graph);
     vector<vector<Point>> Arc_Optimization(Graph);
     vector<Point> Arc_to_Poly(Segment);
@@ -58,16 +61,17 @@ private:
     Point intersection(Point, Point, Point, Point);
     bool In_Between_Lines(Point, Point, Point);
     vector<Point> intersection_between_line_and_arc(Segment, Point, Point);
-    float Calculate_Silkscreen_length(const Graph&);//calculate the length of the Silkscreen
+    float Calculate_Silkscreen_length(const Graph &); // calculate the length of the Silkscreen
 
+    vector<Graph> fit_lines_simularity();
     //----------Convert the Graph_ID to Graph--------
-    Graph Graph_ID_converter (const Graph_ID&);
-    Graph_ID Graph_converter (const Graph&, const size_t);
+    Graph Graph_ID_converter(const Graph_ID &);
+    Graph_ID Graph_converter(const Graph &, const size_t);
 };
 
 #endif // SILKSCREEN_H
 
-//Note and issues:
+// Note and issues:
 /*
 add sort arc tolerance
 use `Calculate_Silkscreen_length` in `Delete_Short_Silkscreen`

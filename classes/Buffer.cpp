@@ -108,6 +108,8 @@ vector<Point> Buffer::Point_Extension(const Graph Assembly, const bool is_assemb
             Extended_Points.push_back(Extend_1);
         else if (Outside_2 && !Outside_1) // 2 is outside, 1 is inside
             Extended_Points.push_back(Extend_2);
+        else
+            Extended_Points.push_back(Assembly_Points.at(j)); // 錯誤，塞入預設值
     }
     Extended_Points = Arc_Point_Tuning(Assembly, is_assembly, Extended_Points); // 圖形外擴點調整
     return Extended_Points;
