@@ -1600,12 +1600,12 @@ Graph Silkscreen::cut_line_arc(Segment, const int, const bool)
     return Graph();// Delete it after starting coding.
 }
 
-Graph cut_line(Segment, const int)
+Graph Silkscreen::cut_line(Segment, const int)
 {
     return Graph();// Delete it after starting coding.
 }
 
-Graph cut_arc(Segment, const int)
+Graph Silkscreen::cut_arc(Segment, const int)
 {
     return Graph();// Delete it after starting coding.
 }
