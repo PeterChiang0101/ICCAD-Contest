@@ -28,6 +28,7 @@ public:
     static bool sort_increase_Arc(const Segment L1, const Segment L2);
     static bool sort_decrease_points(const Point_ID p1, const Point_ID p2);
     static bool sort_increase_points(const Point_ID p1, const Point_ID p2);
+    static bool sort_copperID(const Intersection, const Intersection);
 
 private:
     VectorOp V_Op; // vector operator
@@ -40,7 +41,7 @@ private:
     //----------Untuned Silkscreen--------->main.cpp : Final_Silkscreen()
     Graph Untuned_Silkscreen(const Graph, const Graph, const vector<Graph>);
     Graph Cut_Silkscreen_by_Copper(const Segment, const vector<Graph>);
-    Graph silkscreen_cut_single_copper(Segment, Graph);
+    Graph silkscreen_cut_single_copper(Segment, Graph, size_t);
     Segment Arc_Boundary_Meas_for_Assembly(const Segment);
     vector<Point> intersection_between_arc_and_arc(const Segment, const Segment);
     Graph Segment_Sort(Segment, Graph);
@@ -87,7 +88,6 @@ private:
 /*
 add sort arc tolerance
 use `Calculate_Silkscreen_length` in `Delete_Short_Silkscreen`
-silkscreen_cut_single_copper 需要用到“Graph"資料型態 (用Segment)
 
 
 */
