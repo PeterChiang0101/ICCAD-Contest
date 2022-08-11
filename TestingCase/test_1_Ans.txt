@@ -1,0 +1,6 @@
+silkscreen
+arc,nan,nan,nan,nan,3.2407,2.0000,CW
+silkscreen
+line,nan,nan,nan,nan
+silkscreen
+line,nan,nan,3.3310,0.9000

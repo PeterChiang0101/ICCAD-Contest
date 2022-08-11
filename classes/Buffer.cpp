@@ -44,6 +44,10 @@ vector<Point> Buffer::Point_Extension(const Graph Assembly, const bool is_assemb
     vector<vector<Point>> Arc_Dots;
     vector<Segment> Silkscreen;
 
+    Point Failed_Point;
+    Failed_Point.x = INFINITY;
+    Failed_Point.y = INFINITY;
+    
     Assembly_Points = Line_to_Point(Assembly); //線切割為點
     Arc_Dots = Arc_Optimization(Assembly);     // 將圓弧切割成多個點，以利辨識點在圖形內外
     if (size == 1)                             // i think only happened in copper, eg: a full circle
@@ -109,7 +113,7 @@ vector<Point> Buffer::Point_Extension(const Graph Assembly, const bool is_assemb
         else if (Outside_2 && !Outside_1) // 2 is outside, 1 is inside
             Extended_Points.push_back(Extend_2);
         else
-            Extended_Points.push_back(Assembly_Points.at(j)); // 錯誤，塞入預設值
+            Extended_Points.push_back(Failed_Point); // 錯誤，塞入預設值
     }
     Extended_Points = Arc_Point_Tuning(Assembly, is_assembly, Extended_Points); // 圖形外擴點調整
     return Extended_Points;

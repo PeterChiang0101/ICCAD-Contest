@@ -18,13 +18,15 @@ Silkscreen::Silkscreen(float Silkscreenlen) : silkscreenlen{Silkscreenlen}
 vector<Graph> Silkscreen::Silkscreen_Assembly(const Graph assembly, const Graph silkscreen, const vector<Graph> copper)
 {
     Graph copper_cut_silkscreen;
-
+    this->assembly = assembly;
     // output the untuned silkscreen(cut by copper)
     copper_cut_silkscreen = Untuned_Silkscreen(assembly, silkscreen, copper);
     // delete too short silkscreen
     Delete_Short_Silkscreen(copper_cut_silkscreen);
     // additional silkscreen to cover the whole assembly edge
     fit_boarder_condition(silkscreen, assembly, copper);
+
+    // fit_lines_simularity();
 
     return this->silkscreen;
 }
@@ -98,7 +100,7 @@ Graph Silkscreen::Untuned_Silkscreen(Graph Assembly, Graph Silkscreen_Original, 
     for (size_t i = 0; i < Silkscreen_Org_Size; i++)
     {
         Silkscreen_Cut_Part.segment.clear();
-        if (Silkscreen_Original.segment.at(i).x1 == Assembly.segment.at(i).x1 && Silkscreen_Original.segment.at(i).y1 == Assembly.segment.at(i).y1 || Silkscreen_Original.segment.at(i).x2 == Assembly.segment.at(i).x2 && Silkscreen_Original.segment.at(i).y2 == Assembly.segment.at(i).y2) // 任一點為錯誤點，全部捨棄
+        if (Silkscreen_Original.segment.at(i).x1 == INFINITY && Silkscreen_Original.segment.at(i).y1 == INFINITY || Silkscreen_Original.segment.at(i).x2 == INFINITY && Silkscreen_Original.segment.at(i).y2 == INFINITY) // 任一點為錯誤點，全部捨棄
             continue;
 
         Silkscreen_Cut_Part = Cut_Silkscreen_by_Copper(Silkscreen_Original.segment.at(i), Coppers);
@@ -737,10 +739,10 @@ void Silkscreen::fit_boarder_condition(Graph Uncut_Silkscreen, Graph Assembly, v
     float Assembly_y_min = Assembly.segment.at(0).detail.y_min;
     float Assembly_y_max = Assembly.segment.at(0).detail.y_max;
 
-    int Uppest_Assembly_index = 0;   // assembly 最上面的線
-    int Lowest_Assembly_index = 0;   // assembly 最下面的線
-    int Leftest_Assembly_index = 0;  // assembly 最左邊的線
-    int Rightest_Assembly_index = 0; // assembly 最右邊的線
+    Uppest_Assembly_index = 0;   // assembly 最上面的線
+    Lowest_Assembly_index = 0;   // assembly 最下面的線
+    Leftest_Assembly_index = 0;  // assembly 最左邊的線
+    Rightest_Assembly_index = 0; // assembly 最右邊的線
 
     float silkscreen_x_min = silkscreen.at(0).segment.at(0).detail.x_min;
     float silkscreen_x_max = silkscreen.at(0).segment.at(0).detail.x_max;
@@ -780,18 +782,22 @@ void Silkscreen::fit_boarder_condition(Graph Uncut_Silkscreen, Graph Assembly, v
             if (silkscreen.at(i).segment.at(j).detail.x_min < silkscreen_x_min)
             {
                 silkscreen_x_min = silkscreen.at(i).segment.at(j).detail.x_min;
+                Leftest_Silkscreen_index.at(0) = i, Leftest_Silkscreen_index.at(1) = j;
             }
             if (silkscreen.at(i).segment.at(j).detail.x_max > silkscreen_x_max)
             {
                 silkscreen_x_max = silkscreen.at(i).segment.at(j).detail.x_max;
+                Rightest_Silkscreen_index.at(0) = i, Rightest_Silkscreen_index.at(1) = j;
             }
             if (silkscreen.at(i).segment.at(j).detail.y_min < silkscreen_y_min)
             {
                 silkscreen_y_min = silkscreen.at(i).segment.at(j).detail.y_min;
+                Lowest_Silkscreen_index.at(0) = i, Lowest_Silkscreen_index.at(1) = j;
             }
             if (silkscreen.at(i).segment.at(j).detail.y_max > silkscreen_y_max)
             {
                 silkscreen_y_max = silkscreen.at(i).segment.at(j).detail.y_max;
+                Uppest_Silkscreen_index.at(0) = i, Uppest_Silkscreen_index.at(1) = j;
             }
         }
     }
@@ -1519,6 +1525,70 @@ float Silkscreen::Calculate_Silkscreen_length(const Graph &Silkscreen)
     return len;
 }
 // -----------------------------------End fit_boarder_condition and its dependencies -----------------------------------
+/*
+void Silkscreen::fit_lines_simularity()
+{
+    int assembly_line_num = 0;
+    int assembly_arc_num = 0;
+    int silkscreen_line_num = 0;
+    int silkscreen_arc_num = 0;
+    size_t continuous_size = this->silkscreen.size();
+    for (size_t i = 0; i < continuous_size; i++)
+    {
+        size_t size = this->silkscreen.at(i).segment.size();
+        for (size_t j = 0; j < size; j++)
+            if (this->silkscreen.at(i).segment.at(j).is_line)
+                silkscreen_line_num++;
+            else
+                silkscreen_arc_num++;
+    }
+    size_t size = this->assembly.segment.size();
+    for (size_t i = 0; i < size; i++)
+    {
+        if (this->assembly.segment.at(i).is_line)
+            assembly_line_num++;
+        else
+            assembly_arc_num++;
+    }
+    int arc_diff = assembly_arc_num - silkscreen_arc_num;
+    int line_diff = assembly_line_num - silkscreen_line_num;
+    int arc_running_index = 0;
+    int line_running_index = 0;
+    Graph cut_result;
+    array<int, 2> line_index;
+
+    for (size_t i = 0; i < continuous_size; i++)
+    {
+        size_t size = this->silkscreen.at(i).segment.size();
+        for (size_t j = 0; j < size; j++)
+        {
+            line_index[0] = i, line_index[1] = j;
+            if (this->silkscreen.at(i).segment.at(j).is_line)
+            {
+                continue;
+            }
+            if (arc_diff > 0) // 線段數需要增加
+            {
+                cut_result = cut_line_arc(this->silkscreen.at(i).segment.at(j), arc_diff, false);
+                silkscreen.at(i).segment.insert(silkscreen.at(i).segment.begin() + j, cut_result.segment.begin(), cut_result.segment.end());
+                silkscreen.at(i).segment.erase(silkscreen.at(i).segment.begin() + j);
+                break;
+            }
+            else
+            {
+                if (line_index == Uppest_Silkscreen_index || line_index == Lowest_Silkscreen_index || line_index == Leftest_Silkscreen_index || line_index == Rightest_Silkscreen_index)
+                {
+                    continue;
+                }
+                else
+                {
+                    silkscreen.at(i).segment.erase(silkscreen.at(i).segment.begin() + j);
+                }
+            }
+        }
+    }
+}
+*/
 Graph Silkscreen::Graph_ID_converter(const Graph_ID &graphID)
 {
     Graph graph;

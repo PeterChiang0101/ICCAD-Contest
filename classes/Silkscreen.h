@@ -3,6 +3,7 @@
 #include "Graph.h"
 #include "Segment.h"
 #include "VectorOp.h"
+#include "bits/stdc++.h"
 
 #ifndef SILKSCREEN_H
 #define SILKSCREEN_H
@@ -33,6 +34,7 @@ private:
     float silkscreenlen;
     vector<Graph> Copper_cut_segments;     // contain which copper cuts silkscreen line.
     vector<Intersection> intersect_points; // record the intersection points of the copper and the silkscreen
+    Graph assembly;
     vector<Graph> silkscreen;
 
     //----------Untuned Silkscreen--------->main.cpp : Final_Silkscreen()
@@ -63,7 +65,20 @@ private:
     vector<Point> intersection_between_line_and_arc(Segment, Point, Point);
     float Calculate_Silkscreen_length(const Graph &); // calculate the length of the Silkscreen
 
-    vector<Graph> fit_lines_simularity();
+    int Uppest_Assembly_index;
+    int Lowest_Assembly_index;
+    int Leftest_Assembly_index;
+    int Rightest_Assembly_index;
+
+    array<int, 2> Uppest_Silkscreen_index;
+    array<int, 2> Lowest_Silkscreen_index;
+    array<int, 2> Leftest_Silkscreen_index;
+    array<int, 2> Rightest_Silkscreen_index;
+
+    void fit_lines_simularity();
+    Graph cut_line_arc(Segment, const int, const bool);
+    Graph cut_line(Segment, const int);
+    Graph cut_arc(Segment, const int);
     //----------Convert the Graph_ID to Graph--------
     Graph Graph_ID_converter(const Graph_ID &);
     Graph_ID Graph_converter(const Graph &, const size_t);

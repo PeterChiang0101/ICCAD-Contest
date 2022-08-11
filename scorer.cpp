@@ -7,7 +7,7 @@
 using namespace std;
 
 #define PI 3.14159265358979323846
-#define tolerance 0.001
+#define tolerance 0.00005
 #define INPUT_PATH "./TestingCase/test_B.txt"
 #define OUTPUT_PATH "./TestingCase/test_B_Ans.txt"
 
