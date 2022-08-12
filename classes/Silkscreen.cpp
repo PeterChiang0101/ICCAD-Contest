@@ -1595,17 +1595,37 @@ void Silkscreen::fit_lines_simularity()
 }
 */
 
-Graph Silkscreen::cut_line_arc(Segment, const int, const bool)
+Graph Silkscreen::cut_line_arc(Segment segment, const int cut_number, const bool is_line)
 {
-    return Graph();// Delete it after starting coding.
+    Graph finished_cut;
+    if(is_line)
+        finished_cut = cut_line(segment, cut_number);
+    else
+        finished_cut = cut_arc(segment, cut_number);
+    return finished_cut;
 }
 
-Graph Silkscreen::cut_line(Segment, const int)
+Graph Silkscreen::cut_line(Segment segment, const int cut_number)
 {
-    return Graph();// Delete it after starting coding.
+    Graph finished_cut;
+    double cut_length_x = (segment.x1 - segment.x2) / cut_number;
+    double cut_length_y = (segment.y1 - segment.y2) / cut_number;
+    for(int i = 0; i < cut_number; i++)
+    {
+        Segment temp;
+        temp.x1 = segment.x1 + cut_length_x*i;
+        temp.x2 = segment.x1 + cut_length_x*(i+1);
+        temp.y1 = segment.y1 + cut_length_y*i;
+        temp.y2 = segment.y1 + cut_length_y*(i+1);
+        temp.is_line = true;
+        finished_cut.segment.push_back(temp);//only the data with line is set up.
+    }
+    return finished_cut;// Delete it after starting coding.
 }
 
-Graph Silkscreen::cut_arc(Segment, const int)
+Graph Silkscreen::cut_arc(Segment segment, const int cut_number)
 {
-    return Graph();// Delete it after starting coding.
+    Graph finished_cut;
+    //use Arc_to_Poly() function
+    return finished_cut;// Delete it after starting coding.
 }
