@@ -1597,12 +1597,7 @@ void Silkscreen::fit_lines_simularity()
 
 Graph Silkscreen::cut_line_arc(Segment segment, const int cut_number, const bool is_line)
 {
-    Graph finished_cut;
-    if(is_line)
-        finished_cut = cut_line(segment, cut_number);
-    else
-        finished_cut = cut_arc(segment, cut_number);
-    return finished_cut;
+    return (is_line ? cut_line(segment, cut_number):cut_arc(segment, cut_number));
 }
 
 Graph Silkscreen::cut_line(Segment segment, const int cut_number)
@@ -1620,12 +1615,91 @@ Graph Silkscreen::cut_line(Segment segment, const int cut_number)
         temp.is_line = true;
         finished_cut.segment.push_back(temp);//only the data with line is set up.
     }
-    return finished_cut;// Delete it after starting coding.
+    return finished_cut;
 }
 
 Graph Silkscreen::cut_arc(Segment segment, const int cut_number)
 {
     Graph finished_cut;
-    //use Arc_to_Poly() function
-    return finished_cut;// Delete it after starting coding.
+    double angle {0}, cut_angle{0} ,point_angle{0};
+    float radius{0};
+    Segment temp;//restore the unfinished cut segment
+
+    //find the angle between start point and end point
+    angle = segment.detail.theta_1 - segment.detail.theta_2;
+    radius = hypot((segment.x1 - segment.center_x),(segment.y1 - segment.center_y));//can use the private date ?
+    //correct the angle if segment is across the negative x-asix.
+    if(angle < 0  && !segment.is_CCW)
+    {   
+        angle = 2* PI + angle; //is_CW, angle is positive.
+        segment.detail.theta_1 += 2*PI;
+    }
+    else if(angle > 0 && segment.is_CCW)
+    {   
+        angle = angle - 2* PI; //is_CCW, angle is negative.
+        segment.detail.theta_2 += 2*PI;
+    }
+    //show the warning if the segment angle is 0.
+    if(angle == 0)
+    {
+        cerr << "ERROR: 'theta1' and 'theta2' must be different angles." << endl;
+        finished_cut.segment.push_back(segment);
+        return finished_cut;
+    }
+    if(cut_number <= 0)
+    {   
+        cerr << "Warning: 'cut_number' should be bigger than zero." << endl;
+        finished_cut.segment.push_back(segment);
+        return finished_cut;
+    }
+    cut_angle = angle / (double)cut_number;
+    point_angle = segment.detail.theta_1;
+    for(int i = 0; i < cut_number; i++)
+    {
+        temp.is_CCW = false;
+        temp.center_x = segment.center_x;
+        temp.center_y = segment.center_y;
+        temp.is_CCW = segment.is_CCW;
+        temp.detail.radius = radius;
+
+        //find the next end point angle
+        point_angle = point_angle - cut_angle;
+        //calculate the the segment cut point.
+        Point cut_point;
+        cut_point.x = segment.center_x + radius*cos(point_angle);
+        cut_point.y = segment.center_y + radius*sin(point_angle);
+        
+        if(i == 0)//construct the start point(first segment)
+        {
+            temp.x1 = segment.x1;
+            temp.y1 = segment.y1;
+            temp.detail.theta_1 = segment.detail.theta_1;   
+        }
+
+        if(i == cut_number - 1)//construct the end point(final segment)
+        {
+            temp.x2 = segment.x2;
+            temp.y2 = segment.y2;
+            temp.detail.theta_2 = segment.detail.theta_2;
+        }
+        else//normal case
+        {
+            temp.x2 = cut_point.x;
+            temp.y2 = cut_point.y;
+            temp.detail.theta_2 = point_angle;
+        }
+        //correct the 'theta_1' and 'theta_2' to between +PI and -PI.
+        if(temp.detail.theta_1 > PI)
+        {   temp.detail.theta_1 -= 2*PI;}
+        if(temp.detail.theta_2 > PI)
+        {   temp.detail.theta_2 -= 2*PI;}
+        finished_cut.segment.push_back(temp);//finish the cut segment
+        //construct the struct point for next segment
+        temp.x1 = cut_point.x;
+        temp.y1 = cut_point.y;
+        temp.detail.theta_1 = point_angle;
+        temp.x2 = temp.y2 = -5;
+    }
+
+    return finished_cut;
 }
