@@ -17,8 +17,8 @@ ciry = []
 cir_dir = []
 # add support for both linux(RHEL) and Windows directory system(2022/6/11)
 # use os.path.join function
-home = os.path.join(os.getcwd(),"TestingCase")
-target = os.path.join(home,"test_?.txt")
+home = os.path.join(os.getcwd(), "TestingCase")
+target = os.path.join(home, "test_?.txt")
 result = glob.glob(target)
 i = 0
 print("What testcase you want to visualize?")
@@ -29,9 +29,9 @@ for entry in result:
     print(str(i) + '. ' + filename)
 choice = input("Selection (input the name after test_ ): ")
 
-path = os.path.join(home ,"test_"+choice+".txt")
+path = os.path.join(home, "test_"+choice+".txt")
 silkpath = os.path.join(home, "test_"+choice+"_Ans.txt")
-img_out = os.path.join(home ,"test_"+choice +"_output.png")
+img_out = os.path.join(home, "test_"+choice + "_output.png")
 
 fg = plt.figure()
 # fg.patch.set_facecolor('k')
@@ -90,7 +90,7 @@ for i in range(len(x1)):
         theta1 = degrees(atan2(y1[i]-ciry[i], x1[i]-cirx[i]))
         theta2 = degrees(atan2(y2[i]-ciry[i], x2[i]-cirx[i]))
         if theta1 == theta2:
-            theta2 = 360 - theta1
+            theta2 = 360 + theta1
         if cir_dir[i] == "CW\n":
             theta1, theta2 = theta2, theta1
 
