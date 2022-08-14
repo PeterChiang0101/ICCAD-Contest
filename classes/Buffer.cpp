@@ -299,7 +299,8 @@ vector<Point> Buffer::Arc_Point_Tuning(const Graph Assembly, const bool is_assem
         else
             first_line = Assembly.segment.at(i - 1);
         second_line = Assembly.segment.at(i);
-
+        if(Extended_Points.at(i).x == INFINITY && Extended_Points.at(i).y == INFINITY)
+            continue;
         if (!first_line.is_line && second_line.is_line) // 第一個是圓弧 第二個是線段
         {
             radius = hypot(first_line.x2 - first_line.center_x, first_line.y2 - first_line.center_y);

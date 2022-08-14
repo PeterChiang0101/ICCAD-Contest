@@ -784,22 +784,22 @@ void Silkscreen::fit_boarder_condition(Graph Uncut_Silkscreen, Graph Assembly, v
         silkscreen_piece_size = silkscreen.at(i).segment.size();
         for (int j = 0; j < silkscreen_piece_size; j++)
         {
-            if (silkscreen.at(i).segment.at(j).detail.x_min < silkscreen_x_min)
+            if (silkscreen.at(i).segment.at(j).detail.x_min <= silkscreen_x_min)
             {
                 silkscreen_x_min = silkscreen.at(i).segment.at(j).detail.x_min;
                 Leftest_Silkscreen_index.at(0) = i, Leftest_Silkscreen_index.at(1) = j;
             }
-            if (silkscreen.at(i).segment.at(j).detail.x_max > silkscreen_x_max)
+            if (silkscreen.at(i).segment.at(j).detail.x_max >= silkscreen_x_max)
             {
                 silkscreen_x_max = silkscreen.at(i).segment.at(j).detail.x_max;
                 Rightest_Silkscreen_index.at(0) = i, Rightest_Silkscreen_index.at(1) = j;
             }
-            if (silkscreen.at(i).segment.at(j).detail.y_min < silkscreen_y_min)
+            if (silkscreen.at(i).segment.at(j).detail.y_min <= silkscreen_y_min)
             {
                 silkscreen_y_min = silkscreen.at(i).segment.at(j).detail.y_min;
                 Lowest_Silkscreen_index.at(0) = i, Lowest_Silkscreen_index.at(1) = j;
             }
-            if (silkscreen.at(i).segment.at(j).detail.y_max > silkscreen_y_max)
+            if (silkscreen.at(i).segment.at(j).detail.y_max >= silkscreen_y_max)
             {
                 silkscreen_y_max = silkscreen.at(i).segment.at(j).detail.y_max;
                 Uppest_Silkscreen_index.at(0) = i, Uppest_Silkscreen_index.at(1) = j;
@@ -1583,15 +1583,15 @@ void Silkscreen::fit_lines_simularity()
             if (angle_between <= 0)
                 angle_between += 2 * PI;
             float partial_circumference = radius * angle_between;
-            if (arc_diff > 0 && partial_circumference >= silkscreenlen * (line_diff + 1)) // 線段數需要增加
+            if (arc_diff > 0 && partial_circumference >= silkscreenlen * (arc_diff + 1)) // 線段數需要增加
             {
-                cut_result = cut_line_arc(this->silkscreen.at(i).segment.at(j), arc_diff, false);
+                cut_result = cut_line_arc(this->silkscreen.at(i).segment.at(j), arc_diff + 1, false);
                 silkscreen.at(i).segment.insert(silkscreen.at(i).segment.begin() + j, cut_result.segment.begin(), cut_result.segment.end());
                 silkscreen.at(i).segment.erase(silkscreen.at(i).segment.begin() + j);
                 arc_diff = 0;
                 break;
             }
-            else if (line_diff < 0)
+            else if (arc_diff < 0)
             {
                 if (line_index == Uppest_Silkscreen_index || line_index == Lowest_Silkscreen_index || line_index == Leftest_Silkscreen_index || line_index == Rightest_Silkscreen_index)
                 {
@@ -1625,7 +1625,7 @@ void Silkscreen::fit_lines_simularity()
             }
             if (line_diff > 0 && hypot(line.x2 - line.x1, line.y2 - line.y1) >= silkscreenlen * (line_diff + 1)) // 線段數需要增加
             {
-                cut_result = cut_line_arc(this->silkscreen.at(i).segment.at(j), line_diff, true);
+                cut_result = cut_line_arc(this->silkscreen.at(i).segment.at(j), line_diff + 1, true);
                 silkscreen.at(i).segment.insert(silkscreen.at(i).segment.begin() + j, cut_result.segment.begin(), cut_result.segment.end());
                 silkscreen.at(i).segment.erase(silkscreen.at(i).segment.begin() + j);
                 line_diff = 0;

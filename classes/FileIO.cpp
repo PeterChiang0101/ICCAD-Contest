@@ -19,6 +19,48 @@ void FileIO::Read_File(const char *filename)
     }
 }
 
+void FileIO::Read_File(const char *filename,const char *filename_ans)
+{
+    InFile.open(filename, ios::in);
+    if (!InFile.is_open())
+    {
+        cout << "File open failed!" << endl;
+        InFile.open(INPUT_PATH, ios::in); // 預設讀取測試檔案
+    }
+    InFileAns.open(filename_ans, ios::in);
+    if (!InFileAns.is_open())
+    {
+        cout << "File open failed!" << endl;
+        InFileAns.open(OUTPUT_PATH, ios::in); // 預設讀取測試檔案
+    }
+}
+
+Graph FileIO::Read_Silkscreen() // 讀取絲印
+{
+    Graph Silkscreen;
+    Segment part;
+    string line;
+    int continue_count;
+
+    while (getline(InFileAns, line))
+    {
+        if (line == "silkscreen")
+        {
+            continue_count = 0;
+            continue_num.push_back(continue_count);
+            continue;
+        }
+        else if (line != "") //防止讀到換行空格
+        {
+            part = String_to_Line(line);
+            continue_num.back() = (++continue_count);
+            Silkscreen.segment.push_back(part);
+        }
+    }
+    return Silkscreen;
+}
+
+
 float FileIO::File_to_Parameter()
 {
     string parameter_str;

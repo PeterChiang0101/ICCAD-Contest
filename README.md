@@ -725,6 +725,42 @@ Peter
 
 success generate case 1 solution, arc tuning has problems for point failed
 
+極值一定要連接到Copper_Buffer，極直線段前後，只能選一段刪
+
+剛開始遇到極值跳下一段繼續檢查
+
+遇到不同類型線段，檢查可不可以刪，不行就當作極值處理
+
+連續直線或圓弧
+
+0 2
+0 3
+4 4
+4 1
+
+```c++
+for i
+    for j
+        if 遇到極值 
+            if 此連續線段還沒刪東西
+                continue;
+            else
+                break;
+        else if 遇到與第一條線段不同類型的線段
+            檢查可不可以刪;
+            if 不可以 
+                if 此連續線段還沒刪東西
+                    continue;
+                else
+                    break;
+            else
+                刪掉
+                此連續線段還沒刪東西 = false;
+        else
+            刪掉
+            此連續線段還沒刪東西 = false;
+```
+
 Peter
 
 ---
