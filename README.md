@@ -731,13 +731,6 @@ success generate case 1 solution, arc tuning has problems for point failed
 
 遇到不同類型線段，檢查可不可以刪，不行就當作極值處理
 
-連續直線或圓弧
-
-0 2
-0 3
-4 4
-4 1
-
 ```c++
 for i
     for j
