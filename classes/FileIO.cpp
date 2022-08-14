@@ -179,10 +179,14 @@ void FileIO::Write_File(const vector<Graph> Silkscreen, const char *filename)
     const size_t size = Silkscreen.size();
     for (size_t i = 0; i < size; i++)
     {
-        Output << "silkscreen" << endl;
         int conti_size = Silkscreen.at(i).segment.size();
+        if (conti_size == 0)
+            continue;
+        Output << "silkscreen" << endl;
         for (int j = 0; j < conti_size; j++)
         {
+            if (j > 0 && (Silkscreen.at(i).segment.at(j).x1 != Silkscreen.at(i).segment.at(j - 1).x2 || Silkscreen.at(i).segment.at(j).y1 != Silkscreen.at(i).segment.at(j - 1).y2))
+                Output << "silkscreen" << endl;
             if (Silkscreen.at(i).segment.at(j).is_line)
             {
                 Output << "line," << fixed << setprecision(4) << Silkscreen.at(i).segment.at(j).x1 << "," << Silkscreen.at(i).segment.at(j).y1 << "," << Silkscreen.at(i).segment.at(j).x2 << "," << Silkscreen.at(i).segment.at(j).y2 << endl;

@@ -80,6 +80,7 @@ private:
     Graph cut_line_arc(Segment, const int, const bool);
     Graph cut_line(Segment, const int);
     Graph cut_arc(Segment, const int);
+    // void Find_Continuous_Segment();
 };
 
 #endif // SILKSCREEN_H
