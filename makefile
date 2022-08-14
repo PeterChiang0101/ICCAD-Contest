@@ -28,19 +28,19 @@ testcase3: separated
 testcase4: separated
 	$(output_name) $(testcase4_dir) $(testcase4_out_dir)
 
-separated: new_main.cpp VectorOp.o FileIO.o Buffer.o Silkscreen.o
-	g++ -std=c++0x -Wall -o $(output_name) new_main.cpp ./classes/*.o
+separated: new_main.cpp VectorOp FileIO Buffer Silkscreen
+	g++ -std=c++0x -Wall -o $(output_name) new_main.cpp ./classes/VectorOp.o ./classes/FileIO.o ./classes/Buffer.o ./classes/Silkscreen.o
 
-VectorOp.o: ./classes/VectorOp.cpp ./classes/VectorOp.h
+VectorOp: ./classes/VectorOp.cpp ./classes/VectorOp.h
 	g++ -std=c++0x -Wall -c -o ./classes/VectorOp.o ./classes/VectorOp.cpp
 
-FileIO.o: ./classes/FileIO.cpp ./classes/FileIO.h
+FileIO: ./classes/FileIO.cpp ./classes/FileIO.h
 	g++ -std=c++0x -Wall -c -o ./classes/FileIO.o ./classes/FileIO.cpp
 
-Buffer.o: ./classes/Buffer.cpp ./classes/Buffer.h
+Buffer: ./classes/Buffer.cpp ./classes/Buffer.h
 	g++ -std=c++0x -Wall -c -o ./classes/Buffer.o ./classes/Buffer.cpp
 
-Silkscreen.o: ./classes/Silkscreen.cpp ./classes/Silkscreen.h
+Silkscreen: ./classes/Silkscreen.cpp ./classes/Silkscreen.h
 	g++ -std=c++0x -Wall -c -o ./classes/Silkscreen.o ./classes/Silkscreen.cpp
 
 testing.exe:main.cpp

@@ -721,6 +721,14 @@ Peter
 
 ## Optimization
 
+2022/8/14
+
+success generate case 1 solution, arc tuning has problems for point failed
+
+Peter
+
+---
+
 2022/7/24
 
 create struct and parameter file

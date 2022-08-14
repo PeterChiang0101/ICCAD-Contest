@@ -682,7 +682,7 @@ vector<Graph> Silkscreen::Find_Continuous_Segment(Graph Silkscreen)
         {
             continue_temp.segment.push_back(Silkscreen.segment.at(i));
 
-            if ((Silkscreen.segment.at(i).x2 == Silkscreen.segment.at(0).x1) && (Silkscreen.segment.at(i).y2 == Silkscreen.segment.at(0).y1)) // 如果最後一條線是連接到第一條線的，則加入
+            if (!continue_segment.empty() && (Silkscreen.segment.at(i).x2 == Silkscreen.segment.at(0).x1) && (Silkscreen.segment.at(i).y2 == Silkscreen.segment.at(0).y1)) // 如果最後一條線是連接到第一條線的，則加入
             {
                 continue_temp.segment.insert(continue_temp.segment.end(), continue_segment.at(0).segment.begin(), continue_segment.at(0).segment.end());
                 continue_segment.erase(continue_segment.begin());
