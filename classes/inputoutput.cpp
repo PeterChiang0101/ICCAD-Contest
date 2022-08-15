@@ -1,4 +1,4 @@
-// function of inputoutput.h
+// function of inputoutput.h // this cpp is going to be removed
 #include <bits/stdc++.h>
 #include "inputoutput.h"
 
@@ -17,14 +17,14 @@ Point first_intersection_between_arc_and_arc_for_arc_tuning(Segment, Segment);
 float Dot(Point, Point);
 /////////////////End Function Declaration////////
 
-float Input_Output::File_to_Parameter(const string str) // 讀入參數
+float Input_Output::File_to_Parameter(const string str) // 讀入參數 //OK
 {
     string str_truncate;
     str_truncate = str.substr(str.find(',') + 1);
     return stof(str_truncate);
 }
 
-const vector<string> Input_Output::split(const string &str, const char &delimiter) // 拆分文字
+const vector<string> Input_Output::split(const string &str, const char &delimiter) // 拆分文字 //OK
 {
     vector<string> result;
     stringstream ss(str);
@@ -37,7 +37,7 @@ const vector<string> Input_Output::split(const string &str, const char &delimite
     return result;
 }
 
-vector<Segment> Input_Output::Read_Assembly(fstream &Input_File) // 讀取assembly，轉換為vector
+vector<Segment> Input_Output::Read_Assembly(fstream &Input_File) // 讀取assembly，轉換為vector //OK
 {
     vector<Segment> Assembly;
     Segment part;
@@ -58,7 +58,7 @@ vector<Segment> Input_Output::Read_Assembly(fstream &Input_File) // 讀取assemb
     return Assembly;
 }
 
-vector<vector<Segment>> Input_Output::Read_Copper(fstream &Input_File) // 讀取copper，轉換為二維vector
+vector<vector<Segment>> Input_Output::Read_Copper(fstream &Input_File) // 讀取copper，轉換為二維vector //OK
 {
     vector<Segment> copper;
     vector<vector<Segment>> copper_pack;
@@ -82,7 +82,7 @@ vector<vector<Segment>> Input_Output::Read_Copper(fstream &Input_File) // 讀取
     return copper_pack;
 }
 
-Segment Input_Output::String_to_Line(string line) // 讀取時建立線段
+Segment Input_Output::String_to_Line(string line) // 讀取時建立線段 
 {
     vector<string> Splited;
     Splited = split(line, ',');
@@ -788,7 +788,7 @@ Copper Arc_Boundary_Meas(Segment Arc)
     return A_Arc;
 }
 
-Segment Arc_Boundary_Meas_for_Assembly(Segment Arc)
+Segment Arc_Boundary_Meas_for_Assembly(Segment Arc) // duplicate function of Arc_Boundary_Meas !!!!
 {
     Segment A_Arc;
     A_Arc = Arc;
