@@ -3,3 +3,10 @@ S2 = 0.1944
 S3 = 0.2500
 S4 = 0.2475
 Total = 0.9356
+
+First Score:  0.2465
+Second Score: 0.1944
+Third Score:  0.2500
+Fourth Score: 0.2475
+
+Total Score: 0.9384
