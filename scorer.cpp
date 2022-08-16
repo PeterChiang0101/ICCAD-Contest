@@ -160,7 +160,7 @@ double Scorer::first_quarter() // const vector<Segment> Assembly, const vector<S
                 total_area += cut_area;
         }
     }
-    total_area /= 2; //修正項
+    Rectangular_area *= 2; //修正項
     Answer_1 = (2 - Rectangular_area / (total_area)) * 0.25;
 
     if (ShowDetail)
