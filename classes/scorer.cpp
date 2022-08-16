@@ -530,7 +530,7 @@ double Scorer::third_quarter() // const vector<vector<Segment>> copper, const ve
 double Scorer::fourth_quarter()
 {
     float L_outline = assemblygap;
-    double min_distance;
+    float min_distance;
     double min_tmp;
     double shortest_min; // one silkscreen
     double continue_min; // continue silscreen
@@ -901,7 +901,7 @@ Point orth_CCswap(Point a) //垂直逆時鍾(向量)
 }
 
 //retain in the Socorer
-double Point_to_Arc_MinDist(Point pp, Segment Arc) //點到圓弧之最短距離
+float Scorer::Point_to_Arc_MinDist(Point pp, Segment Arc) //點到圓弧之最短距離
 {
     Point p1, p2, pc, ex_p;
     p1.x = Arc.x1;
@@ -910,7 +910,7 @@ double Point_to_Arc_MinDist(Point pp, Segment Arc) //點到圓弧之最短距離
     p2.y = Arc.y2;
     pc.x = Arc.center_x;
     pc.y = Arc.center_y;
-    double radius;
+    float radius;
     radius = dist(p1, pc);
 
     Point v1;
@@ -935,7 +935,7 @@ double Point_to_Arc_MinDist(Point pp, Segment Arc) //點到圓弧之最短距離
     }
 }
 
-vector<Point> intersection_between_CentersLine_and_Arc(Segment Arc, Point Center) // the other arc's center
+vector<Point> Scorer::intersection_between_CentersLine_and_Arc(Segment Arc, Point Center) // the other arc's center
 {                                                                                 // 圓心線對Arc的交點
     Point centerpoint, A;
     Point v1, v2;
@@ -970,7 +970,7 @@ vector<Point> intersection_between_CentersLine_and_Arc(Segment Arc, Point Center
     return intersect;
 }
 
-Point find_arbitary_point_on_arc(Segment Arc) //找出Arc兩端外圓上一點
+Point Scorer::find_arbitary_point_on_arc(Segment Arc) //找出Arc兩端外圓上一點
 {
 
     Point middlepoint; // A,B中點
@@ -1002,7 +1002,7 @@ Point find_arbitary_point_on_arc(Segment Arc) //找出Arc兩端外圓上一點
         return middlepoint + (dist(middlepoint, centerpoint) + radius) / dist(middlepoint, centerpoint) * v1;
 }
 
-bool On_Arc(Segment Arc, Point p) //判斷點P是否在Arc上
+bool Scorer::On_Arc(Segment Arc, Point p) //判斷點P是否在Arc上
 {
     Segment AB, BC, OP;
     Point ar_p;
@@ -1027,7 +1027,7 @@ bool On_Arc(Segment Arc, Point p) //判斷點P是否在Arc上
         return false;
 }
 
-bool Concentric_Circle_On_Arc(Segment Arc1, Segment Arc2) //同心圓對兩Arc端點射線，在Arc是否有交點
+bool Scorer::Concentric_Circle_On_Arc(Segment Arc1, Segment Arc2) //同心圓對兩Arc端點射線，在Arc是否有交點
 {
     Point A1, A2, B1, B2;
     Point Center;
@@ -1083,7 +1083,7 @@ bool Concentric_Circle_On_Arc(Segment Arc1, Segment Arc2) //同心圓對兩Arc�
 
 // }
 
-bool Line_intersect(Segment S1, Segment S2)
+bool Line_intersect(Segment S1, Segment S2)//找兩Segment交點 //可以移到Segment?
 {
     Point a1, a2, b1, b2;
     a1.x = S1.x1;

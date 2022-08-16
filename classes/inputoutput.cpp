@@ -140,14 +140,14 @@ Segment Input_Output::String_to_Line(string line) // 讀取時建立線段
     return part;
 }
 
-vector<Segment> Input_Output::Assembly_Buffer(const vector<Segment> Assembly, float coppergap, float assemblygap)
+vector<Segment> Input_Output::Assembly_Buffer(const vector<Segment> Assembly, float coppergap, float assemblygap) // in buffer.cpp public 
 {
     vector<Point> Extended_Points = Point_Extension(Assembly, true, coppergap, assemblygap);
     vector<Segment> silkscreen = Point_to_Line(Extended_Points, Assembly);
     return silkscreen;
 }
 
-vector<Point> Input_Output::Point_Extension(const vector<Segment> Assembly, const bool is_assembly, float coppergap, float assemblygap) // 圖形外擴
+vector<Point> Input_Output::Point_Extension(const vector<Segment> Assembly, const bool is_assembly, float coppergap, float assemblygap) // 圖形外擴 //buffer.cpp private
 {
     const size_t size = Assembly.size();
     vector<Point> Assembly_Points;
@@ -230,7 +230,7 @@ vector<Point> Input_Output::Point_Extension(const vector<Segment> Assembly, cons
     return Extended_Points;
 }
 
-vector<Point> Input_Output::Arc_Point_Tuning(const vector<Segment> Assembly, const bool is_assembly, vector<Point> Extended_Points, float coppergap, float assemblygap) // 圓與直線外擴距離不對，需用此函數修正
+vector<Point> Input_Output::Arc_Point_Tuning(const vector<Segment> Assembly, const bool is_assembly, vector<Point> Extended_Points, float coppergap, float assemblygap) // 圓與直線外擴距離不對，需用此函數修正 // in buffer.cpp private
 {
     const size_t size = Extended_Points.size();
 
@@ -511,7 +511,7 @@ Point Input_Output::first_intersection_between_arc_and_arc_for_arc_tuning(Segmen
     return Point();
 }
 
-float Input_Output::Dot(Point v1, Point v2) // 向量積
+float Input_Output::Dot(Point v1, Point v2) // 向量積 // vectorop
 {
     return v1.x * v2.x + v1.y * v2.y;
 }
@@ -543,7 +543,7 @@ bool Input_Output::point_in_polygon(Point t, vector<Point> Assembly_Point, vecto
 }
 */
 
-float interpolate_x(float y, Point p1, Point p2) // 待測點與圖形邊界交會的x值
+float interpolate_x(float y, Point p1, Point p2) // 待測點與圖形邊界交會的x值 //move to point.cpp
 {
     if (p1.y == p2.y)
         return p1.x;
@@ -677,7 +677,7 @@ vector<Point> Input_Output::Arc_to_Poly(Segment Arc)
     return Poly_out;
 }
 
-vector<Segment> Input_Output::Point_to_Line(vector<Point> Extended_Points, vector<Segment> Assembly) // assembly 專屬
+vector<Segment> Input_Output::Point_to_Line(vector<Point> Extended_Points, vector<Segment> Assembly) // assembly 專屬 //in buffer.cpp private
 {
     size_t size = Assembly.size();
     Segment A_Line;
@@ -846,7 +846,7 @@ Segment Arc_Boundary_Meas_for_Assembly(Segment Arc) // duplicate function of Arc
     return A_Arc;
 }
 
-bool Input_Output::point_in_polygon(Point t, vector<Point> Assembly_Point, vector<vector<Point>> Arc_Points) // 運用射線法判斷點在圖形內外
+bool Input_Output::point_in_polygon(Point t, vector<Point> Assembly_Point, vector<vector<Point>> Arc_Points) // 運用射線法判斷點在圖形內外, move to point.cpp
 {
     int Assembly_size = Assembly_Point.size();
     int Arc_count = 0;
