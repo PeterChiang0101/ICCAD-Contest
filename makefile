@@ -16,8 +16,10 @@ testcase3_dir = ./TestingCase/test_C.txt
 testcase3_out_dir = ./TestingCase/test_C_Ans.txt
 testcase4_dir = ./TestingCase/test_1.txt
 testcase4_out_dir = ./TestingCase/test_1_Ans.txt
+testcase5_dir = ./TestingCase/test_2.txt
+testcase5_out_dir = ./TestingCase/test_2_Ans.txt
 
-testcase_all: testcase1 testcase2 testcase3 testcase4
+testcase_all: testcase1 testcase2 testcase3 testcase4 testcase5
 
 testcase1: separated
 	$(output_name) $(testcase1_dir) $(testcase1_out_dir)
@@ -27,6 +29,8 @@ testcase3: separated
 	$(output_name) $(testcase3_dir) $(testcase3_out_dir)
 testcase4: separated
 	$(output_name) $(testcase4_dir) $(testcase4_out_dir)
+testcase5: separated
+	$(output_name) $(testcase5_dir) $(testcase5_out_dir)
 
 separated: new_main.cpp VectorOp FileIO Buffer Silkscreen
 	g++ -std=c++0x -Wall -o $(output_name) new_main.cpp ./classes/VectorOp.o ./classes/FileIO.o ./classes/Buffer.o ./classes/Silkscreen.o
