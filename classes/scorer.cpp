@@ -4,17 +4,12 @@
 #include "scorer.h"
 #include "FileIO.h"
 #include "Buffer.h"
+#include "Parameter.h"
 #include "inputoutput.h"
 
 using namespace std;
 
-#define PI 3.14159265358979323846
-#define tolerance 0.00005
-#define INPUT_PATH "./TestingCase/test_B.txt"
-#define OUTPUT_PATH "./TestingCase/test_B_Ans.txt"
-
 //=================function declarations==========================
-double Arc_Degree(const Segment &); // calculate the Segment theta
 double cross(Point, Point);
 double dot(Point, Point);
 double dis2(Point, Point);
@@ -53,7 +48,7 @@ Scorer::Scorer(const char *Ques_File, const char *Ans_File)
     // this->open_file();
 }
 
-void Scorer::open_file()
+void Scorer::read_file()
 {
     // Input_Output A;
     // Q_file.open(INPUT_PATH, ios::in);
@@ -114,7 +109,6 @@ double Scorer::first_quarter() // const vector<Segment> Assembly, const vector<S
     /* calculate Y_area*/
     vector<Point> Assembly_push_out_points;
     vector<vector<Point>> Arc_Dots;
-    // this->Assembly_push_out = A.Assembly_Buffer(Assembly, coppergap, assemblygap);
     Assembly_push_out_points = A1.Line_to_Point(Assembly_push_out);
     Arc_Dots = A1.Arc_Optimization(Assembly_push_out);
 
@@ -326,7 +320,7 @@ double Scorer::third_quarter() // const vector<vector<Segment>> copper, const ve
 
     min_distance_sum = 0;
 
-    for (size_t i = 0; i < this->silkscreen.size(); i++)
+    for (size_t i = 0; i < silkscreen.segment.size(); i++)
     {
         // count the continue_silkscreen
         if (++continue_seg_count >= continue_num[continue_seg])
@@ -340,40 +334,40 @@ double Scorer::third_quarter() // const vector<vector<Segment>> copper, const ve
             continue;
         }
 
-        A1.x = this->silkscreen.at(i).x1;
-        A1.y = this->silkscreen.at(i).y1;
-        A2.x = this->silkscreen.at(i).x2;
-        A2.y = this->silkscreen.at(i).y2;
+        A1.x = silkscreen.segment.at(i).x1;
+        A1.y = silkscreen.segment.at(i).y1;
+        A2.x = silkscreen.segment.at(i).x2;
+        A2.y = silkscreen.segment.at(i).y2;
         rA = dist(A1, circle_center_A);
 
-        for (size_t j = 0; j < this->copper.size(); j++)
+        for (size_t j = 0; j < copper.size(); j++)
         {
-            for (size_t k = 0; k < this->copper.at(j).size(); k++)
+            for (size_t k = 0; k <copper.at(j).segment.size(); k++)
             {
-                B1.x = this->copper.at(j).at(k).x1;
-                B1.y = this->copper.at(j).at(k).y1;
-                B2.x = this->copper.at(j).at(k).x2;
-                B2.y = this->copper.at(j).at(k).y2;
-                circle_center_B.x = copper.at(j).at(k).center_x;
-                circle_center_B.y = copper.at(j).at(k).center_y;
+                B1.x = copper.at(j).segment.at(k).x1;
+                B1.y = copper.at(j).segment.at(k).y1;
+                B2.x = copper.at(j).segment.at(k).x2;
+                B2.y = copper.at(j).segment.at(k).y2;
+                circle_center_B.x = copper.at(j).segment.at(k).center_x;
+                circle_center_B.y = copper.at(j).segment.at(k).center_y;
                 rB = dist(B1, circle_center_B);
                 if (dir(A1, A2, B1) * dir(A1, A2, B2) <= 0 && dir(B1, B2, A1) * dir(B1, B2, A2) <= 0) //兩線段相交, 距離為0
                     min_distance = 0;
 
-                if (this->silkscreen.at(i).is_line == 1 && this->copper.at(j).at(k).is_line == 1)
+                if (silkscreen.segment.at(i).is_line && copper.at(j).segment.at(k).is_line)//Silkscreen:line, Copper Segment: lines.
                 {
                     if (dir(A1, A2, B1) * dir(A1, A2, B2) <= 0 && dir(B1, B2, A1) * dir(B1, B2, A2) <= 0) //兩線段相交, 距離為0
                         min_distance = 0;
                     else //如不相交, 最短距離為四個端點中到另一條線段距離的最小值
                         min_distance = min(min(min(disMin(A1, A2, B1), disMin(A1, A2, B2)), disMin(B1, B2, A1)), disMin(B1, B2, A2));
                 }
-                else if (this->silkscreen[i].is_line == 1 && this->copper.at(j).at(k).is_line == 0)
+                else if (silkscreen.segment.at(i).is_line && !copper.at(j).segment.at(k).is_line)//Silkscreen:line, Copper Segment: arc.
                 {
-                    min_distance = min(min(min(disMin(A1, A2, B1), disMin(A1, A2, B2)), Point_to_Arc_MinDist(A1, copper.at(j).at(k))), Point_to_Arc_MinDist(A2, copper.at(j).at(k)));
+                    min_distance = min(min(min(disMin(A1, A2, B1), disMin(A1, A2, B2)), Point_to_Arc_MinDist(A1, copper.at(j).segment.at(k))), Point_to_Arc_MinDist(A2, copper.at(j).segment.at(k)));
 
                     if (disMin(A1, A2, circle_center_B) > rB)
                     {
-                        A_ps = intersection_between_CentersLine_and_Arc(this->copper.at(j).at(k), circle_center_B + orth_Cswap(A1 - A2));
+                        A_ps = intersection_between_CentersLine_and_Arc(copper.at(j).segment.at(k), circle_center_B + orth_Cswap(A1 - A2));
                         for (size_t i = 0; i < A_ps.size(); i++)
                         {
                             if (i == 0)
@@ -390,13 +384,13 @@ double Scorer::third_quarter() // const vector<vector<Segment>> copper, const ve
                             min_distance = min(min_distance, min_tmp);
                     }
                 }
-                else if (this->silkscreen.at(i).is_line == 0 && this->copper.at(j).at(k).is_line == 1)
+                else if (!silkscreen.segment.at(i).is_line && copper.at(j).segment.at(k).is_line)//Silkscreen:arc, Copper Segment:line
                 {
-                    min_distance = min(min(min(Point_to_Arc_MinDist(B1, silkscreen.at(i)), Point_to_Arc_MinDist(B2, silkscreen.at(i))), disMin(B1, B2, A1)), disMin(B1, B2, A2));
+                    min_distance = min(min(min(Point_to_Arc_MinDist(B1, silkscreen.segment.at(i)), Point_to_Arc_MinDist(B2, silkscreen.segment.at(i))), disMin(B1, B2, A1)), disMin(B1, B2, A2));
 
                     if (disMin(B1, B2, circle_center_A) > rA)
                     {
-                        S_ps = intersection_between_CentersLine_and_Arc(this->silkscreen.at(i), circle_center_A + orth_Cswap(B1 - B2));
+                        S_ps = intersection_between_CentersLine_and_Arc(silkscreen.segment.at(i), circle_center_A + orth_Cswap(B1 - B2));
                         for (size_t i = 0; i < S_ps.size(); i++)
                         {
                             if (i == 0)
@@ -413,12 +407,12 @@ double Scorer::third_quarter() // const vector<vector<Segment>> copper, const ve
                             min_distance = min(min_distance, min_tmp);
                     }
                 }
-                else if (this->silkscreen.at(i).is_line == 0 && this->copper.at(j).at(k).is_line == 0)
+                else if (!silkscreen.segment.at(i).is_line && !copper.at(j).segment.at(k).is_line)//silkscreen: arc, copper segment arc. 
                 {
-                    min_distance = 999999999;
+                    min_distance = INFINITY;// changed on 8/16 (Warning)
                     if (circle_center_A == circle_center_B)
                     {
-                        if (Concentric_Circle_On_Arc(silkscreen[i], copper.at(j).at(k)) == 1)
+                        if (Concentric_Circle_On_Arc(silkscreen.segment.at(i), copper.at(j).segment.at(k))) 
                         {
                             if (rA > rB)
                                 min_distance = rA - rB;
@@ -428,8 +422,8 @@ double Scorer::third_quarter() // const vector<vector<Segment>> copper, const ve
                     }
                     else
                     {
-                        S_ps = intersection_between_CentersLine_and_Arc(this->silkscreen.at(i), circle_center_B);
-                        A_ps = intersection_between_CentersLine_and_Arc(copper.at(j).at(k), circle_center_A);
+                        S_ps = intersection_between_CentersLine_and_Arc(silkscreen.segment.at(i), circle_center_B);
+                        A_ps = intersection_between_CentersLine_and_Arc(copper.at(j).segment.at(k), circle_center_A);
                         for (size_t i = 0; i < S_ps.size(); i++)
                         {
                             for (size_t j = 0; j < A_ps.size(); j++)
@@ -448,25 +442,25 @@ double Scorer::third_quarter() // const vector<vector<Segment>> copper, const ve
                     }
 
                     if ((A1 != A2) && (B1 != B2))
-                        min_distance = min(min(min(min(Point_to_Arc_MinDist(A1, copper.at(j).at(k)), Point_to_Arc_MinDist(A2, copper.at(j).at(k))), Point_to_Arc_MinDist(B1, silkscreen[i])), Point_to_Arc_MinDist(B2, silkscreen[i])), min_distance);
+                        min_distance = min(min(min(min(Point_to_Arc_MinDist(A1, copper.at(j).segment.at(k)), Point_to_Arc_MinDist(A2, copper.at(j).segment.at(k))), Point_to_Arc_MinDist(B1, silkscreen.segment.at(i))), Point_to_Arc_MinDist(B2, silkscreen.segment.at(i))), min_distance);
                     else if ((A1 == A2) && (B1 != B2))
-                        min_distance = min(min(Point_to_Arc_MinDist(B1, silkscreen[i]), Point_to_Arc_MinDist(B2, silkscreen[i])), min_distance);
+                        min_distance = min(min(Point_to_Arc_MinDist(B1, silkscreen.segment.at(i)), Point_to_Arc_MinDist(B2, silkscreen.segment.at(i))), min_distance);
                     else if ((A1 != A2) && (B1 == B2))
-                        min_distance = min(min(Point_to_Arc_MinDist(A1, copper.at(j).at(k)), Point_to_Arc_MinDist(A2, copper.at(j).at(k))), min_distance);
+                        min_distance = min(min(Point_to_Arc_MinDist(A1, copper.at(j).segment.at(k)), Point_to_Arc_MinDist(A2, copper.at(j).segment.at(k))), min_distance);
                 }
 
-                if ((min_distance < L_copper && min_distance > L_copper - tolerance)) // || (min_distance > L_copper && min_distance < L_copper + tolerance))
+                if ((min_distance < L_copper && min_distance > L_copper - Subtraction_Tolerance)) // || (min_distance > L_copper && min_distance < L_copper + tolerance))
                     min_distance = L_copper;
-                else if (min_distance < L_copper - tolerance)
+                else if (min_distance < L_copper - Subtraction_Tolerance)
                 {
                     pass_monitor = false;
                     cout << "Error: i(silkscreen) = " << i << ", j(copper) = " << j << ", k = " << k << " coppergap: " << L_copper << " min_distance: " << min_distance << endl;
-                    cout << "Silksreen: (" << silkscreen[i].x1 << "," << silkscreen[i].y1 << ") -> (" << silkscreen[i].x2 << "," << silkscreen[i].y2 << ") is_line = " << silkscreen[i].is_line;
-                    if (silkscreen[i].is_line == 0)
-                        cout << " center: (" << silkscreen[i].center_x << "," << silkscreen[i].center_y << ")";
-                    cout << "     Copper: (" << copper[j][k].x1 << "," << copper[j][k].y1 << ") -> (" << copper[j][k].x2 << "," << copper[j][k].y2 << ") is_line = " << copper[j][k].is_line;
-                    if (copper[j][k].is_line == 0)
-                        cout << " center: (" << copper[j][k].center_x << "," << copper[j][k].center_y << ")" << endl;
+                    cout << "Silksreen: (" << silkscreen.segment.at(i).x1 << "," << silkscreen.segment.at(i).y1 << ") -> (" << silkscreen.segment.at(i).x2 << "," << silkscreen.segment.at(i).y2 << ") is_line = " << silkscreen.segment.at(i).is_line;
+                    if (silkscreen.segment.at(i).is_line == 0)
+                        cout << " center: (" << silkscreen.segment.at(i).center_x << "," << silkscreen.segment.at(i).center_y << ")";
+                    cout << "     Copper: (" << copper[j].segment[k].x1 << "," << copper[j].segment[k].y1 << ") -> (" << copper[j].segment[k].x2 << "," << copper[j].segment[k].y2 << ") is_line = " << copper[j].segment[k].is_line;
+                    if (copper[j].segment[k].is_line == 0)
+                        cout << " center: (" << copper[j].segment[k].center_x << "," << copper[j].segment[k].center_y << ")" << endl;
                     else
                         cout << endl;
                 }
@@ -533,7 +527,7 @@ double Scorer::third_quarter() // const vector<vector<Segment>> copper, const ve
 }
 
 // 7/10 done untest
-double Scorer::fourth_quarter() // const vector<Segment> assembly, const vector<Segment> silkscreen
+double Scorer::fourth_quarter()
 {
     float L_outline = assemblygap;
     double min_distance;
@@ -556,7 +550,7 @@ double Scorer::fourth_quarter() // const vector<Segment> assembly, const vector<
     min_distance_sum = 0;
     vector<Point> A_ps, S_ps;
 
-    for (size_t i = 0; i < this->silkscreen.size(); i++)
+    for (size_t i = 0; i < silkscreen.segment.size(); i++)
     {
         if (++count_number == continue_num[group])
         {
@@ -564,32 +558,32 @@ double Scorer::fourth_quarter() // const vector<Segment> assembly, const vector<
             brk = true;
         }
         shortest_min = 0;
-        A1.x = this->silkscreen[i].x1;
-        A1.y = this->silkscreen[i].y1;
-        A2.x = this->silkscreen[i].x2;
-        A2.y = this->silkscreen[i].y2;
-        circle_center_A.x = this->silkscreen[i].center_x;
-        circle_center_A.y = this->silkscreen[i].center_y;
+        A1.x = silkscreen.segment.at(i).x1;
+        A1.y = silkscreen.segment.at(i).y1;
+        A2.x = silkscreen.segment.at(i).x2;
+        A2.y = silkscreen.segment.at(i).y2;
+        circle_center_A.x = silkscreen.segment.at(i).center_x;
+        circle_center_A.y = silkscreen.segment.at(i).center_y;
         rA = dist(A1, circle_center_A);
-        for (size_t j = 0; j < assembly.size(); j++)
+        for (size_t j = 0; j < assembly.segment.size(); j++)
         {
-            B1.x = assembly[j].x1;
-            B1.y = assembly[j].y1;
-            B2.x = assembly[j].x2;
-            B2.y = assembly[j].y2;
-            circle_center_B.x = assembly[j].center_x;
-            circle_center_B.y = assembly[j].center_y;
+            B1.x = assembly.segment.at(j).x1;
+            B1.y = assembly.segment.at(j).y1;
+            B2.x = assembly.segment.at(j).x2;
+            B2.y = assembly.segment.at(j).y2;
+            circle_center_B.x = assembly.segment.at(j).center_x;
+            circle_center_B.y = assembly.segment.at(j).center_y;
             rB = dist(B1, circle_center_B);
-            if (this->silkscreen[i].is_line == 1 && assembly[j].is_line == 1)
+            if (silkscreen.segment.at(i).is_line && assembly.segment.at(j).is_line)//silkscreen: line, assembly segment line.
             {
                 if (dir(A1, A2, B1) * dir(A1, A2, B2) <= 0 && dir(B1, B2, A1) * dir(B1, B2, A2) <= 0) //兩線段相交, 距離為0
                     min_distance = 0;
                 else //如不相交, 最短距離為四個端點中到另一條線段距離的最小值
                     min_distance = min(min(min(disMin(A1, A2, B1), disMin(A1, A2, B2)), disMin(B1, B2, A1)), disMin(B1, B2, A2));
             }
-            else if (this->silkscreen[i].is_line == 1 && assembly[j].is_line == 0)
+            else if (silkscreen.segment.at(i).is_line && !assembly.segment.at(j).is_line)//silkscreen: line, assembly segment arc.
             {
-                min_distance = min(min(min(disMin(A1, A2, B1), disMin(A1, A2, B2)), Point_to_Arc_MinDist(A1, assembly[j])), Point_to_Arc_MinDist(A2, assembly[j]));
+                min_distance = min(min(min(disMin(A1, A2, B1), disMin(A1, A2, B2)), Point_to_Arc_MinDist(A1, assembly.segment.at(j))), Point_to_Arc_MinDist(A2, assembly.segment.at(j)));
 
                 /*if (disMin(A1, A2, circle_center_B) < rB)
                 {
@@ -604,7 +598,7 @@ double Scorer::fourth_quarter() // const vector<Segment> assembly, const vector<
                 if (disMin(A1, A2, circle_center_B) > rB)
                 {
                     //
-                    A_ps = intersection_between_CentersLine_and_Arc(this->assembly[j], circle_center_B + orth_Cswap(A1 - A2));
+                    A_ps = intersection_between_CentersLine_and_Arc(assembly.segment.at(j), circle_center_B + orth_Cswap(A1 - A2));
                     for (size_t i = 0; i < A_ps.size(); i++)
                     {
                         if (i == 0)
@@ -621,10 +615,10 @@ double Scorer::fourth_quarter() // const vector<Segment> assembly, const vector<
                         min_distance = min(min_distance, min_tmp);
                 }
             }
-            else if (this->silkscreen[i].is_line == 0 && assembly[j].is_line == 1)
+            else if (!silkscreen.segment.at(i).is_line && assembly.segment.at(j).is_line)//silkscreen: arc, assembly segment line.
             {
 
-                min_distance = min(min(min(Point_to_Arc_MinDist(B1, silkscreen[i]), Point_to_Arc_MinDist(B2, silkscreen[i])), disMin(B1, B2, A1)), disMin(B1, B2, A2));
+                min_distance = min(min(min(Point_to_Arc_MinDist(B1, silkscreen.segment.at(i)), Point_to_Arc_MinDist(B2, silkscreen.segment.at(i))), disMin(B1, B2, A1)), disMin(B1, B2, A2));
 
                 /*if (disMin(B1, B2, circle_center_A) < rA)
                 {
@@ -636,7 +630,7 @@ double Scorer::fourth_quarter() // const vector<Segment> assembly, const vector<
                 }*/
                 if (disMin(B1, B2, circle_center_A) > rA)
                 {
-                    S_ps = intersection_between_CentersLine_and_Arc(this->silkscreen[i], circle_center_A + orth_Cswap(B1 - B2));
+                    S_ps = intersection_between_CentersLine_and_Arc(silkscreen.segment.at(i), circle_center_A + orth_Cswap(B1 - B2));
                     for (size_t i = 0; i < S_ps.size(); i++)
                     {
                         if (i == 0)
@@ -653,12 +647,12 @@ double Scorer::fourth_quarter() // const vector<Segment> assembly, const vector<
                         min_distance = min(min_distance, min_tmp);
                 }
             }
-            else if (this->silkscreen[i].is_line == 0 && assembly[j].is_line == 0)
+            else if (!silkscreen.segment.at(i).is_line && !assembly.segment.at(j).is_line)//silkscreen: arc, assembly segment arc.
             {
-                min_distance = 999999999;
+                min_distance = INFINITY;
                 if (circle_center_A == circle_center_B)
                 { //兩個圓弧構成之連心線與圓弧焦點關係
-                    if (Concentric_Circle_On_Arc(silkscreen[i], assembly[j]) == 1)
+                    if (Concentric_Circle_On_Arc(silkscreen.segment.at(i), assembly.segment.at(j)))
                     {
                         if (rA > rB)
                             min_distance = rA - rB;
@@ -668,8 +662,8 @@ double Scorer::fourth_quarter() // const vector<Segment> assembly, const vector<
                 }
                 else
                 {
-                    S_ps = intersection_between_CentersLine_and_Arc(this->silkscreen[i], circle_center_B);
-                    A_ps = intersection_between_CentersLine_and_Arc(assembly[j], circle_center_A);
+                    S_ps = intersection_between_CentersLine_and_Arc(silkscreen.segment.at(i), circle_center_B);
+                    A_ps = intersection_between_CentersLine_and_Arc(assembly.segment.at(j), circle_center_A);
                     for (size_t i = 0; i < S_ps.size(); i++)
                     {
                         for (size_t j = 0; j < A_ps.size(); j++)
@@ -688,27 +682,27 @@ double Scorer::fourth_quarter() // const vector<Segment> assembly, const vector<
                 }
 
                 if ((A1 != A2) && (B1 != B2))
-                    min_distance = min(min(min(min(Point_to_Arc_MinDist(A1, assembly[j]), Point_to_Arc_MinDist(A2, assembly[j])), Point_to_Arc_MinDist(B1, silkscreen[i])), Point_to_Arc_MinDist(B2, silkscreen[i])), min_distance);
+                    min_distance = min(min(min(min(Point_to_Arc_MinDist(A1, assembly.segment.at(j)), Point_to_Arc_MinDist(A2, assembly.segment.at(j))), Point_to_Arc_MinDist(B1, silkscreen.segment.at(i))), Point_to_Arc_MinDist(B2, silkscreen.segment.at(i))), min_distance);
                 else if ((A1 == A2) && (B1 != B2))
-                    min_distance = min(min(Point_to_Arc_MinDist(B1, silkscreen[i]), Point_to_Arc_MinDist(B2, silkscreen[i])), min_distance);
+                    min_distance = min(min(Point_to_Arc_MinDist(B1, silkscreen.segment.at(i)), Point_to_Arc_MinDist(B2, silkscreen.segment.at(i))), min_distance);
                 else if ((A1 != A2) && (B1 == B2))
-                    min_distance = min(min(Point_to_Arc_MinDist(A1, assembly[j]), Point_to_Arc_MinDist(A2, assembly[j])), min_distance);
+                    min_distance = min(min(Point_to_Arc_MinDist(A1, assembly.segment.at(j)), Point_to_Arc_MinDist(A2, assembly.segment.at(j))), min_distance);
                 // else if ((A1 == A2) && (B1 == B2))
                 // min_distance = min_tmp;
             }
 
-            if ((min_distance < L_outline && min_distance > L_outline - tolerance)) // || (min_distance > L_outline && min_distance < L_outline + tolerance))
+            if ((min_distance < L_outline && min_distance > L_outline - Subtraction_Tolerance)) // || (min_distance > L_outline && min_distance < L_outline + Subtraction_Tolerance))
                 min_distance = L_outline;
-            else if (min_distance < L_outline - tolerance)
+            else if (min_distance < L_outline - Subtraction_Tolerance)
             {
                 pass_monitor = false;
                 cout << "Error: i(silkscreen) = " << i << ", j(assembly) = " << j << " assemblygap: " << L_outline << " min_distance: " << min_distance << endl;
-                cout << "Silksreen: (" << silkscreen[i].x1 << "," << silkscreen[i].y1 << ") -> (" << silkscreen[i].x2 << "," << silkscreen[i].y2 << ") is_line = " << silkscreen[i].is_line;
-                if (silkscreen[i].is_line == 0)
-                    cout << " center: (" << silkscreen[i].center_x << "," << silkscreen[i].center_y << ")";
-                cout << "     Assembly: (" << assembly[j].x1 << "," << assembly[j].y1 << ") -> (" << assembly[j].x2 << "," << assembly[j].y2 << ") is_line = " << assembly[j].is_line;
-                if (assembly[j].is_line == 0)
-                    cout << " center: (" << assembly[j].center_x << "," << assembly[j].center_y << ")" << endl;
+                cout << "Silksreen: (" << silkscreen.segment.at(i).x1 << "," << silkscreen.segment.at(i).y1 << ") -> (" << silkscreen.segment.at(i).x2 << "," << silkscreen.segment.at(i).y2 << ") is_line = " << silkscreen.segment.at(i).is_line;
+                if (silkscreen.segment.at(i).is_line == 0)
+                    cout << " center: (" << silkscreen.segment.at(i).center_x << "," << silkscreen.segment.at(i).center_y << ")";
+                cout << "     Assembly: (" << assembly.segment.at(j).x1 << "," << assembly.segment.at(j).y1 << ") -> (" << assembly.segment.at(j).x2 << "," << assembly.segment.at(j).y2 << ") is_line = " << assembly.segment.at(j).is_line;
+                if (assembly.segment.at(j).is_line == 0)
+                    cout << " center: (" << assembly.segment.at(j).center_x << "," << assembly.segment.at(j).center_y << ")" << endl;
                 else
                     cout << endl;
             }
@@ -783,32 +777,32 @@ double Scorer::Total_score(bool Print_Detail)
     return total_score;
 }
 
-double cross1(Point o, Point a, Point b)
+double cross1(Point o, Point a, Point b) // move to vector op
 {
     return (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
 }
 
-double cross(Point v1, Point v2) // 向量外積
+double cross(Point v1, Point v2) // 向量外積 //same in vectorop
 {
     return v1.x * v2.y - v1.y * v2.x;
 }
 
-double dot(Point v1, Point v2) // 向量內積
+double dot(Point v1, Point v2) // 向量內積 //same in vector op
 {
     return v1.x * v2.x + v1.y * v2.y;
 }
 
-double dis2(Point A, Point B) //點A、B距離的平方
+double dis2(Point A, Point B) //點A、B距離的平方 // move to Point 
 {
     return (A.x - B.x) * (A.x - B.x) + (A.y - B.y) * (A.y - B.y);
 }
 
-double dist(Point A, Point B) //點A、B距離
+double dist(Point A, Point B) //點A、B距離 // will replace by stl hypot 
 {
     return sqrt((A.x - B.x) * (A.x - B.x) + (A.y - B.y) * (A.y - B.y));
 }
 
-int dir(Point A, Point B, Point P) //點P與線段AB位置關係
+int dir(Point A, Point B, Point P) //點P與線段AB位置關係 // in scorer
 {
     Point v1, v2;
     v1 = B - A;
@@ -828,7 +822,7 @@ int dir(Point A, Point B, Point P) //點P與線段AB位置關係
     return -100;
 }
 
-double disMin(Point A, Point B, Point P) //點P到線段AB的最短距離
+double disMin(Point A, Point B, Point P) //點P到線段AB的最短距離 //in scorer
 {
     double r = ((P.x - A.x) * (B.x - A.x) + (P.y - A.y) * (B.y - A.y)) / dis2(A, B);
     if (r <= 0)
@@ -906,6 +900,7 @@ Point orth_CCswap(Point a) //垂直逆時鍾(向量)
     return v;
 }
 
+//retain in the Socorer
 double Point_to_Arc_MinDist(Point pp, Segment Arc) //點到圓弧之最短距離
 {
     Point p1, p2, pc, ex_p;
@@ -996,12 +991,12 @@ Point find_arbitary_point_on_arc(Segment Arc) //找出Arc兩端外圓上一點
     v2 = B - A;
     if ((A + B) / 2 == centerpoint)
     {
-        if (Arc.direction == 0)
+        if (!Arc.is_CCW )
             return middlepoint + orth_Cswap(v2 / 2);
         else
             return middlepoint + orth_CCswap(v2 / 2);
     }
-    else if ((cross(v2, v1) > 0 && Arc.direction == 1) || (cross(v2, v1) < 0 && Arc.direction == 0))
+    else if ((cross(v2, v1) > 0 && Arc.is_CCW) || (cross(v2, v1) < 0 && !Arc.is_CCW))
         return middlepoint + (radius - dist(middlepoint, centerpoint)) / dist(middlepoint, centerpoint) * (-1 * v1);
     else
         return middlepoint + (dist(middlepoint, centerpoint) + radius) / dist(middlepoint, centerpoint) * v1;
@@ -1116,17 +1111,17 @@ bool Line_intersect(Segment S1, Segment S2)
 }
 
 // enable "main" to modify the private data member, with cascading
-Scorer &Scorer::setAssembly(const vector<Segment> Assembly)
+Scorer &Scorer::setAssembly(const Graph Assembly)
 {
     this->assembly = Assembly;
     return *this;
 }
-Scorer &Scorer::setCopper(const vector<vector<Segment>> copper)
+Scorer &Scorer::setCopper(const vector<Graph> copper)
 {
     this->copper = copper;
     return *this;
 }
-Scorer &Scorer::setSilkscreen(const vector<Segment> silkscreen)
+Scorer &Scorer::setSilkscreen(const Graph silkscreen)
 {
     this->silkscreen = silkscreen;
     return *this;

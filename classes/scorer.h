@@ -35,23 +35,23 @@ class Scorer
 public:
     Scorer();
     Scorer(const char *, const char *);
-    void open_file();
-    double first_quarter();  // const vector<Segment>, const vector<Segment>);
-    double second_quarter(); // const vector<Segment>, const vector<Segment>);
-    double third_quarter();  // const vector<vector<Segment>>, const vector<Segment>);
-    double fourth_quarter(); // const vector<Segment>, const vector<Segment>);
+    void read_file();
+    double first_quarter();  
+    double second_quarter(); 
+    double third_quarter();  
+    double fourth_quarter(); 
     double Total_score(bool);
-    Scorer &setAssembly(const vector<Segment>);
-    Scorer &setCopper(const vector<vector<Segment>>);
-    Scorer &setSilkscreen(const vector<Segment>);
+    Scorer &setAssembly(const Graph);
+    Scorer &setCopper(const vector<Graph>);
+    Scorer &setSilkscreen(const Graph);
 
 private:
     FileIO file;
     double Arc_Degree(const Segment &S1);
     
     Segment S1;
-    fstream Q_file; // 題目
-    fstream A_file; // 答案
+    //fstream Q_file; // 題目
+    //fstream A_file; // 答案
     float assemblygap, coppergap, silkscreenlen;
     vector<int> continue_num; // 每個連續線段的線段數量
     Graph assembly;
