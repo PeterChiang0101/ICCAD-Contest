@@ -2,6 +2,7 @@
 #include "inputoutput.h"
 #include "FileIO.h"
 #include "Buffer.h"
+#include "Graph.h"
 
 using namespace std;
 
@@ -47,11 +48,11 @@ public:
 
 private:
     FileIO file;
+    GRAPH graph_op;
+    POINT point_op;
     double Arc_Degree(const Segment &S1);
     
     Segment S1;
-    //fstream Q_file; // 題目
-    //fstream A_file; // 答案
     float assemblygap, coppergap, silkscreenlen;
     vector<int> continue_num; // 每個連續線段的線段數量
     Graph assembly;
@@ -61,11 +62,20 @@ private:
     bool ShowDetail = false;
 
     //third quarter and fourth quarter functions
-    float Point_to_Arc_MinDist(Point, Segment); //點到圓弧之最短距離
+    int dir(const Point, const Point, const Point);
+    double disMin(const Point, const Point, const Point);//點P到線段AB的最短距離
+    double Point_to_Arc_MinDist(Point, Segment); //點到圓弧之最短距離
     vector<Point> intersection_between_CentersLine_and_Arc(Segment, Point); // 圓心線對Arc的交點
     Point find_arbitary_point_on_arc(Segment); //找出Arc兩端外圓上一點
     bool On_Arc(Segment, Point); //判斷點P是否在Arc上
     bool Concentric_Circle_On_Arc(Segment, Segment); //同心圓對兩Arc端點射線，在Arc是否有交點
+
+    friend Point operator-(const Point, Point);
+    friend Point operator+(Point, Point);
+    friend Point operator*(double, Point);
+    friend Point operator/(Point, double);
+    friend bool operator==(Point, Point);
+    friend bool operator!=(Point, Point);
 };
 
 #endif

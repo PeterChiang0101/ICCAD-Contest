@@ -42,8 +42,8 @@ private:
     Graph Untuned_Silkscreen(const Graph, const Graph, const vector<Graph>);
     Graph Cut_Silkscreen_by_Copper(const Segment, const vector<Graph>);
     Graph silkscreen_cut_single_copper(Segment, Graph, size_t);
-    Segment Arc_Boundary_Meas_for_Assembly(const Segment);
-    vector<Point> intersection_between_arc_and_arc(const Segment, const Segment);
+    Segment Arc_Boundary_Meas_for_Assembly(const Segment);// moved to GRAPH(Arc_Boundary_Meas)
+    vector<Point> intersection_between_arc_and_arc(const Segment, const Segment);// moved to GRAPH
     Graph Segment_Sort(Segment, Graph);
     vector<Point_ID> Point_Sort(const Segment, vector<Point_ID>);
 
@@ -55,15 +55,15 @@ private:
     //----------Fit boarder condition functions----------
     void fit_boarder_condition(Graph, Graph, vector<Graph>);
     vector<Graph> Add_Excess_Silkscreen_For_Boarder_Condition(vector<Graph>, Point, vector<Graph>, int, Graph);
-    vector<vector<Point>> Arc_Optimization(Graph);
-    vector<Point> Arc_to_Poly(Segment);
-    vector<Point> Line_to_Point(const Graph);
-    bool point_in_polygon(Point, vector<Point>, vector<vector<Point>>);
-    float interpolate_x(float, Point, Point);
-    bool Point_Inside_Arc(float, float, float, bool);
-    Point intersection(Point, Point, Point, Point);
-    bool In_Between_Lines(Point, Point, Point);
-    vector<Point> intersection_between_line_and_arc(Segment, Point, Point);
+    vector<vector<Point>> Arc_Optimization(Graph);//moved to GRAPH
+    vector<Point> Arc_to_Poly(Segment);//moved to GRAPH
+    vector<Point> Line_to_Point(const Graph);// moved to GRAPH
+    bool point_in_polygon(Point, vector<Point>, vector<vector<Point>>);//moved to POINT
+    float interpolate_x(float, Point, Point);//move to POINT
+    bool Point_Inside_Arc(float, float, float, bool);//move to POINT
+    Point intersection(Point, Point, Point, Point);//move to POINT
+    bool In_Between_Lines(Point, Point, Point);//move to POINT
+    vector<Point> intersection_between_line_and_arc(Segment, Point, Point);//move to GRAPH
     float Calculate_Silkscreen_length(const Graph &); // calculate the length of the Silkscreen
 
     int Uppest_Assembly_index;

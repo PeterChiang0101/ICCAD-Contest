@@ -1,5 +1,6 @@
 #include <bits/stdc++.h>
 #include "Point.h"
+#include "Parameter.h"
 
 using namespace std;
 
@@ -63,3 +64,16 @@ bool POINT::Point_Inside_Arc(const float Point_Theta,float Arc_Theta1, float Arc
         return((Point_Theta >= Arc_Theta1 && Point_Theta <= Arc_Theta2)?true:false);
     }
 }
+
+bool POINT::In_Between_Lines(const Point test, const Point first, const Point last) // safe 
+{    
+    float min_x = min(first.x, last.x);
+    float max_x = max(first.x, last.x);
+    float min_y = min(first.y, last.y);
+    float max_y = max(first.y, last.y);
+    if (test.x >= min_x - Subtraction_Tolerance && test.x <= max_x + Subtraction_Tolerance && test.y >= min_y - Subtraction_Tolerance && test.y <= max_y + Subtraction_Tolerance)
+        return true;
+    else
+        return false;
+}
+

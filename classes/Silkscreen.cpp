@@ -359,7 +359,7 @@ Segment Silkscreen::Arc_Boundary_Meas_for_Assembly(const Segment Arc)
     return A_Arc;
 }
 
-vector<Point> Silkscreen::intersection_between_arc_and_arc(const Segment Arc1, const Segment Arc2)
+vector<Point> Silkscreen::intersection_between_arc_and_arc(const Segment Arc1, const Segment Arc2) //moved to GRAPH
 {
     float d = hypot(Arc1.center_x - Arc2.center_x, Arc1.center_y - Arc2.center_y); // 兩圓中心距離
     float r1 = hypot(Arc1.x2 - Arc1.center_x, Arc1.y2 - Arc1.center_y);            // 圓1半徑
@@ -1216,7 +1216,7 @@ vector<vector<Point>> Silkscreen::Arc_Optimization(Graph Assembly)
     return vector_of_Arc;
 }
 
-vector<Point> Silkscreen::Arc_to_Poly(Segment Arc)
+vector<Point> Silkscreen::Arc_to_Poly(Segment Arc) //moved to GRAPH //merged into "Arc_Optimization"
 {
     vector<Point> Poly_out;
     Point part;
@@ -1382,7 +1382,7 @@ bool Silkscreen::Point_Inside_Arc(float Point_Theta, float Arc_Theta1, float Arc
     }
 }
 
-Point Silkscreen::intersection(Point a1, Point a2, Point b1, Point b2)
+Point Silkscreen::intersection(Point a1, Point a2, Point b1, Point b2) //move to POINT
 {
     Point a, b, s;
     a.x = a2.x - a1.x, a.y = a2.y - a1.y;
@@ -1411,7 +1411,7 @@ Point Silkscreen::intersection(Point a1, Point a2, Point b1, Point b2)
     }
 }
 
-bool Silkscreen::In_Between_Lines(Point test, Point first, Point last) // safe
+bool Silkscreen::In_Between_Lines(Point test, Point first, Point last) // safe //move to POINT
 {
     float min_x = min(first.x, last.x);
     float max_x = max(first.x, last.x);
@@ -1561,7 +1561,7 @@ void Silkscreen::fit_lines_simularity()
     int line_running_index = 0;
     Graph cut_result;
     array<int, 2> line_index;
-    /*
+
     for (size_t i = 0; i < continuous_size; i++)
     {
         size_t size = this->silkscreen.at(i).segment.size();
@@ -1611,18 +1611,19 @@ void Silkscreen::fit_lines_simularity()
         if (arc_diff == 0)
             break;
     }
-    */
-    bool line_modified = false;
+
     for (size_t i = 0; i < continuous_size; i++)
     {
         size_t size = this->silkscreen.at(i).segment.size();
-
-        line_modified = false;
-        for (size_t j = 0, l = 0; j < size; j++, l++)
+        for (size_t j = 0; j < size; j++)
         {
-            line_index[0] = i, line_index[1] = l;
+            line_index[0] = i, line_index[1] = j;
             Segment line = this->silkscreen.at(i).segment.at(j);
-            /*if (line_diff > 0 && hypot(line.x2 - line.x1, line.y2 - line.y1) >= silkscreenlen * (line_diff + 1)) // 線段數需要增加
+            if (!line.is_line)
+            {
+                continue;
+            }
+            if (line_diff > 0 && hypot(line.x2 - line.x1, line.y2 - line.y1) >= silkscreenlen * (line_diff + 1)) // 線段數需要增加
             {
                 cut_result = cut_line_arc(this->silkscreen.at(i).segment.at(j), line_diff + 1, true);
                 silkscreen.at(i).segment.insert(silkscreen.at(i).segment.begin() + j, cut_result.segment.begin(), cut_result.segment.end());
@@ -1630,43 +1631,23 @@ void Silkscreen::fit_lines_simularity()
                 line_diff = 0;
                 break;
             }
-            */
-            if (line_index == Uppest_Silkscreen_index || line_index == Lowest_Silkscreen_index || line_index == Leftest_Silkscreen_index || line_index == Rightest_Silkscreen_index)
+            else if (line_diff < 0)
             {
-                if (!line_modified)
-                    continue;
-                else
-                    break;
-            }
-            else
-            {
-                if (line.is_line && line_diff < 0)
+                if (line_index == Uppest_Silkscreen_index || line_index == Lowest_Silkscreen_index || line_index == Leftest_Silkscreen_index || line_index == Rightest_Silkscreen_index)
                 {
-                    line_modified = true;
+                    continue;
+                }
+                else
+                {
                     silkscreen.at(i).segment.erase(silkscreen.at(i).segment.begin() + j);
-                    j--;
                     size--;
                     line_diff++;
                 }
-                else if (!line.is_line && arc_diff < 0)
-                {
-                    line_modified = true;
-                    silkscreen.at(i).segment.erase(silkscreen.at(i).segment.begin() + j);
-                    j--;
-                    size--;
-                    arc_diff++;
-                }
-                else if (!line_modified)
-                {
-                    continue;
-                }
-                else
-                {
-                    break;
-                }
             }
+            if (line_diff == 0)
+                break;
         }
-        if (line_diff == 0 && arc_diff == 0)
+        if (line_diff == 0)
             break;
     }
 }
