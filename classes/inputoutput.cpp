@@ -16,7 +16,7 @@ Point first_intersection_between_line_and_arc_for_arc_tuning(Segment, Point, Poi
 Point first_intersection_between_arc_and_arc_for_arc_tuning(Segment, Segment);
 float Dot(Point, Point);
 /////////////////End Function Declaration////////
-
+/*
 float Input_Output::File_to_Parameter(const string str) // 讀入參數 //OK
 {
     string str_truncate;
@@ -140,14 +140,14 @@ Segment Input_Output::String_to_Line(string line) // 讀取時建立線段
     return part;
 }
 
-vector<Segment> Input_Output::Assembly_Buffer(const vector<Segment> Assembly, float coppergap, float assemblygap)
+vector<Segment> Input_Output::Assembly_Buffer(const vector<Segment> Assembly, float coppergap, float assemblygap) // in buffer.cpp public 
 {
     vector<Point> Extended_Points = Point_Extension(Assembly, true, coppergap, assemblygap);
     vector<Segment> silkscreen = Point_to_Line(Extended_Points, Assembly);
     return silkscreen;
 }
 
-vector<Point> Input_Output::Point_Extension(const vector<Segment> Assembly, const bool is_assembly, float coppergap, float assemblygap) // 圖形外擴
+vector<Point> Input_Output::Point_Extension(const vector<Segment> Assembly, const bool is_assembly, float coppergap, float assemblygap) // 圖形外擴 //buffer.cpp private
 {
     const size_t size = Assembly.size();
     vector<Point> Assembly_Points;
@@ -230,7 +230,7 @@ vector<Point> Input_Output::Point_Extension(const vector<Segment> Assembly, cons
     return Extended_Points;
 }
 
-vector<Point> Input_Output::Arc_Point_Tuning(const vector<Segment> Assembly, const bool is_assembly, vector<Point> Extended_Points, float coppergap, float assemblygap) // 圓與直線外擴距離不對，需用此函數修正
+vector<Point> Input_Output::Arc_Point_Tuning(const vector<Segment> Assembly, const bool is_assembly, vector<Point> Extended_Points, float coppergap, float assemblygap) // 圓與直線外擴距離不對，需用此函數修正 // in buffer.cpp private
 {
     const size_t size = Extended_Points.size();
 
@@ -407,7 +407,8 @@ vector<Point> Input_Output::Arc_Point_Tuning(const vector<Segment> Assembly, con
     return Extended_Points;
 }
 
-Point Input_Output::first_intersection_between_line_and_arc_for_arc_tuning(Segment Arc, Point Line_First_Point, Point Line_Second_Point)
+*/
+Point Input_Output::first_intersection_between_line_and_arc_for_arc_tuning(Segment Arc, Point Line_First_Point, Point Line_Second_Point) //moved to GRAPH
 {
     // 圓公式 (x-x0)^2 + (y-y0)^2 = r^2
     // 直線公式 ax + by + c = 0
@@ -468,7 +469,7 @@ Point Input_Output::first_intersection_between_line_and_arc_for_arc_tuning(Segme
     return Point();
 }
 
-Point Input_Output::first_intersection_between_arc_and_arc_for_arc_tuning(Segment Arc1, Segment Arc2)
+Point Input_Output::first_intersection_between_arc_and_arc_for_arc_tuning(Segment Arc1, Segment Arc2) //moved to GRAPH
 {
     float d = hypot(Arc1.center_x - Arc2.center_x, Arc1.center_y - Arc2.center_y); // 兩圓中心距離
     float r1 = hypot(Arc1.x2 - Arc1.center_x, Arc1.y2 - Arc1.center_y);            // 圓1半徑
@@ -511,7 +512,7 @@ Point Input_Output::first_intersection_between_arc_and_arc_for_arc_tuning(Segmen
     return Point();
 }
 
-float Input_Output::Dot(Point v1, Point v2) // 向量積
+float Input_Output::Dot(Point v1, Point v2) // 向量積 // vectorop
 {
     return v1.x * v2.x + v1.y * v2.y;
 }
@@ -543,14 +544,14 @@ bool Input_Output::point_in_polygon(Point t, vector<Point> Assembly_Point, vecto
 }
 */
 
-float interpolate_x(float y, Point p1, Point p2) // 待測點與圖形邊界交會的x值
+float interpolate_x(float y, Point p1, Point p2) // 待測點與圖形邊界交會的x值 //move to point.cpp
 {
     if (p1.y == p2.y)
         return p1.x;
     return p1.x + (p2.x - p1.x) * (y - p1.y) / (p2.y - p1.y);
 }
 
-vector<Point> Input_Output::Line_to_Point(const vector<Segment> Assembly) // 將線段切割成點
+vector<Point> Input_Output::Line_to_Point(const vector<Segment> Assembly) // 將線段切割成點 //move to graph.cpp
 {
     const size_t size = Assembly.size();
     vector<Point> Point_Vector;
@@ -582,7 +583,7 @@ vector<Point> Input_Output::Line_to_Point(const vector<Segment> Assembly) // 將
     return Point_Vector;
 }
 
-vector<vector<Point>> Input_Output::Arc_Optimization(vector<Segment> Assembly)
+vector<vector<Point>> Input_Output::Arc_Optimization(vector<Segment> Assembly)//moved to GRAPH
 {
     int Assembly_size = Assembly.size();
     vector<Point> Dots_of_Arc;
@@ -599,7 +600,7 @@ vector<vector<Point>> Input_Output::Arc_Optimization(vector<Segment> Assembly)
     return vector_of_Arc;
 }
 
-vector<Point> Input_Output::Arc_to_Poly(Segment Arc)
+vector<Point> Input_Output::Arc_to_Poly(Segment Arc)//merged into "Arc_Optimization"
 {
     vector<Point> Poly_out;
     Point part;
@@ -677,7 +678,7 @@ vector<Point> Input_Output::Arc_to_Poly(Segment Arc)
     return Poly_out;
 }
 
-vector<Segment> Input_Output::Point_to_Line(vector<Point> Extended_Points, vector<Segment> Assembly) // assembly 專屬
+vector<Segment> Input_Output::Point_to_Line(vector<Point> Extended_Points, vector<Segment> Assembly) // assembly 專屬 //in buffer.cpp private
 {
     size_t size = Assembly.size();
     Segment A_Line;
@@ -731,7 +732,7 @@ vector<Segment> Input_Output::Point_to_Line(vector<Point> Extended_Points, vecto
     return Silkscreen;
 }
 
-Copper Arc_Boundary_Meas(Segment Arc)
+Copper Arc_Boundary_Meas(Segment Arc) //moved to GRAPH
 {
     Copper A_Arc;
     float first, second;
@@ -846,7 +847,7 @@ Segment Arc_Boundary_Meas_for_Assembly(Segment Arc) // duplicate function of Arc
     return A_Arc;
 }
 
-bool Input_Output::point_in_polygon(Point t, vector<Point> Assembly_Point, vector<vector<Point>> Arc_Points) // 運用射線法判斷點在圖形內外
+bool Input_Output::point_in_polygon(Point t, vector<Point> Assembly_Point, vector<vector<Point>> Arc_Points) // 運用射線法判斷點在圖形內外, move to point.cpp
 {
     int Assembly_size = Assembly_Point.size();
     int Arc_count = 0;

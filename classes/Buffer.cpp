@@ -119,7 +119,7 @@ vector<Point> Buffer::Point_Extension(const Graph Assembly, const bool is_assemb
     return Extended_Points;
 }
 
-vector<Point> Buffer::Line_to_Point(const Graph Assembly) // 將線段切割成點
+vector<Point> Buffer::Line_to_Point(const Graph Assembly) // 將線段切割成點  // moved to GRAPH
 {
     const size_t size = Assembly.segment.size();
     vector<Point> Point_Vector;
@@ -149,7 +149,7 @@ vector<Point> Buffer::Line_to_Point(const Graph Assembly) // 將線段切割成�
     return Point_Vector;
 }
 
-vector<vector<Point>> Buffer::Arc_Optimization(const Graph Polygon) // 將圓弧切割成多個點，以利辨識點在圖形內外
+vector<vector<Point>> Buffer::Arc_Optimization(const Graph Polygon) // 將圓弧切割成多個點，以利辨識點在圖形內外 //moved to GRAPH
 {
     int Assembly_size = Polygon.segment.size();
     vector<Point> Dots_of_Arc;
@@ -239,7 +239,7 @@ vector<vector<Point>> Buffer::Arc_Optimization(const Graph Polygon) // 將圓弧
     return vector_of_Arc;
 }
 
-bool Buffer::point_in_polygon(Point t, vector<Point> Assembly_Point, vector<vector<Point>> Arc_Points) // 運用射線法判斷點在圖形內外
+bool Buffer::point_in_polygon(Point t, vector<Point> Assembly_Point, vector<vector<Point>> Arc_Points) // 運用射線法判斷點在圖形內外 //moved into POINT
 {
     int Assembly_size = Assembly_Point.size();
     int Arc_count = 0;
@@ -264,7 +264,7 @@ bool Buffer::point_in_polygon(Point t, vector<Point> Assembly_Point, vector<vect
     return c;
 }
 
-float Buffer::interpolate_x(float y, Point p1, Point p2) // 待測點與圖形邊界交會的x值
+float Buffer::interpolate_x(float y, Point p1, Point p2) // 待測點與圖形邊界交會的x值 // move to point.cpp
 {
     if (p1.y == p2.y)
         return p1.x;
@@ -507,12 +507,12 @@ Point Buffer::first_intersection_between_line_and_arc_for_arc_tuning(Segment Arc
     return Point();
 }
 
-float Buffer::dot(Point v1, Point v2) // 向量積
+float Buffer::dot(Point v1, Point v2) // 向量積 //removed ,replaced by vectorop
 {
     return v1.x * v2.x + v1.y * v2.y;
 }
 
-Point Buffer::first_intersection_between_arc_and_arc_for_arc_tuning(Segment Arc1, Segment Arc2)
+Point Buffer::first_intersection_between_arc_and_arc_for_arc_tuning(Segment Arc1, Segment Arc2) //inputoupt.cpp
 {
     float d = hypot(Arc1.center_x - Arc2.center_x, Arc1.center_y - Arc2.center_y); // 兩圓中心距離
     float r1 = hypot(Arc1.x2 - Arc1.center_x, Arc1.y2 - Arc1.center_y);            // 圓1半徑
@@ -631,7 +631,7 @@ Graph Buffer::Point_to_Line(vector<Point> Extended_Points, Graph Polygon)
     return Silkscreen;
 }
 
-Segment Buffer::Arc_Boundary_Meas(Segment Arc)
+Segment Buffer::Arc_Boundary_Meas(Segment Arc) // move to graph.cpp
 {
     Segment A_Arc;
     A_Arc = Arc;

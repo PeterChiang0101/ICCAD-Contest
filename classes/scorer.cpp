@@ -5,30 +5,26 @@
 #include "FileIO.h"
 #include "Buffer.h"
 #include "Parameter.h"
-#include "inputoutput.h"
+#include "VectorOp.h"
 
 using namespace std;
 
 //=================function declarations==========================
-double cross(Point, Point);
-double dot(Point, Point);
-double dis2(Point, Point);
-double dist(Point, Point);
-int dir(Point, Point, Point);
-double disMin(Point, Point, Point);
+//int dir(Point, Point, Point);
+//double disMin(Point, Point, Point);
 Point operator-(Point, Point);
 Point operator+(Point, Point);
 Point operator*(double, Point);
 Point operator/(Point, double);
 bool operator==(Point, Point);
 bool operator!=(Point, Point);
-Point orth_Cswap(Point);
-Point orth_CCswap(Point);
-double Point_to_Arc_MinDist(Point, Segment);
-vector<Point> intersection_between_CentersLine_and_Arc(Segment, Point);
-bool Line_intersect(Segment, Segment);
-bool On_Arc(Segment, Point);
-bool Concentric_Circle_On_Arc(Segment, Segment);
+//Point orth_Cswap(Point);
+//Point orth_CCswap(Point);
+//double Point_to_Arc_MinDist(Point, Segment);
+//vector<Point> intersection_between_CentersLine_and_Arc(Segment, Point);
+//bool Line_intersect(Segment, Segment);
+//bool On_Arc(Segment, Point);
+//bool Concentric_Circle_On_Arc(Segment, Segment);
 
 Scorer::Scorer()
 { // the default constructor, use the defined Q_FILE and A_FILE path
@@ -70,7 +66,6 @@ void Scorer::read_file()
 // test passed 2022/07/19
 double Scorer::first_quarter() // const vector<Segment> Assembly, const vector<Segment> silkscreen)
 {
-    Input_Output A1;
     float Rectangular_area = 0;       // 絲印標示之座標極限值所構成之矩形面積
     float X_max, Y_max, X_min, Y_min; //絲印座標極限值
 
@@ -86,31 +81,31 @@ double Scorer::first_quarter() // const vector<Segment> Assembly, const vector<S
 
     for (size_t i = 0; i < this->silkscreen.segment.size(); i++)
     {
-        if (this->silkscreen.segment[i].x2 > X_max)
-            X_max = this->silkscreen.segment[i].x2;
-        if (this->silkscreen.segment[i].x1 > X_max)
-            X_max = this->silkscreen.segment[i].x1;
-        if (this->silkscreen.segment[i].x2 < X_min)
-            X_min = this->silkscreen.segment[i].x2;
-        if (this->silkscreen.segment[i].x1 < X_min)
-            X_min = this->silkscreen.segment[i].x1;
+        if (silkscreen.segment[i].x2 > X_max)
+            X_max = silkscreen.segment[i].x2;
+        if (silkscreen.segment[i].x1 > X_max)
+            X_max = silkscreen.segment[i].x1;
+        if (silkscreen.segment[i].x2 < X_min)
+            X_min = silkscreen.segment[i].x2;
+        if (silkscreen.segment[i].x1 < X_min)
+            X_min = silkscreen.segment[i].x1;
 
-        if (this->silkscreen.segment[i].y2 > Y_max)
-            Y_max = this->silkscreen.segment[i].y2;
-        if (this->silkscreen.segment[i].y1 > Y_max)
-            Y_max = this->silkscreen.segment[i].y1;
-        if (this->silkscreen.segment[i].y2 < Y_min)
-            Y_min = this->silkscreen.segment[i].y2;
-        if (this->silkscreen.segment[i].y1 < Y_min)
-            Y_min = this->silkscreen.segment[i].y1;
+        if (silkscreen.segment[i].y2 > Y_max)
+            Y_max = silkscreen.segment[i].y2;
+        if (silkscreen.segment[i].y1 > Y_max)
+            Y_max = silkscreen.segment[i].y1;
+        if (silkscreen.segment[i].y2 < Y_min)
+            Y_min = silkscreen.segment[i].y2;
+        if (silkscreen.segment[i].y1 < Y_min)
+            Y_min = silkscreen.segment[i].y1;
     }
     Rectangular_area = abs((X_max - X_min) * (Y_max - Y_min));
 
     /* calculate Y_area*/
     vector<Point> Assembly_push_out_points;
     vector<vector<Point>> Arc_Dots;
-    Assembly_push_out_points = A1.Line_to_Point(Assembly_push_out);
-    Arc_Dots = A1.Arc_Optimization(Assembly_push_out);
+    Assembly_push_out_points = graph_op.Line_to_Point(Assembly_push_out);
+    Arc_Dots = graph_op.Arc_Optimization(Assembly_push_out);
 
     float total_area = 0;
     size_t i;
@@ -147,15 +142,15 @@ double Scorer::first_quarter() // const vector<Segment> Assembly, const vector<S
             point_2.x = Assembly_push_out.segment.at(i).x2;
             point_2.y = Assembly_push_out.segment.at(i).y2;
 
-            radius = sqrt(dis2(center_of_circle, point_1));
-            c = sqrt(dis2(point_1, point_2));
+            radius = POINT::dist(center_of_circle, point_1);
+            c = POINT::dist(point_1, point_2);
             s = (radius + radius + c) / 2;
             testing_variable = (2 * (radius * radius) - c * c) / (2 * radius * radius);
             theta = acos(testing_variable); // Law of cosines
 
             cut_area = radius * radius * theta / 2 - sqrt(s * (s - radius) * (s - radius) * (s - c)); // last part is heron formula
 
-            outside = !A1.point_in_polygon(center_of_circle, Assembly_push_out_points, Arc_Dots);
+            outside = !point_op.point_in_polygon(center_of_circle, Assembly_push_out_points, Arc_Dots);
             if (outside)
                 total_area -= cut_area;
             else
@@ -338,7 +333,7 @@ double Scorer::third_quarter() // const vector<vector<Segment>> copper, const ve
         A1.y = silkscreen.segment.at(i).y1;
         A2.x = silkscreen.segment.at(i).x2;
         A2.y = silkscreen.segment.at(i).y2;
-        rA = dist(A1, circle_center_A);
+        rA = POINT::dist(A1, circle_center_A);
 
         for (size_t j = 0; j < copper.size(); j++)
         {
@@ -350,7 +345,7 @@ double Scorer::third_quarter() // const vector<vector<Segment>> copper, const ve
                 B2.y = copper.at(j).segment.at(k).y2;
                 circle_center_B.x = copper.at(j).segment.at(k).center_x;
                 circle_center_B.y = copper.at(j).segment.at(k).center_y;
-                rB = dist(B1, circle_center_B);
+                rB = POINT::dist(B1, circle_center_B);
                 if (dir(A1, A2, B1) * dir(A1, A2, B2) <= 0 && dir(B1, B2, A1) * dir(B1, B2, A2) <= 0) //兩線段相交, 距離為0
                     min_distance = 0;
 
@@ -367,7 +362,7 @@ double Scorer::third_quarter() // const vector<vector<Segment>> copper, const ve
 
                     if (disMin(A1, A2, circle_center_B) > rB)
                     {
-                        A_ps = intersection_between_CentersLine_and_Arc(copper.at(j).segment.at(k), circle_center_B + orth_Cswap(A1 - A2));
+                        A_ps = intersection_between_CentersLine_and_Arc(copper.at(j).segment.at(k), circle_center_B + VectorOp::orth_Cswap(A1 - A2));
                         for (size_t i = 0; i < A_ps.size(); i++)
                         {
                             if (i == 0)
@@ -390,7 +385,7 @@ double Scorer::third_quarter() // const vector<vector<Segment>> copper, const ve
 
                     if (disMin(B1, B2, circle_center_A) > rA)
                     {
-                        S_ps = intersection_between_CentersLine_and_Arc(silkscreen.segment.at(i), circle_center_A + orth_Cswap(B1 - B2));
+                        S_ps = intersection_between_CentersLine_and_Arc(silkscreen.segment.at(i), circle_center_A + VectorOp::orth_Cswap(B1 - B2));
                         for (size_t i = 0; i < S_ps.size(); i++)
                         {
                             if (i == 0)
@@ -429,11 +424,11 @@ double Scorer::third_quarter() // const vector<vector<Segment>> copper, const ve
                             for (size_t j = 0; j < A_ps.size(); j++)
                             {
                                 if (i == 0 && j == 0)
-                                    min_tmp = dist(S_ps.at(0), A_ps.at(0));
+                                    min_tmp = POINT::dist(S_ps.at(0), A_ps.at(0));
                                 else
                                 {
-                                    if (dist(S_ps.at(i), A_ps.at(j)) < min_tmp)
-                                        min_tmp = dist(S_ps.at(i), A_ps.at(j));
+                                    if (POINT::dist(S_ps.at(i), A_ps.at(j)) < min_tmp)
+                                        min_tmp = POINT::dist(S_ps.at(i), A_ps.at(j));
                                 }
                             }
                         }
@@ -564,7 +559,7 @@ double Scorer::fourth_quarter()
         A2.y = silkscreen.segment.at(i).y2;
         circle_center_A.x = silkscreen.segment.at(i).center_x;
         circle_center_A.y = silkscreen.segment.at(i).center_y;
-        rA = dist(A1, circle_center_A);
+        rA = POINT::dist(A1, circle_center_A);
         for (size_t j = 0; j < assembly.segment.size(); j++)
         {
             B1.x = assembly.segment.at(j).x1;
@@ -573,7 +568,7 @@ double Scorer::fourth_quarter()
             B2.y = assembly.segment.at(j).y2;
             circle_center_B.x = assembly.segment.at(j).center_x;
             circle_center_B.y = assembly.segment.at(j).center_y;
-            rB = dist(B1, circle_center_B);
+            rB = POINT::dist(B1, circle_center_B);
             if (silkscreen.segment.at(i).is_line && assembly.segment.at(j).is_line)//silkscreen: line, assembly segment line.
             {
                 if (dir(A1, A2, B1) * dir(A1, A2, B2) <= 0 && dir(B1, B2, A1) * dir(B1, B2, A2) <= 0) //兩線段相交, 距離為0
@@ -598,7 +593,7 @@ double Scorer::fourth_quarter()
                 if (disMin(A1, A2, circle_center_B) > rB)
                 {
                     //
-                    A_ps = intersection_between_CentersLine_and_Arc(assembly.segment.at(j), circle_center_B + orth_Cswap(A1 - A2));
+                    A_ps = intersection_between_CentersLine_and_Arc(assembly.segment.at(j), circle_center_B + VectorOp::orth_Cswap(A1 - A2));
                     for (size_t i = 0; i < A_ps.size(); i++)
                     {
                         if (i == 0)
@@ -630,7 +625,7 @@ double Scorer::fourth_quarter()
                 }*/
                 if (disMin(B1, B2, circle_center_A) > rA)
                 {
-                    S_ps = intersection_between_CentersLine_and_Arc(silkscreen.segment.at(i), circle_center_A + orth_Cswap(B1 - B2));
+                    S_ps = intersection_between_CentersLine_and_Arc(silkscreen.segment.at(i), circle_center_A + VectorOp::orth_Cswap(B1 - B2));
                     for (size_t i = 0; i < S_ps.size(); i++)
                     {
                         if (i == 0)
@@ -669,11 +664,11 @@ double Scorer::fourth_quarter()
                         for (size_t j = 0; j < A_ps.size(); j++)
                         {
                             if (i == 0 && j == 0)
-                                min_tmp = dist(S_ps[0], A_ps[0]);
+                                min_tmp = POINT::dist(S_ps[0], A_ps[0]);
                             else
                             {
-                                if (dist(S_ps[i], A_ps[j]) < min_tmp)
-                                    min_tmp = dist(S_ps[i], A_ps[j]);
+                                if (POINT::dist(S_ps[i], A_ps[j]) < min_tmp)
+                                    min_tmp = POINT::dist(S_ps[i], A_ps[j]);
                             }
                         }
                     }
@@ -776,7 +771,7 @@ double Scorer::Total_score(bool Print_Detail)
     total_score = First_Score + Second_Score + Third_Score + Fourth_Score;
     return total_score;
 }
-
+/*
 double cross1(Point o, Point a, Point b) // move to vector op
 {
     return (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
@@ -801,40 +796,267 @@ double dist(Point A, Point B) //點A、B距離 // will replace by stl hypot
 {
     return sqrt((A.x - B.x) * (A.x - B.x) + (A.y - B.y) * (A.y - B.y));
 }
-
-int dir(Point A, Point B, Point P) //點P與線段AB位置關係 // in scorer
+*/
+int Scorer::dir(Point A, Point B, Point P) //點P與線段AB位置關係 // in scorer
 {
     Point v1, v2;
     v1 = B - A;
     v2 = P - A;
-    if (cross(v1, v2) < 0)
+    if (VectorOp::cross(v1, v2) < 0)
         return -1; //逆時針
-    else if (cross(v1, v2) > 0)
+    else if (VectorOp::cross(v1, v2) > 0)
         return 1; //順時針
-    else if (dot(v1, v2) < 0)
+    else if (VectorOp::dot(v1, v2) < 0)
         return -2; //反延長線
-    else if (dot(v1, v2) >= 0 && dis2(A, B) >= dis2(A, P))
+    else if (VectorOp::dot(v1, v2) >= 0 && POINT::dis2(A, B) >= POINT::dis2(A, P))
     {
-        if (dis2(A, B) < dis2(A, P))
+        if (POINT::dis2(A, B) < POINT::dis2(A, P))
             return 2; //延長線
         return 0;     //在線上
     }
     return -100;
 }
 
-double disMin(Point A, Point B, Point P) //點P到線段AB的最短距離 //in scorer
+double Scorer::disMin(const Point A, const Point B, const Point P) //點P到線段AB的最短距離
 {
-    double r = ((P.x - A.x) * (B.x - A.x) + (P.y - A.y) * (B.y - A.y)) / dis2(A, B);
+    double r = ((P.x - A.x) * (B.x - A.x) + (P.y - A.y) * (B.y - A.y)) / POINT::dis2(A, B);
     if (r <= 0)
-        return dist(A, P);
+        return POINT::dist(A, P);
     else if (r >= 1)
-        return dist(B, P);
+        return POINT::dist(B, P);
     else
     {
-        double AC = r * sqrt(dis2(A, B));
-        return sqrt(dis2(A, P) - AC * AC);
+        double AC = r * sqrt(POINT::dis2(A, B));
+        return sqrt(POINT::dis2(A, P) - AC * AC);
     }
 }
+
+//retain in the Socorer
+double Scorer::Point_to_Arc_MinDist(Point pp, Segment Arc) //點到圓弧之最短距離
+{
+    Point p1, p2, pc, ex_p;
+    p1.x = Arc.x1;
+    p1.y = Arc.y1;
+    p2.x = Arc.x2;
+    p2.y = Arc.y2;
+    pc.x = Arc.center_x;
+    pc.y = Arc.center_y;
+    double radius = POINT::dist(p1, pc);
+
+    Point v1;
+    v1 = pp - pc;
+    ex_p = pc + radius / POINT::dist(pp, pc) * v1;
+
+    if (On_Arc(Arc, ex_p) || p1 == p2)
+    {
+        if (POINT::dist(pp, pc) > radius)
+        {
+            return POINT::dist(pp, pc) - radius;
+        }
+
+        else
+        {
+            return radius - POINT::dist(pp, pc);
+        }
+    }
+    else
+    {
+        return min(POINT::dist(pp, p1), POINT::dist(pp, p2));
+    }
+}
+
+vector<Point> Scorer::intersection_between_CentersLine_and_Arc(Segment Arc, Point Center) // the other arc's center
+{                                                                                 // 圓心線對Arc的交點
+    Point centerpoint, A;
+    Point v1, v2;
+    Point tmp;
+    vector<Point> intersect;
+    double radius;
+    double theta;
+
+    A.x = Arc.x1;
+    A.y = Arc.y1;
+    centerpoint.x = Arc.center_x;
+    centerpoint.y = Arc.center_y;
+    radius = POINT::dist(A, centerpoint);
+
+    theta = atan2(centerpoint.y - Center.y, centerpoint.x - Center.x);
+    v1 = Center - centerpoint;
+    tmp.x = centerpoint.x + radius * cos(theta);
+    tmp.y = centerpoint.y + radius * sin(theta);
+
+    if (On_Arc(Arc, tmp))
+    {
+        intersect.push_back(tmp);
+    }
+
+    v2 = centerpoint - tmp;
+    tmp = tmp + 2 * v2;
+
+    if (On_Arc(Arc, tmp))
+    {
+        intersect.push_back(tmp);
+    }
+    return intersect;
+}
+
+Point Scorer::find_arbitary_point_on_arc(Segment Arc) //找出Arc兩端外圓上一點
+{
+
+    Point middlepoint; // A,B中點
+    Point centerpoint, A, B;
+    Point v1, v2;
+    double radius;
+
+    A.x = Arc.x1;
+    A.y = Arc.y1;
+    B.x = Arc.x2;
+    B.y = Arc.y2;
+
+    middlepoint = (A + B) / 2;
+    centerpoint.x = Arc.center_x;
+    centerpoint.y = Arc.center_y;
+    radius = POINT::dist(A, centerpoint);
+    v1 = centerpoint - middlepoint;
+    v2 = B - A;
+    if ((A + B) / 2 == centerpoint)
+    {
+        if (!Arc.is_CCW )
+            return middlepoint + VectorOp::orth_Cswap(v2 / 2);
+        else
+            return middlepoint + VectorOp::orth_CCswap(v2 / 2);
+    }
+    else if ((VectorOp::cross(v2, v1) > 0 && Arc.is_CCW) || (VectorOp::cross(v2, v1) < 0 && !Arc.is_CCW))
+        return middlepoint + (radius - POINT::dist(middlepoint, centerpoint)) / POINT::dist(middlepoint, centerpoint) * (-1 * v1);
+    else
+        return middlepoint + (POINT::dist(middlepoint, centerpoint) + radius) / POINT::dist(middlepoint, centerpoint) * v1;
+}
+
+bool Scorer::On_Arc(Segment Arc, Point p) //判斷點P是否在Arc上
+{
+    Segment AB, BC, OP;
+    Point ar_p;
+    ar_p = find_arbitary_point_on_arc(Arc);
+    AB.x1 = Arc.x1;
+    AB.y1 = Arc.y1;
+    AB.x2 = ar_p.x;
+    AB.y2 = ar_p.y;
+    BC.x1 = ar_p.x;
+    BC.y1 = ar_p.y;
+    BC.x2 = Arc.x2;
+    BC.y2 = Arc.y2;
+
+    OP.x1 = Arc.center_x;
+    OP.y1 = Arc.center_y;
+    OP.x2 = p.x;
+    OP.y2 = p.y;
+
+    return (graph_op.Line_intersect(AB, OP) || graph_op.Line_intersect(BC, OP))? true : false;
+}
+
+bool Scorer::Concentric_Circle_On_Arc(Segment Arc1, Segment Arc2) //同心圓對兩Arc端點射線，在Arc是否有交點
+{
+    Point A1, A2, B1, B2;
+    Point Center;
+    double radius_A, radius_B;
+    Point v1, v2, v3, v4;
+
+    A1.x = Arc1.x1;
+    A1.y = Arc1.y1;
+    A2.x = Arc1.x2;
+    A2.y = Arc1.y2;
+    B1.x = Arc2.x1;
+    B1.y = Arc2.y1;
+    B2.x = Arc2.x2;
+    B2.y = Arc2.y2;
+    Center.x = Arc1.center_x;
+    Center.y = Arc1.center_y;
+
+    radius_A = POINT::dist(A1, Center);
+    radius_B = POINT::dist(B1, Center);
+
+    v1 = A1 - Center;
+    v2 = A2 - Center;
+    v3 = B1 - Center;
+    v4 = B2 - Center;
+
+    if (On_Arc(Arc1, Center + radius_A / radius_B * v3) == 1 || On_Arc(Arc1, Center + radius_A / radius_B * v4) == 1 || On_Arc(Arc2, Center + radius_B / radius_A * v1) == 1 || On_Arc(Arc2, Center + radius_B / radius_A * v2) == 1)
+        return 1;
+    else
+        return 0;
+}
+
+// vector<Point> Orth_Point_On_Arc(Segment Arc, Segment Line)
+// {
+//     Point centerpoint, A, B, ex_p;
+//     Point v1, v2;
+//     double theta;
+//     double radius;
+
+//     centerpoint.x = Arc.center_x;
+//     centerpoint.y = Arc.center_y;
+//     A.x = Line.x1;
+//     A.y = Line.y1;
+//     B.x = Line.x2;
+//     B.y = Line.y2;
+//     radius = dist(A, centerpoint);
+
+//     v1 = A - B;
+//     v2 = orth_Cswap(v1);
+//     theta = atan2(v2.x, v2.y);
+//     ex_p = centerpoint + radius * cos(theta);
+//     ex_p = centerpoint + radius * sin(theta);
+//     if(dist(ex_p, centerpoint) > disMin(centerpoint, Line))
+
+// }
+/*
+bool Line_intersect(Segment S1, Segment S2)//找兩Segment交點 //moved to GRAPH
+{
+    Point a1, a2, b1, b2;
+    a1.x = S1.x1;
+    a1.y = S1.y1;
+    a2.x = S1.x2;
+    a2.y = S1.y2;
+    b1.x = S2.x1;
+    b1.y = S2.y1;
+    b2.x = S2.x2;
+    b2.y = S2.y2;
+    double c1 = cross1(a1, a2, b1);
+    double c2 = cross1(a1, a2, b2);
+    double c3 = cross1(b1, b2, a1);
+    double c4 = cross1(b1, b2, a2);
+
+    // 端點不共線
+    if (c1 * c2 <= 0 && c3 * c4 <= 0)
+        return true;
+    // 端點共線
+    
+    //if (c1 == 0 && Line_intersect(a1, a2, b1)) return true;
+    //if (c2 == 0 && Line_intersect(a1, a2, b2)) return true;
+    //if (c3 == 0 && Line_intersect(b1, b2, a1)) return true;
+    //if (c4 == 0 && Line_intersect(b1, b2, a2)) return true;
+    
+    return false;
+}
+*/
+
+// enable "main" to modify the private data member, with cascading
+Scorer &Scorer::setAssembly(const Graph Assembly)
+{
+    this->assembly = Assembly;
+    return *this;
+}
+Scorer &Scorer::setCopper(const vector<Graph> copper)
+{
+    this->copper = copper;
+    return *this;
+}
+Scorer &Scorer::setSilkscreen(const Graph silkscreen)
+{
+    this->silkscreen = silkscreen;
+    return *this;
+}
+
 
 Point operator-(Point a, Point b)
 {
@@ -883,246 +1105,19 @@ bool operator!=(Point a, Point b)
     else
         return 1;
 }
-
-Point orth_Cswap(Point a) //垂直順時鐘(向量)
-{
+/*
+Point orth_Cswap(Point a) //垂直順時鐘(向量) //moved to VectorOp
     Point v;
     v.x = a.y * (-1);
     v.y = a.x;
     return v;
 }
 
-Point orth_CCswap(Point a) //垂直逆時鍾(向量)
+Point orth_CCswap(Point a) //垂直逆時鍾(向量) // moved to VectorOp
 {
     Point v;
     v.x = a.y;
     v.y = a.x * (-1);
     return v;
 }
-
-//retain in the Socorer
-double Point_to_Arc_MinDist(Point pp, Segment Arc) //點到圓弧之最短距離
-{
-    Point p1, p2, pc, ex_p;
-    p1.x = Arc.x1;
-    p1.y = Arc.y1;
-    p2.x = Arc.x2;
-    p2.y = Arc.y2;
-    pc.x = Arc.center_x;
-    pc.y = Arc.center_y;
-    double radius;
-    radius = dist(p1, pc);
-
-    Point v1;
-    v1 = pp - pc;
-    ex_p = pc + radius / dist(pp, pc) * v1;
-
-    if (On_Arc(Arc, ex_p) || p1 == p2)
-    {
-        if (dist(pp, pc) > radius)
-        {
-            return dist(pp, pc) - radius;
-        }
-
-        else
-        {
-            return radius - dist(pp, pc);
-        }
-    }
-    else
-    {
-        return min(dist(pp, p1), dist(pp, p2));
-    }
-}
-
-vector<Point> intersection_between_CentersLine_and_Arc(Segment Arc, Point Center) // the other arc's center
-{                                                                                 // 圓心線對Arc的交點
-    Point centerpoint, A;
-    Point v1, v2;
-    Point tmp;
-    vector<Point> intersect;
-    double radius;
-    double theta;
-
-    A.x = Arc.x1;
-    A.y = Arc.y1;
-    centerpoint.x = Arc.center_x;
-    centerpoint.y = Arc.center_y;
-    radius = dist(A, centerpoint);
-
-    theta = atan2(centerpoint.y - Center.y, centerpoint.x - Center.x);
-    v1 = Center - centerpoint;
-    tmp.x = centerpoint.x + radius * cos(theta);
-    tmp.y = centerpoint.y + radius * sin(theta);
-
-    if (On_Arc(Arc, tmp))
-    {
-        intersect.push_back(tmp);
-    }
-
-    v2 = centerpoint - tmp;
-    tmp = tmp + 2 * v2;
-
-    if (On_Arc(Arc, tmp))
-    {
-        intersect.push_back(tmp);
-    }
-    return intersect;
-}
-
-Point find_arbitary_point_on_arc(Segment Arc) //找出Arc兩端外圓上一點
-{
-
-    Point middlepoint; // A,B中點
-    Point centerpoint, A, B;
-    Point v1, v2;
-    double radius;
-
-    A.x = Arc.x1;
-    A.y = Arc.y1;
-    B.x = Arc.x2;
-    B.y = Arc.y2;
-
-    middlepoint = (A + B) / 2;
-    centerpoint.x = Arc.center_x;
-    centerpoint.y = Arc.center_y;
-    radius = dist(A, centerpoint);
-    v1 = centerpoint - middlepoint;
-    v2 = B - A;
-    if ((A + B) / 2 == centerpoint)
-    {
-        if (!Arc.is_CCW )
-            return middlepoint + orth_Cswap(v2 / 2);
-        else
-            return middlepoint + orth_CCswap(v2 / 2);
-    }
-    else if ((cross(v2, v1) > 0 && Arc.is_CCW) || (cross(v2, v1) < 0 && !Arc.is_CCW))
-        return middlepoint + (radius - dist(middlepoint, centerpoint)) / dist(middlepoint, centerpoint) * (-1 * v1);
-    else
-        return middlepoint + (dist(middlepoint, centerpoint) + radius) / dist(middlepoint, centerpoint) * v1;
-}
-
-bool On_Arc(Segment Arc, Point p) //判斷點P是否在Arc上
-{
-    Segment AB, BC, OP;
-    Point ar_p;
-    ar_p = find_arbitary_point_on_arc(Arc);
-    AB.x1 = Arc.x1;
-    AB.y1 = Arc.y1;
-    AB.x2 = ar_p.x;
-    AB.y2 = ar_p.y;
-    BC.x1 = ar_p.x;
-    BC.y1 = ar_p.y;
-    BC.x2 = Arc.x2;
-    BC.y2 = Arc.y2;
-
-    OP.x1 = Arc.center_x;
-    OP.y1 = Arc.center_y;
-    OP.x2 = p.x;
-    OP.y2 = p.y;
-
-    if (Line_intersect(AB, OP) || Line_intersect(BC, OP))
-        return true;
-    else
-        return false;
-}
-
-bool Concentric_Circle_On_Arc(Segment Arc1, Segment Arc2) //同心圓對兩Arc端點射線，在Arc是否有交點
-{
-    Point A1, A2, B1, B2;
-    Point Center;
-    double radius_A, radius_B;
-    Point v1, v2, v3, v4;
-
-    A1.x = Arc1.x1;
-    A1.y = Arc1.y1;
-    A2.x = Arc1.x2;
-    A2.y = Arc1.y2;
-    B1.x = Arc2.x1;
-    B1.y = Arc2.y1;
-    B2.x = Arc2.x2;
-    B2.y = Arc2.y2;
-    Center.x = Arc1.center_x;
-    Center.y = Arc1.center_y;
-
-    radius_A = dist(A1, Center);
-    radius_B = dist(B1, Center);
-
-    v1 = A1 - Center;
-    v2 = A2 - Center;
-    v3 = B1 - Center;
-    v4 = B2 - Center;
-
-    if (On_Arc(Arc1, Center + radius_A / radius_B * v3) == 1 || On_Arc(Arc1, Center + radius_A / radius_B * v4) == 1 || On_Arc(Arc2, Center + radius_B / radius_A * v1) == 1 || On_Arc(Arc2, Center + radius_B / radius_A * v2) == 1)
-        return 1;
-    else
-        return 0;
-}
-
-// vector<Point> Orth_Point_On_Arc(Segment Arc, Segment Line)
-// {
-//     Point centerpoint, A, B, ex_p;
-//     Point v1, v2;
-//     double theta;
-//     double radius;
-
-//     centerpoint.x = Arc.center_x;
-//     centerpoint.y = Arc.center_y;
-//     A.x = Line.x1;
-//     A.y = Line.y1;
-//     B.x = Line.x2;
-//     B.y = Line.y2;
-//     radius = dist(A, centerpoint);
-
-//     v1 = A - B;
-//     v2 = orth_Cswap(v1);
-//     theta = atan2(v2.x, v2.y);
-//     ex_p = centerpoint + radius * cos(theta);
-//     ex_p = centerpoint + radius * sin(theta);
-//     if(dist(ex_p, centerpoint) > disMin(centerpoint, Line))
-
-// }
-
-bool Line_intersect(Segment S1, Segment S2)
-{
-    Point a1, a2, b1, b2;
-    a1.x = S1.x1;
-    a1.y = S1.y1;
-    a2.x = S1.x2;
-    a2.y = S1.y2;
-    b1.x = S2.x1;
-    b1.y = S2.y1;
-    b2.x = S2.x2;
-    b2.y = S2.y2;
-    double c1 = cross1(a1, a2, b1);
-    double c2 = cross1(a1, a2, b2);
-    double c3 = cross1(b1, b2, a1);
-    double c4 = cross1(b1, b2, a2);
-
-    // 端點不共線
-    if (c1 * c2 <= 0 && c3 * c4 <= 0)
-        return true;
-    // 端點共線
-    /*if (c1 == 0 && Line_intersect(a1, a2, b1)) return true;
-    if (c2 == 0 && Line_intersect(a1, a2, b2)) return true;
-    if (c3 == 0 && Line_intersect(b1, b2, a1)) return true;
-    if (c4 == 0 && Line_intersect(b1, b2, a2)) return true;*/
-    return false;
-}
-
-// enable "main" to modify the private data member, with cascading
-Scorer &Scorer::setAssembly(const Graph Assembly)
-{
-    this->assembly = Assembly;
-    return *this;
-}
-Scorer &Scorer::setCopper(const vector<Graph> copper)
-{
-    this->copper = copper;
-    return *this;
-}
-Scorer &Scorer::setSilkscreen(const Graph silkscreen)
-{
-    this->silkscreen = silkscreen;
-    return *this;
-}
+*/
