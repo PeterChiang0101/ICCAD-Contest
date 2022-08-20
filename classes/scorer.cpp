@@ -12,12 +12,12 @@ using namespace std;
 //=================function declarations==========================
 //int dir(Point, Point, Point);
 //double disMin(Point, Point, Point);
-//Point operator-(Point, Point);
-//Point operator+(Point, Point);
-//Point operator*(double, Point);
-//Point operator/(Point, double);
-//bool operator==(Point, Point);
-//bool operator!=(Point, Point);
+Point operator-(Point, Point);
+Point operator+(Point, Point);
+Point operator*(double, Point);
+Point operator/(Point, double);
+bool operator==(Point, Point);
+bool operator!=(Point, Point);
 //Point orth_Cswap(Point);
 //Point orth_CCswap(Point);
 //double Point_to_Arc_MinDist(Point, Segment);

@@ -1,10 +1,11 @@
 // Point.hpp
 // declearation of struct Point
+#include <bits/stdc++.h>
+
+using namespace std;
 
 #ifndef POINT_H
 #define POINT_H
-
-#include "VectorOp.h"
 
 struct Point
 {
@@ -30,7 +31,6 @@ class POINT
         bool In_Between_Lines(const Point, const Point, const Point);
     private:
         double interpolate_x(const float, const Point, const Point); // 待測點與圖形邊界交會的x值
-        VectorOp V_Op;
 };
 
 #endif // POINT_H

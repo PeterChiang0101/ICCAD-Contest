@@ -8,7 +8,7 @@
 
 using namespace std;
 
-float VectorOp::cross(const Point v1, const Point v2) // 向量外積
+double VectorOp::cross(const Point v1, const Point v2) // 向量外積
 {
     // 沒有除法，儘量避免誤差。
     return v1.x * v2.y - v1.y * v2.x;
@@ -19,14 +19,14 @@ double VectorOp::cross1(const Point o, const Point a, const Point b) //共起點
     return (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
 }
 
-float VectorOp::dot(const Point v1, const Point v2) // 向量內積
-{
-    return v1.x * v2.x + v1.y * v2.y;
-}
-
-float VectorOp::cross_point (const Point original, const Point a, const Point b)
+double VectorOp::cross_point (const Point original, const Point a, const Point b)
 {
     return (a.x - original.x) * (b.y - original.y) - (a.y - original.y) * (b.x - original.x);
+}
+
+double VectorOp::dot(const Point v1, const Point v2) // 向量內積
+{
+    return v1.x * v2.x + v1.y * v2.y;
 }
 
 //向量伸縮平移
