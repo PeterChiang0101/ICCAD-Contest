@@ -1,7 +1,6 @@
 // VectorOp.hpp
 // declearation of struct VectorOp
-
-#include "Segment.h"
+#include <bits/stdc++.h>
 #include "Point.h"
 
 using namespace std;

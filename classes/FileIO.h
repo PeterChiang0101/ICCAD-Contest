@@ -28,9 +28,10 @@ private:
     fstream InFile;
     fstream InFileAns;
     vector<int> continue_num; // 每個連續線段的線段數量
+    GRAPH graph_op; // graph operator
     Segment String_to_Line(string);                     // 讀取時建立線段
     vector<string> split(const string &, const char &); // 拆分文字
-    Segment Arc_Boundary_Meas_for_Assembly(Segment);    // 計算圓弧邊界
+    //Segment Arc_Boundary_Meas_for_Assembly(Segment);    // 計算圓弧邊界 //moved to GRAPH
 };
 
 #endif // FILEIO_H

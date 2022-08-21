@@ -1,10 +1,12 @@
 // Buffer.cpp
 // implementation of class Buffer
 
+#include <bits/stdc++.h>
 #include "Buffer.h"
 #include "Point.h"
 #include "Parameter.h"
-#include <bits/stdc++.h>
+#include "Graph.h"
+#include "VectorOp.h"
 
 using namespace std;
 
@@ -48,8 +50,8 @@ vector<Point> Buffer::Point_Extension(const Graph Assembly, const bool is_assemb
     Failed_Point.x = INFINITY;
     Failed_Point.y = INFINITY;
     
-    Assembly_Points = Line_to_Point(Assembly); //線切割為點
-    Arc_Dots = Arc_Optimization(Assembly);     // 將圓弧切割成多個點，以利辨識點在圖形內外
+    Assembly_Points = graph_op.Line_to_Point(Assembly); //線切割為點
+    Arc_Dots = graph_op.Arc_Optimization(Assembly);     // 將圓弧切割成多個點，以利辨識點在圖形內外
     if (size == 1)                             // i think only happened in copper, eg: a full circle
     {
         Point Extended_Point;
@@ -105,8 +107,8 @@ vector<Point> Buffer::Point_Extension(const Graph Assembly, const bool is_assemb
         Extend_2.Next_Arc = Assembly_Points.at(j).Next_Arc;
 
         //點是否在圖型外
-        Outside_1 = !point_in_polygon(Extend_1, Assembly_Points, Arc_Dots); // true for outside, false for inside
-        Outside_2 = !point_in_polygon(Extend_2, Assembly_Points, Arc_Dots);
+        Outside_1 = !point_op.point_in_polygon(Extend_1, Assembly_Points, Arc_Dots); // true for outside, false for inside
+        Outside_2 = !point_op.point_in_polygon(Extend_2, Assembly_Points, Arc_Dots);
 
         if (Outside_1 && !Outside_2) // 1 is outside, 2 is inside
             Extended_Points.push_back(Extend_1);
@@ -119,6 +121,258 @@ vector<Point> Buffer::Point_Extension(const Graph Assembly, const bool is_assemb
     return Extended_Points;
 }
 
+
+vector<Point> Buffer::Arc_Point_Tuning(const Graph Assembly, const bool is_assembly, vector<Point> Extended_Points) // 圓與直線外擴距離不對，需用此函數修正
+{
+    const size_t size = Extended_Points.size();
+    Segment first_line, second_line;
+    float radius;
+    float radius_1, radius_2;
+    float radius_silkscreen;
+    float radius_1_silkscreen, radius_2_silkscreen;
+    bool concave; // true for concave, false for convex
+    bool first_concave, second_concave;
+    Segment Pushout_Circle;
+    Segment Pushout_Circle_1, Pushout_Circle_2;
+    Point first_point, second_point;
+    Point Intersection_Points;
+    float gap;
+
+    if (is_assembly)
+        gap = assemblygap;
+    else
+        gap = coppergap;
+
+    for (size_t i = 0; i < size; i++)
+    {
+        if (i == 0)
+            first_line = Assembly.segment.at(size - 1);
+        else
+            first_line = Assembly.segment.at(i - 1);
+        second_line = Assembly.segment.at(i);
+        if(Extended_Points.at(i).x == INFINITY && Extended_Points.at(i).y == INFINITY)
+            continue;
+        if (!first_line.is_line && second_line.is_line) // 第一個是圓弧 第二個是線段
+        {
+            radius = hypot(first_line.x2 - first_line.center_x, first_line.y2 - first_line.center_y);
+            radius_silkscreen = hypot(Extended_Points.at(i).x - first_line.center_x, Extended_Points.at(i).y - first_line.center_y);
+            if (radius_silkscreen > radius)
+                concave = false; // 凸
+            else
+                concave = true; // 凹
+            Pushout_Circle.center_x = first_line.center_x;
+            Pushout_Circle.center_y = first_line.center_y;
+            Pushout_Circle.is_CCW = first_line.is_CCW;
+            Pushout_Circle.detail.theta_1 = first_line.detail.theta_1;
+            Pushout_Circle.detail.theta_2 = first_line.detail.theta_1;
+
+            first_point.x = Extended_Points.at(i).x;
+            first_point.y = Extended_Points.at(i).y;
+            if (i != size - 1)
+            {
+                second_point.x = Extended_Points.at(i + 1).x;
+                second_point.y = Extended_Points.at(i + 1).y;
+            }
+            else
+            {
+                second_point.x = Extended_Points.at(0).x;
+                second_point.y = Extended_Points.at(0).y;
+            }
+
+            if (concave)
+            {
+                Pushout_Circle.x1 = Pushout_Circle.x2 = first_line.center_x + (1 - gap / radius) * (first_line.x2 - first_line.center_x);
+                Pushout_Circle.y1 = Pushout_Circle.y2 = first_line.center_y + (1 - gap / radius) * (first_line.y2 - first_line.center_y);
+            }
+            else
+            {
+                Pushout_Circle.x1 = Pushout_Circle.x2 = first_line.center_x + (1 + gap / radius) * (first_line.x2 - first_line.center_x);
+                Pushout_Circle.y1 = Pushout_Circle.y2 = first_line.center_y + (1 + gap / radius) * (first_line.y2 - first_line.center_y);
+            }
+
+            Intersection_Points = graph_op.first_intersection_between_line_and_arc_for_arc_tuning(Pushout_Circle, first_point, second_point);
+
+            Extended_Points.at(i).x = Intersection_Points.x;
+            Extended_Points.at(i).y = Intersection_Points.y;
+        }
+        else if (first_line.is_line && !second_line.is_line) // 第一個是線段 第二個是圓弧
+        {
+            radius = hypot(second_line.x1 - second_line.center_x, second_line.y1 - second_line.center_y);
+            radius_silkscreen = hypot(Extended_Points.at(i).x - second_line.center_x, Extended_Points.at(i).y - second_line.center_y);
+            if (radius_silkscreen > radius)
+                concave = false; // 凸
+            else
+                concave = true; // 凹
+            Pushout_Circle.center_x = second_line.center_x;
+            Pushout_Circle.center_y = second_line.center_y;
+            Pushout_Circle.is_CCW = second_line.is_CCW;
+            Pushout_Circle.detail.theta_1 = second_line.detail.theta_1;
+            Pushout_Circle.detail.theta_2 = second_line.detail.theta_1;
+
+            if (i != 0)
+            {
+                first_point.x = Extended_Points.at(i - 1).x;
+                first_point.y = Extended_Points.at(i - 1).y;
+            }
+            else
+            {
+                first_point.x = Extended_Points.at(size - 1).x;
+                first_point.y = Extended_Points.at(size - 1).y;
+            }
+            second_point.x = Extended_Points.at(i).x;
+            second_point.y = Extended_Points.at(i).y;
+
+            if (concave)
+            {
+                Pushout_Circle.x1 = Pushout_Circle.x2 = second_line.center_x + (1 - gap / radius) * (second_line.x1 - second_line.center_x);
+                Pushout_Circle.y1 = Pushout_Circle.y2 = second_line.center_y + (1 - gap / radius) * (second_line.y1 - second_line.center_y);
+            }
+            else
+            {
+                Pushout_Circle.x1 = Pushout_Circle.x2 = second_line.center_x + (1 + gap / radius) * (second_line.x1 - second_line.center_x);
+                Pushout_Circle.y1 = Pushout_Circle.y2 = second_line.center_y + (1 + gap / radius) * (second_line.y1 - second_line.center_y);
+            }
+
+            Intersection_Points = graph_op.first_intersection_between_line_and_arc_for_arc_tuning(Pushout_Circle, second_point, first_point);
+
+            Extended_Points.at(i).x = Intersection_Points.x;
+            Extended_Points.at(i).y = Intersection_Points.y;
+        }
+        else if (!first_line.is_line && !second_line.is_line)
+        {
+            radius_1 = hypot(first_line.x2 - first_line.center_x, first_line.y2 - first_line.center_y);
+            radius_2 = hypot(second_line.x1 - second_line.center_x, second_line.y1 - second_line.center_y);
+            radius_1_silkscreen = hypot(Extended_Points.at(i).x - first_line.center_x, Extended_Points.at(i).y - first_line.center_y);
+            radius_2_silkscreen = hypot(Extended_Points.at(i).x - second_line.center_x, Extended_Points.at(i).y - second_line.center_y);
+            if (radius_1_silkscreen > radius_1)
+                first_concave = false; // 凸
+            else
+                first_concave = true; // 凹
+            Pushout_Circle_1.center_x = first_line.center_x;
+            Pushout_Circle_1.center_y = first_line.center_y;
+            Pushout_Circle_1.is_CCW = first_line.is_CCW;
+            Pushout_Circle_1.detail.theta_1 = first_line.detail.theta_1;
+            Pushout_Circle_1.detail.theta_2 = first_line.detail.theta_1;
+            if (first_concave)
+            {
+                Pushout_Circle_1.x1 = Pushout_Circle_1.x2 = first_line.center_x + (1 - gap / radius_1) * (first_line.x2 - first_line.center_x);
+                Pushout_Circle_1.y1 = Pushout_Circle_1.y2 = first_line.center_y + (1 - gap / radius_1) * (first_line.y2 - first_line.center_y);
+            }
+            else
+            {
+                Pushout_Circle_1.x1 = Pushout_Circle_1.x2 = first_line.center_x + (1 + gap / radius_1) * (first_line.x2 - first_line.center_x);
+                Pushout_Circle_1.y1 = Pushout_Circle_1.y2 = first_line.center_y + (1 + gap / radius_1) * (first_line.y2 - first_line.center_y);
+            }
+
+            if (radius_2_silkscreen > radius_2)
+                second_concave = false; // 凸
+            else
+                second_concave = true; // 凹
+            Pushout_Circle_2.center_x = second_line.center_x;
+            Pushout_Circle_2.center_y = second_line.center_y;
+            Pushout_Circle_2.is_CCW = second_line.is_CCW;
+            Pushout_Circle_2.detail.theta_1 = second_line.detail.theta_1;
+            Pushout_Circle_2.detail.theta_2 = second_line.detail.theta_1;
+
+            if (second_concave)
+            {
+                Pushout_Circle_2.x1 = Pushout_Circle_2.x2 = second_line.center_x + (1 - gap / radius_2) * (second_line.x1 - second_line.center_x);
+                Pushout_Circle_2.y1 = Pushout_Circle_2.y2 = second_line.center_y + (1 - gap / radius_2) * (second_line.y1 - second_line.center_y);
+            }
+            else
+            {
+                Pushout_Circle_2.x1 = Pushout_Circle_2.x2 = second_line.center_x + (1 + gap / radius_2) * (second_line.x1 - second_line.center_x);
+                Pushout_Circle_2.y1 = Pushout_Circle_2.y2 = second_line.center_y + (1 + gap / radius_2) * (second_line.y1 - second_line.center_y);
+            }
+
+            Intersection_Points = graph_op.first_intersection_between_arc_and_arc_for_arc_tuning(Pushout_Circle_1, Pushout_Circle_2);
+            Extended_Points.at(i).x = Intersection_Points.x;
+            Extended_Points.at(i).y = Intersection_Points.y;
+        }
+    }
+    return Extended_Points;
+}
+
+
+
+Graph Buffer::Point_to_Line(vector<Point> Extended_Points, Graph Polygon)
+{
+    size_t size = Polygon.segment.size();
+    Segment A_Line;
+    Graph Silkscreen;
+    if (!Extended_Points.empty())
+    {
+        Silkscreen.x_min = Silkscreen.x_max = Extended_Points.at(0).x; // initialize
+        Silkscreen.y_min = Silkscreen.y_max = Extended_Points.at(0).y;
+        for (size_t i = 0; i < size; i++)
+        {
+            // calculate point to line
+            A_Line.is_line = (Extended_Points.at(i).Next_Arc) ? false : true;
+            A_Line.x1 = Extended_Points.at(i).x;
+            A_Line.y1 = Extended_Points.at(i).y;
+            if (i != size - 1)
+            {
+                A_Line.x2 = Extended_Points.at(i + 1).x;
+                A_Line.y2 = Extended_Points.at(i + 1).y;
+            }
+            else
+            {
+                A_Line.x2 = Extended_Points.at(0).x;
+                A_Line.y2 = Extended_Points.at(0).y;
+            }
+            if (A_Line.is_line)
+            {
+                A_Line.center_x = A_Line.center_y = A_Line.is_CCW = 0;
+            }
+            else
+            {
+                A_Line.detail.theta = 0;
+
+                A_Line.center_x = Polygon.segment.at(i).center_x;
+                A_Line.center_y = Polygon.segment.at(i).center_y;
+                A_Line.is_CCW = Polygon.segment.at(i).is_CCW;
+
+                A_Line.detail.theta_1 = atan2(A_Line.y1 - A_Line.center_y, A_Line.x1 - A_Line.center_x);
+                A_Line.detail.theta_2 = atan2(A_Line.y2 - A_Line.center_y, A_Line.x2 - A_Line.center_x);
+            }
+            if (!A_Line.is_line) // arc
+            {
+                A_Line = graph_op.Arc_Boundary_Meas(A_Line);
+            }
+            else // line
+            {
+                A_Line.detail.x_min = min(A_Line.x1, A_Line.x2);
+                A_Line.detail.x_max = max(A_Line.x1, A_Line.x2);
+                A_Line.detail.y_min = min(A_Line.y1, A_Line.y2);
+                A_Line.detail.y_max = max(A_Line.y1, A_Line.y2);
+            }
+
+            if (A_Line.detail.x_max > Silkscreen.x_max)
+            {
+                Silkscreen.x_max = A_Line.detail.x_max;
+            }
+            if (A_Line.detail.x_min < Silkscreen.x_min)
+            {
+                Silkscreen.x_min = A_Line.detail.x_min;
+            }
+            if (A_Line.detail.y_max > Silkscreen.y_max)
+            {
+                Silkscreen.y_max = A_Line.detail.y_max;
+            }
+            if (A_Line.detail.y_min < Silkscreen.y_min)
+            {
+                Silkscreen.y_min = A_Line.detail.y_min;
+            }
+
+            Silkscreen.segment.push_back(A_Line);
+        }
+    }
+
+    return Silkscreen;
+}
+
+//-----------removed functions---------
+/*
 vector<Point> Buffer::Line_to_Point(const Graph Assembly) // 將線段切割成點  // moved to GRAPH
 {
     const size_t size = Assembly.segment.size();
@@ -270,178 +524,8 @@ float Buffer::interpolate_x(float y, Point p1, Point p2) // 待測點與圖形�
         return p1.x;
     return p1.x + (p2.x - p1.x) * (y - p1.y) / (p2.y - p1.y);
 }
-
-vector<Point> Buffer::Arc_Point_Tuning(const Graph Assembly, const bool is_assembly, vector<Point> Extended_Points) // 圓與直線外擴距離不對，需用此函數修正
-{
-    const size_t size = Extended_Points.size();
-    Segment first_line, second_line;
-    float radius;
-    float radius_1, radius_2;
-    float radius_silkscreen;
-    float radius_1_silkscreen, radius_2_silkscreen;
-    bool concave; // true for concave, false for convex
-    bool first_concave, second_concave;
-    Segment Pushout_Circle;
-    Segment Pushout_Circle_1, Pushout_Circle_2;
-    Point first_point, second_point;
-    Point Intersection_Points;
-    float gap;
-
-    if (is_assembly)
-        gap = assemblygap;
-    else
-        gap = coppergap;
-
-    for (size_t i = 0; i < size; i++)
-    {
-        if (i == 0)
-            first_line = Assembly.segment.at(size - 1);
-        else
-            first_line = Assembly.segment.at(i - 1);
-        second_line = Assembly.segment.at(i);
-        if(Extended_Points.at(i).x == INFINITY && Extended_Points.at(i).y == INFINITY)
-            continue;
-        if (!first_line.is_line && second_line.is_line) // 第一個是圓弧 第二個是線段
-        {
-            radius = hypot(first_line.x2 - first_line.center_x, first_line.y2 - first_line.center_y);
-            radius_silkscreen = hypot(Extended_Points.at(i).x - first_line.center_x, Extended_Points.at(i).y - first_line.center_y);
-            if (radius_silkscreen > radius)
-                concave = false; // 凸
-            else
-                concave = true; // 凹
-            Pushout_Circle.center_x = first_line.center_x;
-            Pushout_Circle.center_y = first_line.center_y;
-            Pushout_Circle.is_CCW = first_line.is_CCW;
-            Pushout_Circle.detail.theta_1 = first_line.detail.theta_1;
-            Pushout_Circle.detail.theta_2 = first_line.detail.theta_1;
-
-            first_point.x = Extended_Points.at(i).x;
-            first_point.y = Extended_Points.at(i).y;
-            if (i != size - 1)
-            {
-                second_point.x = Extended_Points.at(i + 1).x;
-                second_point.y = Extended_Points.at(i + 1).y;
-            }
-            else
-            {
-                second_point.x = Extended_Points.at(0).x;
-                second_point.y = Extended_Points.at(0).y;
-            }
-
-            if (concave)
-            {
-                Pushout_Circle.x1 = Pushout_Circle.x2 = first_line.center_x + (1 - gap / radius) * (first_line.x2 - first_line.center_x);
-                Pushout_Circle.y1 = Pushout_Circle.y2 = first_line.center_y + (1 - gap / radius) * (first_line.y2 - first_line.center_y);
-            }
-            else
-            {
-                Pushout_Circle.x1 = Pushout_Circle.x2 = first_line.center_x + (1 + gap / radius) * (first_line.x2 - first_line.center_x);
-                Pushout_Circle.y1 = Pushout_Circle.y2 = first_line.center_y + (1 + gap / radius) * (first_line.y2 - first_line.center_y);
-            }
-
-            Intersection_Points = first_intersection_between_line_and_arc_for_arc_tuning(Pushout_Circle, first_point, second_point);
-
-            Extended_Points.at(i).x = Intersection_Points.x;
-            Extended_Points.at(i).y = Intersection_Points.y;
-        }
-        else if (first_line.is_line && !second_line.is_line) // 第一個是線段 第二個是圓弧
-        {
-            radius = hypot(second_line.x1 - second_line.center_x, second_line.y1 - second_line.center_y);
-            radius_silkscreen = hypot(Extended_Points.at(i).x - second_line.center_x, Extended_Points.at(i).y - second_line.center_y);
-            if (radius_silkscreen > radius)
-                concave = false; // 凸
-            else
-                concave = true; // 凹
-            Pushout_Circle.center_x = second_line.center_x;
-            Pushout_Circle.center_y = second_line.center_y;
-            Pushout_Circle.is_CCW = second_line.is_CCW;
-            Pushout_Circle.detail.theta_1 = second_line.detail.theta_1;
-            Pushout_Circle.detail.theta_2 = second_line.detail.theta_1;
-
-            if (i != 0)
-            {
-                first_point.x = Extended_Points.at(i - 1).x;
-                first_point.y = Extended_Points.at(i - 1).y;
-            }
-            else
-            {
-                first_point.x = Extended_Points.at(size - 1).x;
-                first_point.y = Extended_Points.at(size - 1).y;
-            }
-            second_point.x = Extended_Points.at(i).x;
-            second_point.y = Extended_Points.at(i).y;
-
-            if (concave)
-            {
-                Pushout_Circle.x1 = Pushout_Circle.x2 = second_line.center_x + (1 - gap / radius) * (second_line.x1 - second_line.center_x);
-                Pushout_Circle.y1 = Pushout_Circle.y2 = second_line.center_y + (1 - gap / radius) * (second_line.y1 - second_line.center_y);
-            }
-            else
-            {
-                Pushout_Circle.x1 = Pushout_Circle.x2 = second_line.center_x + (1 + gap / radius) * (second_line.x1 - second_line.center_x);
-                Pushout_Circle.y1 = Pushout_Circle.y2 = second_line.center_y + (1 + gap / radius) * (second_line.y1 - second_line.center_y);
-            }
-
-            Intersection_Points = first_intersection_between_line_and_arc_for_arc_tuning(Pushout_Circle, second_point, first_point);
-
-            Extended_Points.at(i).x = Intersection_Points.x;
-            Extended_Points.at(i).y = Intersection_Points.y;
-        }
-        else if (!first_line.is_line && !second_line.is_line)
-        {
-            radius_1 = hypot(first_line.x2 - first_line.center_x, first_line.y2 - first_line.center_y);
-            radius_2 = hypot(second_line.x1 - second_line.center_x, second_line.y1 - second_line.center_y);
-            radius_1_silkscreen = hypot(Extended_Points.at(i).x - first_line.center_x, Extended_Points.at(i).y - first_line.center_y);
-            radius_2_silkscreen = hypot(Extended_Points.at(i).x - second_line.center_x, Extended_Points.at(i).y - second_line.center_y);
-            if (radius_1_silkscreen > radius_1)
-                first_concave = false; // 凸
-            else
-                first_concave = true; // 凹
-            Pushout_Circle_1.center_x = first_line.center_x;
-            Pushout_Circle_1.center_y = first_line.center_y;
-            Pushout_Circle_1.is_CCW = first_line.is_CCW;
-            Pushout_Circle_1.detail.theta_1 = first_line.detail.theta_1;
-            Pushout_Circle_1.detail.theta_2 = first_line.detail.theta_1;
-            if (first_concave)
-            {
-                Pushout_Circle_1.x1 = Pushout_Circle_1.x2 = first_line.center_x + (1 - gap / radius_1) * (first_line.x2 - first_line.center_x);
-                Pushout_Circle_1.y1 = Pushout_Circle_1.y2 = first_line.center_y + (1 - gap / radius_1) * (first_line.y2 - first_line.center_y);
-            }
-            else
-            {
-                Pushout_Circle_1.x1 = Pushout_Circle_1.x2 = first_line.center_x + (1 + gap / radius_1) * (first_line.x2 - first_line.center_x);
-                Pushout_Circle_1.y1 = Pushout_Circle_1.y2 = first_line.center_y + (1 + gap / radius_1) * (first_line.y2 - first_line.center_y);
-            }
-
-            if (radius_2_silkscreen > radius_2)
-                second_concave = false; // 凸
-            else
-                second_concave = true; // 凹
-            Pushout_Circle_2.center_x = second_line.center_x;
-            Pushout_Circle_2.center_y = second_line.center_y;
-            Pushout_Circle_2.is_CCW = second_line.is_CCW;
-            Pushout_Circle_2.detail.theta_1 = second_line.detail.theta_1;
-            Pushout_Circle_2.detail.theta_2 = second_line.detail.theta_1;
-
-            if (second_concave)
-            {
-                Pushout_Circle_2.x1 = Pushout_Circle_2.x2 = second_line.center_x + (1 - gap / radius_2) * (second_line.x1 - second_line.center_x);
-                Pushout_Circle_2.y1 = Pushout_Circle_2.y2 = second_line.center_y + (1 - gap / radius_2) * (second_line.y1 - second_line.center_y);
-            }
-            else
-            {
-                Pushout_Circle_2.x1 = Pushout_Circle_2.x2 = second_line.center_x + (1 + gap / radius_2) * (second_line.x1 - second_line.center_x);
-                Pushout_Circle_2.y1 = Pushout_Circle_2.y2 = second_line.center_y + (1 + gap / radius_2) * (second_line.y1 - second_line.center_y);
-            }
-
-            Intersection_Points = first_intersection_between_arc_and_arc_for_arc_tuning(Pushout_Circle_1, Pushout_Circle_2);
-            Extended_Points.at(i).x = Intersection_Points.x;
-            Extended_Points.at(i).y = Intersection_Points.y;
-        }
-    }
-    return Extended_Points;
-}
-
+*/
+/*
 Point Buffer::first_intersection_between_line_and_arc_for_arc_tuning(Segment Arc, Point Line_First_Point, Point Line_Second_Point)
 {
     // 圓公式 (x-x0)^2 + (y-y0)^2 = r^2
@@ -555,82 +639,6 @@ Point Buffer::first_intersection_between_arc_and_arc_for_arc_tuning(Segment Arc1
     return Point();
 }
 
-Graph Buffer::Point_to_Line(vector<Point> Extended_Points, Graph Polygon)
-{
-    size_t size = Polygon.segment.size();
-    Segment A_Line;
-    Graph Silkscreen;
-    if (!Extended_Points.empty())
-    {
-        Silkscreen.x_min = Silkscreen.x_max = Extended_Points.at(0).x; // initialize
-        Silkscreen.y_min = Silkscreen.y_max = Extended_Points.at(0).y;
-        for (size_t i = 0; i < size; i++)
-        {
-            // calculate point to line
-            A_Line.is_line = (Extended_Points.at(i).Next_Arc) ? false : true;
-            A_Line.x1 = Extended_Points.at(i).x;
-            A_Line.y1 = Extended_Points.at(i).y;
-            if (i != size - 1)
-            {
-                A_Line.x2 = Extended_Points.at(i + 1).x;
-                A_Line.y2 = Extended_Points.at(i + 1).y;
-            }
-            else
-            {
-                A_Line.x2 = Extended_Points.at(0).x;
-                A_Line.y2 = Extended_Points.at(0).y;
-            }
-            if (A_Line.is_line)
-            {
-                A_Line.center_x = A_Line.center_y = A_Line.is_CCW = 0;
-            }
-            else
-            {
-                A_Line.detail.theta = 0;
-
-                A_Line.center_x = Polygon.segment.at(i).center_x;
-                A_Line.center_y = Polygon.segment.at(i).center_y;
-                A_Line.is_CCW = Polygon.segment.at(i).is_CCW;
-
-                A_Line.detail.theta_1 = atan2(A_Line.y1 - A_Line.center_y, A_Line.x1 - A_Line.center_x);
-                A_Line.detail.theta_2 = atan2(A_Line.y2 - A_Line.center_y, A_Line.x2 - A_Line.center_x);
-            }
-            if (!A_Line.is_line) // arc
-            {
-                A_Line = Arc_Boundary_Meas(A_Line);
-            }
-            else // line
-            {
-                A_Line.detail.x_min = min(A_Line.x1, A_Line.x2);
-                A_Line.detail.x_max = max(A_Line.x1, A_Line.x2);
-                A_Line.detail.y_min = min(A_Line.y1, A_Line.y2);
-                A_Line.detail.y_max = max(A_Line.y1, A_Line.y2);
-            }
-
-            if (A_Line.detail.x_max > Silkscreen.x_max)
-            {
-                Silkscreen.x_max = A_Line.detail.x_max;
-            }
-            if (A_Line.detail.x_min < Silkscreen.x_min)
-            {
-                Silkscreen.x_min = A_Line.detail.x_min;
-            }
-            if (A_Line.detail.y_max > Silkscreen.y_max)
-            {
-                Silkscreen.y_max = A_Line.detail.y_max;
-            }
-            if (A_Line.detail.y_min < Silkscreen.y_min)
-            {
-                Silkscreen.y_min = A_Line.detail.y_min;
-            }
-
-            Silkscreen.segment.push_back(A_Line);
-        }
-    }
-
-    return Silkscreen;
-}
-
 Segment Buffer::Arc_Boundary_Meas(Segment Arc) // move to graph.cpp
 {
     Segment A_Arc;
@@ -683,3 +691,5 @@ Segment Buffer::Arc_Boundary_Meas(Segment Arc) // move to graph.cpp
 
     return A_Arc;
 }
+
+*/

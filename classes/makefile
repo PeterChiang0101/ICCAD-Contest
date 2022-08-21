@@ -8,20 +8,31 @@ else
 	output_name := ./cade0025_beta
 endif
 
-separated: new_main.cpp VectorOp.o FileIO.o Buffer.o Silkscreen.o
-	g++ -std=c++0x -Wall -o $(output_name) new_main.cpp VectorOp.o FileIO.o Buffer.o Silkscreen.o
-
-VectorOp.o: VectorOp.cpp VectorOp.h
-	g++ -std=c++0x -Wall -c -o VectorOp.o VectorOp.cpp
-
-FileIO.o: FileIO.cpp FileIO.h
-	g++ -std=c++0x -Wall -c -o FileIO.o FileIO.cpp
+separated: new_main.cpp VectorOp.o FileIO.o Buffer.o Silkscreen.o Graph.o Point.o
+	g++ -std=c++0x -Wall -o $(output_name) new_main.cpp VectorOp.o FileIO.o Buffer.o Silkscreen.o Graph.o Point.o
 
 Buffer.o: Buffer.cpp Buffer.h
 	g++ -std=c++0x -Wall -c -o Buffer.o Buffer.cpp
 
+FileIO.o: FileIO.cpp FileIO.h
+	g++ -std=c++0x -Wall -c -o FileIO.o FileIO.cpp
+
+Graph.o: Graph.cpp Graph.h
+	g++ -std=c++0x -Wall -c -o Graph.o Graph.cpp
+
+Point.o: Point.cpp Point.h
+	g++ -std=c++0x -Wall -c -o Point.o Point.cpp
+
+scorer.o: scorer.cpp scorer.h 
+
 Silkscreen.o: Silkscreen.cpp Silkscreen.h
 	g++ -std=c++0x -Wall -c -o Silkscreen.o Silkscreen.cpp
+
+scorer.o: scorer.cpp scorer.h
+	g++ -std=c++0x -Wall -c -o scorer.o scorer.cpp
+
+VectorOp.o: VectorOp.cpp VectorOp.h
+	g++ -std=c++0x -Wall -c -o VectorOp.o VectorOp.cpp
 
 .PHONY: clean
 clean:

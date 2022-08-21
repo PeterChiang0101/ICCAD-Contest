@@ -120,7 +120,7 @@ Graph FileIO::Read_Assembly() // 讀取assembly，轉換為vector
                 part.detail.theta_1 = atan2(part.y1 - part.center_y, part.x1 - part.center_x);
                 part.detail.theta_2 = atan2(part.y2 - part.center_y, part.x2 - part.center_x);
                 part.detail.radius = hypot(part.x1 - part.center_x, part.y1 - part.center_y);
-                part = Arc_Boundary_Meas_for_Assembly(part);
+                part = graph_op.Arc_Boundary_Meas(part);
             }
             if (part.detail.x_min < Assembly.x_min)
                 Assembly.x_min = part.detail.x_min;
@@ -176,7 +176,7 @@ vector<Graph> FileIO::Read_Copper() // 讀取copper，轉換為二維vector
                 part.detail.theta_1 = atan2(part.y1 - part.center_y, part.x1 - part.center_x);
                 part.detail.theta_2 = atan2(part.y2 - part.center_y, part.x2 - part.center_x);
                 part.detail.radius = hypot(part.x1 - part.center_x, part.y1 - part.center_y);
-                part = Arc_Boundary_Meas_for_Assembly(part);
+                part = graph_op.Arc_Boundary_Meas(part);
             }
             if (part.detail.x_min < copper.x_min)
                 copper.x_min = part.detail.x_min;
@@ -348,7 +348,8 @@ vector<string> FileIO::split(const string &str, const char &delimiter) // 拆分
     return result;
 }
 
-Segment FileIO::Arc_Boundary_Meas_for_Assembly(Segment Arc)
+/*
+Segment FileIO::Arc_Boundary_Meas_for_Assembly(Segment Arc)// moved to GRAPH
 {
     Segment A_Arc;
     A_Arc = Arc;
@@ -397,10 +398,11 @@ Segment FileIO::Arc_Boundary_Meas_for_Assembly(Segment Arc)
         A_Arc.detail.y_min = (first_angle >= -PI / 2) ? Arc.center_y - Arc.detail.radius : min(min(Arc.y1, Arc.y2), Arc.center_y);
     }
 
-    /*A_Arc.x_max = (first >= 0 && second <= 0) ? Arc.center_x + Arc.detail.radius : max(max(Arc.x1, Arc.x2), Arc.center_x);
-    A_Arc.x_min = (first >= PI && second <= PI) ? Arc.center_x - Arc.detail.radius : min(min(Arc.x1, Arc.x2), Arc.center_x);
-    A_Arc.y_max = (first >= PI / 2 && second <= PI / 2) ? Arc.center_y + Arc.detail.radius : max(max(Arc.y1, Arc.y2), Arc.center_y);
-    A_Arc.y_min = (first >= -PI / 2 && second <= -PI / 2) ? Arc.center_y - Arc.detail.radius : min(min(Arc.y1, Arc.y2), Arc.center_y);*/
+    //A_Arc.x_max = (first >= 0 && second <= 0) ? Arc.center_x + Arc.detail.radius : max(max(Arc.x1, Arc.x2), Arc.center_x);
+    //A_Arc.x_min = (first >= PI && second <= PI) ? Arc.center_x - Arc.detail.radius : min(min(Arc.x1, Arc.x2), Arc.center_x);
+    //A_Arc.y_max = (first >= PI / 2 && second <= PI / 2) ? Arc.center_y + Arc.detail.radius : max(max(Arc.y1, Arc.y2), Arc.center_y);
+    //A_Arc.y_min = (first >= -PI / 2 && second <= -PI / 2) ? Arc.center_y - Arc.detail.radius : min(min(Arc.y1, Arc.y2), Arc.center_y);
 
     return A_Arc;
 }
+*/

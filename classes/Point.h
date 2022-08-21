@@ -1,4 +1,4 @@
-// Point.hpp
+// Point.h
 // declearation of struct Point
 #include <bits/stdc++.h>
 

@@ -32,6 +32,14 @@ using namespace std;
 
 class Scorer
 {
+    /*
+    friend Point operator-(Point, Point);
+    friend Point operator+(Point, Point);
+    friend Point operator*(double, Point);
+    friend Point operator/(Point, double);
+    friend bool operator==(Point, Point);
+    friend bool operator!=(Point, Point);
+    */
 public:
     Scorer();
     Scorer(const char *, const char *);
@@ -68,14 +76,7 @@ private:
     Point find_arbitary_point_on_arc(Segment); //找出Arc兩端外圓上一點
     bool On_Arc(Segment, Point); //判斷點P是否在Arc上
     bool Concentric_Circle_On_Arc(Segment, Segment); //同心圓對兩Arc端點射線，在Arc是否有交點
-    /*
-    friend Point operator-(Point, Point);
-    friend Point operator+(Point, Point);
-    friend Point operator*(double, Point);
-    friend Point operator/(Point, double);
-    friend bool operator==(Point, Point);
-    friend bool operator!=(Point, Point);
-    */
+       
 };
 
 #endif
