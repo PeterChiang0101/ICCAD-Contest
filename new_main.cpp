@@ -1,5 +1,5 @@
 #include <bits/stdc++.h>
-
+#include "./classes/Parameter.h"
 #include "./classes/FileIO.h"
 #include "./classes/Buffer.h"
 #include "./classes/Silkscreen.h"
@@ -14,9 +14,9 @@ int main(int argc, char **argv)
     float silkscreenlen = 0.0;
     FileIO File;
     File.Read_File(argv[1]);
-    assemblygap = File.File_to_Parameter() * 1.0001;
-    coppergap = File.File_to_Parameter() * 1.0001;
-    silkscreenlen = File.File_to_Parameter() * 1.0001;
+    assemblygap = File.File_to_Parameter() * 1;
+    coppergap = File.File_to_Parameter() * 1;
+    silkscreenlen = File.File_to_Parameter() * 1;
     Graph assembly = File.Read_Assembly();
     vector<Graph> copper = File.Read_Copper();
 

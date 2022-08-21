@@ -32,8 +32,8 @@ testcase4: separated
 testcase5: separated
 	$(output_name) $(testcase5_dir) $(testcase5_out_dir)
 
-separated: new_main.o VectorOp.o FileIO.o Buffer.o Silkscreen.o
-	g++ -std=c++0x -Wall -o $(output_name) new_main.o ./classes/VectorOp.o ./classes/FileIO.o ./classes/Buffer.o ./classes/Silkscreen.o
+separated: new_main.o VectorOp.o FileIO.o Buffer.o Silkscreen.o Point.o Graph.o
+	g++ -std=c++0x -Wall -o $(output_name) new_main.o ./classes/VectorOp.o ./classes/FileIO.o ./classes/Buffer.o ./classes/Silkscreen.o ./classes/Point.o ./classes/Graph.o
 
 new_main.o: new_main.cpp
 	g++ -std=c++0x -Wall -c -o new_main.o new_main.cpp
@@ -61,6 +61,12 @@ inputoutput.o:inputoutput.cpp inputoutput.h
 
 Segment.o:Segment.cpp Segment.h
 	g++ -c -Wall -o Segment.o Segment.cpp
+
+Graph.o: ./classes/Graph.cpp ./classes/Graph.h
+	g++ -std=c++0x -Wall -c -o ./classes/Graph.o ./classes/Graph.cpp
+
+Point.o: ./classes/Point.cpp ./classes/Point.h
+	g++ -std=c++0x -Wall -c -o ./classes/Point.o ./classes/Point.cpp
 
 .PHONY: clean
 clean:

@@ -1,6 +1,7 @@
 silkscreen
+line,5.9052,3.2232,6.1638,2.9646
+silkscreen
 line,6.1638,1.2818,5.9052,1.0232
-line,5.9052,1.0232,5.5838,1.0232
 silkscreen
 line,2.6738,1.0232,2.1838,1.0232
 silkscreen
