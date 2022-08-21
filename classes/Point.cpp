@@ -5,17 +5,17 @@
 using namespace std;
 
 
-float POINT::dis2(const Point A, const Point B) //點A、B距離的平方
+double POINT::dis2(const Point A, const Point B) //點A、B距離的平方
 {
     return (A.x - B.x) * (A.x - B.x) + (A.y - B.y) * (A.y - B.y);
 }
 
-float POINT::dist(const Point A, const Point B) //點A、B距離,with hypot
+double POINT::dist(const Point A, const Point B) //點A、B距離,with hypot
 {
     return hypot((A.x - B.x),(A.y - B.y));
 }
 
-float POINT::interpolate_x(const float y, const Point p1, const Point p2) // 待測點與圖形邊界交會的x值
+double POINT::interpolate_x(const float y, const Point p1, const Point p2) // 待測點與圖形邊界交會的x值
 {
     if (p1.y == p2.y)
         return p1.x;

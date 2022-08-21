@@ -14,6 +14,7 @@ class FileIO
 {
 public:
     void Read_File(const char *filename);
+    void Read_File(const string filename);
     void Read_File(const char *filename, const char *filename_ans);
     float File_to_Parameter(); // 讀入參數
     Graph Read_Assembly();
@@ -21,6 +22,7 @@ public:
     Graph Read_Silkscreen();
     void Write_File(const Graph);                               // 印出未切割的絲
     void Write_File(const vector<Graph>, const char *filename); // 可印出切割後的絲印和原始和外擴的copper
+    void Write_File(const vector<Graph>, const string);
 
 private:
     fstream InFile;

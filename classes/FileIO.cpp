@@ -18,6 +18,16 @@ void FileIO::Read_File(const char *filename)
         InFile.open(INPUT_PATH, ios::in); // 預設讀取測試檔案
     }
 }
+//for testing case
+void FileIO::Read_File(const string filename)
+{
+    InFile.open(filename, ios::in);
+    if (!InFile.is_open())
+    {
+        cout << "File open failed!" << endl;
+        InFile.open(INPUT_PATH, ios::in); // 預設讀取測試檔案
+    }
+}
 
 void FileIO::Read_File(const char *filename,const char *filename_ans)
 {
@@ -207,6 +217,41 @@ void FileIO::Write_File(const Graph Silkscreen)
 }
 
 void FileIO::Write_File(const vector<Graph> Silkscreen, const char *filename)
+{
+    fstream Output;
+
+    Output.open(filename, ios::out);
+
+    if (!Output)
+    {
+        cout << "Error: Cannot open file" << endl;
+        Output.open(OUTPUT_PATH, ios::out); // 如果未指定路徑，使用預設路徑
+    }
+
+    const size_t size = Silkscreen.size();
+    for (size_t i = 0; i < size; i++)
+    {
+        int conti_size = Silkscreen.at(i).segment.size();
+        if (conti_size == 0)
+            continue;
+        Output << "silkscreen" << endl;
+        for (int j = 0; j < conti_size; j++)
+        {
+            if (j > 0 && (Silkscreen.at(i).segment.at(j).x1 != Silkscreen.at(i).segment.at(j - 1).x2 || Silkscreen.at(i).segment.at(j).y1 != Silkscreen.at(i).segment.at(j - 1).y2))
+                Output << "silkscreen" << endl;
+            if (Silkscreen.at(i).segment.at(j).is_line)
+            {
+                Output << "line," << fixed << setprecision(4) << Silkscreen.at(i).segment.at(j).x1 << "," << Silkscreen.at(i).segment.at(j).y1 << "," << Silkscreen.at(i).segment.at(j).x2 << "," << Silkscreen.at(i).segment.at(j).y2 << endl;
+            }
+            else
+            {
+                Output << "arc," << fixed << setprecision(4) << Silkscreen.at(i).segment.at(j).x1 << "," << Silkscreen.at(i).segment.at(j).y1 << "," << Silkscreen.at(i).segment.at(j).x2 << "," << Silkscreen.at(i).segment.at(j).y2 << "," << Silkscreen.at(i).segment.at(j).center_x << "," << Silkscreen.at(i).segment.at(j).center_y << "," << (Silkscreen.at(i).segment.at(j).is_CCW ? "CCW" : "CW") << endl;
+            }
+        }
+    }
+}
+
+void FileIO::Write_File(const vector<Graph> Silkscreen, const string filename)
 {
     fstream Output;
 
