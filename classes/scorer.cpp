@@ -10,21 +10,21 @@
 using namespace std;
 
 //=================function declarations==========================
-//int dir(Point, Point, Point);
-//double disMin(Point, Point, Point);
+// int dir(Point, Point, Point);
+// double disMin(Point, Point, Point);
 Point operator-(Point, Point);
 Point operator+(Point, Point);
 Point operator*(double, Point);
 Point operator/(Point, double);
 bool operator==(Point, Point);
 bool operator!=(Point, Point);
-//Point orth_Cswap(Point);
-//Point orth_CCswap(Point);
-//double Point_to_Arc_MinDist(Point, Segment);
-//vector<Point> intersection_between_CentersLine_and_Arc(Segment, Point);
-//bool Line_intersect(Segment, Segment);
-//bool On_Arc(Segment, Point);
-//bool Concentric_Circle_On_Arc(Segment, Segment);
+// Point orth_Cswap(Point);
+// Point orth_CCswap(Point);
+// double Point_to_Arc_MinDist(Point, Segment);
+// vector<Point> intersection_between_CentersLine_and_Arc(Segment, Point);
+// bool Line_intersect(Segment, Segment);
+// bool On_Arc(Segment, Point);
+// bool Concentric_Circle_On_Arc(Segment, Segment);
 
 Scorer::Scorer()
 { // the default constructor, use the defined Q_FILE and A_FILE path
@@ -337,7 +337,7 @@ double Scorer::third_quarter() // const vector<vector<Segment>> copper, const ve
 
         for (size_t j = 0; j < copper.size(); j++)
         {
-            for (size_t k = 0; k <copper.at(j).segment.size(); k++)
+            for (size_t k = 0; k < copper.at(j).segment.size(); k++)
             {
                 B1.x = copper.at(j).segment.at(k).x1;
                 B1.y = copper.at(j).segment.at(k).y1;
@@ -349,14 +349,14 @@ double Scorer::third_quarter() // const vector<vector<Segment>> copper, const ve
                 if (dir(A1, A2, B1) * dir(A1, A2, B2) <= 0 && dir(B1, B2, A1) * dir(B1, B2, A2) <= 0) //兩線段相交, 距離為0
                     min_distance = 0;
 
-                if (silkscreen.segment.at(i).is_line && copper.at(j).segment.at(k).is_line)//Silkscreen:line, Copper Segment: lines.
+                if (silkscreen.segment.at(i).is_line && copper.at(j).segment.at(k).is_line) // Silkscreen:line, Copper Segment: lines.
                 {
                     if (dir(A1, A2, B1) * dir(A1, A2, B2) <= 0 && dir(B1, B2, A1) * dir(B1, B2, A2) <= 0) //兩線段相交, 距離為0
                         min_distance = 0;
                     else //如不相交, 最短距離為四個端點中到另一條線段距離的最小值
                         min_distance = min(min(min(disMin(A1, A2, B1), disMin(A1, A2, B2)), disMin(B1, B2, A1)), disMin(B1, B2, A2));
                 }
-                else if (silkscreen.segment.at(i).is_line && !copper.at(j).segment.at(k).is_line)//Silkscreen:line, Copper Segment: arc.
+                else if (silkscreen.segment.at(i).is_line && !copper.at(j).segment.at(k).is_line) // Silkscreen:line, Copper Segment: arc.
                 {
                     min_distance = min(min(min(disMin(A1, A2, B1), disMin(A1, A2, B2)), Point_to_Arc_MinDist(A1, copper.at(j).segment.at(k))), Point_to_Arc_MinDist(A2, copper.at(j).segment.at(k)));
 
@@ -379,7 +379,7 @@ double Scorer::third_quarter() // const vector<vector<Segment>> copper, const ve
                             min_distance = min(min_distance, min_tmp);
                     }
                 }
-                else if (!silkscreen.segment.at(i).is_line && copper.at(j).segment.at(k).is_line)//Silkscreen:arc, Copper Segment:line
+                else if (!silkscreen.segment.at(i).is_line && copper.at(j).segment.at(k).is_line) // Silkscreen:arc, Copper Segment:line
                 {
                     min_distance = min(min(min(Point_to_Arc_MinDist(B1, silkscreen.segment.at(i)), Point_to_Arc_MinDist(B2, silkscreen.segment.at(i))), disMin(B1, B2, A1)), disMin(B1, B2, A2));
 
@@ -402,12 +402,12 @@ double Scorer::third_quarter() // const vector<vector<Segment>> copper, const ve
                             min_distance = min(min_distance, min_tmp);
                     }
                 }
-                else if (!silkscreen.segment.at(i).is_line && !copper.at(j).segment.at(k).is_line)//silkscreen: arc, copper segment arc. 
+                else if (!silkscreen.segment.at(i).is_line && !copper.at(j).segment.at(k).is_line) // silkscreen: arc, copper segment arc.
                 {
-                    min_distance = INFINITY;// changed on 8/16 (Warning)
+                    min_distance = INFINITY; // changed on 8/16 (Warning)
                     if (circle_center_A == circle_center_B)
                     {
-                        if (Concentric_Circle_On_Arc(silkscreen.segment.at(i), copper.at(j).segment.at(k))) 
+                        if (Concentric_Circle_On_Arc(silkscreen.segment.at(i), copper.at(j).segment.at(k)))
                         {
                             if (rA > rB)
                                 min_distance = rA - rB;
@@ -569,14 +569,14 @@ double Scorer::fourth_quarter()
             circle_center_B.x = assembly.segment.at(j).center_x;
             circle_center_B.y = assembly.segment.at(j).center_y;
             rB = POINT::dist(B1, circle_center_B);
-            if (silkscreen.segment.at(i).is_line && assembly.segment.at(j).is_line)//silkscreen: line, assembly segment line.
+            if (silkscreen.segment.at(i).is_line && assembly.segment.at(j).is_line) // silkscreen: line, assembly segment line.
             {
                 if (dir(A1, A2, B1) * dir(A1, A2, B2) <= 0 && dir(B1, B2, A1) * dir(B1, B2, A2) <= 0) //兩線段相交, 距離為0
                     min_distance = 0;
                 else //如不相交, 最短距離為四個端點中到另一條線段距離的最小值
                     min_distance = min(min(min(disMin(A1, A2, B1), disMin(A1, A2, B2)), disMin(B1, B2, A1)), disMin(B1, B2, A2));
             }
-            else if (silkscreen.segment.at(i).is_line && !assembly.segment.at(j).is_line)//silkscreen: line, assembly segment arc.
+            else if (silkscreen.segment.at(i).is_line && !assembly.segment.at(j).is_line) // silkscreen: line, assembly segment arc.
             {
                 min_distance = min(min(min(disMin(A1, A2, B1), disMin(A1, A2, B2)), Point_to_Arc_MinDist(A1, assembly.segment.at(j))), Point_to_Arc_MinDist(A2, assembly.segment.at(j)));
 
@@ -610,7 +610,7 @@ double Scorer::fourth_quarter()
                         min_distance = min(min_distance, min_tmp);
                 }
             }
-            else if (!silkscreen.segment.at(i).is_line && assembly.segment.at(j).is_line)//silkscreen: arc, assembly segment line.
+            else if (!silkscreen.segment.at(i).is_line && assembly.segment.at(j).is_line) // silkscreen: arc, assembly segment line.
             {
 
                 min_distance = min(min(min(Point_to_Arc_MinDist(B1, silkscreen.segment.at(i)), Point_to_Arc_MinDist(B2, silkscreen.segment.at(i))), disMin(B1, B2, A1)), disMin(B1, B2, A2));
@@ -642,7 +642,7 @@ double Scorer::fourth_quarter()
                         min_distance = min(min_distance, min_tmp);
                 }
             }
-            else if (!silkscreen.segment.at(i).is_line && !assembly.segment.at(j).is_line)//silkscreen: arc, assembly segment arc.
+            else if (!silkscreen.segment.at(i).is_line && !assembly.segment.at(j).is_line) // silkscreen: arc, assembly segment arc.
             {
                 min_distance = INFINITY;
                 if (circle_center_A == circle_center_B)
@@ -787,12 +787,12 @@ double dot(Point v1, Point v2) // 向量內積 //same in vector op
     return v1.x * v2.x + v1.y * v2.y;
 }
 
-double dis2(Point A, Point B) //點A、B距離的平方 // move to Point 
+double dis2(Point A, Point B) //點A、B距離的平方 // move to Point
 {
     return (A.x - B.x) * (A.x - B.x) + (A.y - B.y) * (A.y - B.y);
 }
 
-double dist(Point A, Point B) //點A、B距離 // will replace by stl hypot 
+double dist(Point A, Point B) //點A、B距離 // will replace by stl hypot
 {
     return sqrt((A.x - B.x) * (A.x - B.x) + (A.y - B.y) * (A.y - B.y));
 }
@@ -831,7 +831,7 @@ double Scorer::disMin(const Point A, const Point B, const Point P) //點P到線�
     }
 }
 
-//retain in the Socorer
+// retain in the Socorer
 double Scorer::Point_to_Arc_MinDist(Point pp, Segment Arc) //點到圓弧之最短距離
 {
     Point p1, p2, pc, ex_p;
@@ -866,7 +866,7 @@ double Scorer::Point_to_Arc_MinDist(Point pp, Segment Arc) //點到圓弧之最�
 }
 
 vector<Point> Scorer::intersection_between_CentersLine_and_Arc(Segment Arc, Point Center) // the other arc's center
-{                                                                                 // 圓心線對Arc的交點
+{                                                                                         // 圓心線對Arc的交點
     Point centerpoint, A;
     Point v1, v2;
     Point tmp;
@@ -921,7 +921,7 @@ Point Scorer::find_arbitary_point_on_arc(Segment Arc) //找出Arc兩端外圓上
     v2 = B - A;
     if ((A + B) / 2 == centerpoint)
     {
-        if (!Arc.is_CCW )
+        if (!Arc.is_CCW)
             return middlepoint + VectorOp::orth_Cswap(v2 / 2);
         else
             return middlepoint + VectorOp::orth_CCswap(v2 / 2);
@@ -951,7 +951,7 @@ bool Scorer::On_Arc(Segment Arc, Point p) //判斷點P是否在Arc上
     OP.x2 = p.x;
     OP.y2 = p.y;
 
-    return (graph_op.Line_intersect(AB, OP) || graph_op.Line_intersect(BC, OP))? true : false;
+    return (graph_op.Line_intersect(AB, OP) || graph_op.Line_intersect(BC, OP)) ? true : false;
 }
 
 bool Scorer::Concentric_Circle_On_Arc(Segment Arc1, Segment Arc2) //同心圓對兩Arc端點射線，在Arc是否有交點
@@ -1030,12 +1030,12 @@ bool Line_intersect(Segment S1, Segment S2)//找兩Segment交點 //moved to GRAP
     if (c1 * c2 <= 0 && c3 * c4 <= 0)
         return true;
     // 端點共線
-    
+
     //if (c1 == 0 && Line_intersect(a1, a2, b1)) return true;
     //if (c2 == 0 && Line_intersect(a1, a2, b2)) return true;
     //if (c3 == 0 && Line_intersect(b1, b2, a1)) return true;
     //if (c4 == 0 && Line_intersect(b1, b2, a2)) return true;
-    
+
     return false;
 }
 */
@@ -1056,7 +1056,6 @@ Scorer &Scorer::setSilkscreen(const Graph silkscreen)
     this->silkscreen = silkscreen;
     return *this;
 }
-
 
 Point operator-(Point a, Point b)
 {

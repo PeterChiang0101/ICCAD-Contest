@@ -7,4 +7,4 @@
 #define ARC_TO_LINE_SLICE_DENSITY 1 // 切片密度(in degree)
 #define INPUT_PATH "./TestingCase/test_C.txt"
 #define OUTPUT_PATH "./TestingCase/test_C_Ans.txt"
-#define mutiplier_to_fit_host_need 1
+#define mutiplier_to_fit_host_need 1.0004

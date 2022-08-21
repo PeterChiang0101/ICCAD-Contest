@@ -1148,7 +1148,7 @@ void Silkscreen::fit_lines_simularity()
     int line_running_index = 0;
     Graph cut_result;
     array<int, 2> line_index;
-
+    /*
     for (size_t i = 0; i < continuous_size; i++)
     {
         size_t size = this->silkscreen.at(i).segment.size();
@@ -1198,19 +1198,18 @@ void Silkscreen::fit_lines_simularity()
         if (arc_diff == 0)
             break;
     }
-
+    */
+    bool line_modified = false;
     for (size_t i = 0; i < continuous_size; i++)
     {
         size_t size = this->silkscreen.at(i).segment.size();
-        for (size_t j = 0; j < size; j++)
+
+        line_modified = false;
+        for (size_t j = 0, l = 0; j < size; j++, l++)
         {
-            line_index[0] = i, line_index[1] = j;
+            line_index[0] = i, line_index[1] = l;
             Segment line = this->silkscreen.at(i).segment.at(j);
-            if (!line.is_line)
-            {
-                continue;
-            }
-            if (line_diff > 0 && hypot(line.x2 - line.x1, line.y2 - line.y1) >= silkscreenlen * (line_diff + 1)) // 線段數需要增加
+            /*if (line_diff > 0 && hypot(line.x2 - line.x1, line.y2 - line.y1) >= silkscreenlen * (line_diff + 1)) // 線段數需要增加
             {
                 cut_result = cut_line_arc(this->silkscreen.at(i).segment.at(j), line_diff + 1, true);
                 silkscreen.at(i).segment.insert(silkscreen.at(i).segment.begin() + j, cut_result.segment.begin(), cut_result.segment.end());
@@ -1218,23 +1217,43 @@ void Silkscreen::fit_lines_simularity()
                 line_diff = 0;
                 break;
             }
-            else if (line_diff < 0)
+            */
+            if (line_index == Uppest_Silkscreen_index || line_index == Lowest_Silkscreen_index || line_index == Leftest_Silkscreen_index || line_index == Rightest_Silkscreen_index)
             {
-                if (line_index == Uppest_Silkscreen_index || line_index == Lowest_Silkscreen_index || line_index == Leftest_Silkscreen_index || line_index == Rightest_Silkscreen_index)
+                if (!line_modified)
+                    continue;
+                else
+                    break;
+            }
+            else
+            {
+                if (line.is_line && line_diff < 0)
+                {
+                    line_modified = true;
+                    silkscreen.at(i).segment.erase(silkscreen.at(i).segment.begin() + j);
+                    j--;
+                    size--;
+                    line_diff++;
+                }
+                else if (!line.is_line && arc_diff < 0)
+                {
+                    line_modified = true;
+                    silkscreen.at(i).segment.erase(silkscreen.at(i).segment.begin() + j);
+                    j--;
+                    size--;
+                    arc_diff++;
+                }
+                else if (!line_modified)
                 {
                     continue;
                 }
                 else
                 {
-                    silkscreen.at(i).segment.erase(silkscreen.at(i).segment.begin() + j);
-                    size--;
-                    line_diff++;
+                    break;
                 }
             }
-            if (line_diff == 0)
-                break;
         }
-        if (line_diff == 0)
+        if (line_diff == 0 && arc_diff == 0)
             break;
     }
 }
@@ -1423,7 +1442,7 @@ Segment Silkscreen::Arc_Boundary_Meas_for_Assembly(const Segment Arc)
         A_Arc.detail.y_min = (first_angle >= -PI / 2) ? Arc.center_y - radius : min(min(Arc.y1, Arc.y2), Arc.center_y);
     }
 
-    
+
     //A_Arc.x_max = (first >= 0 && second <= 0) ? Arc.center_x + radius : max(max(Arc.x1, Arc.x2), Arc.center_x);
     //A_Arc.x_min = (first >= PI && second <= PI) ? Arc.center_x - radius : min(min(Arc.x1, Arc.x2), Arc.center_x);
     //A_Arc.y_max = (first >= PI / 2 && second <= PI / 2) ? Arc.center_y + radius : max(max(Arc.y1, Arc.y2), Arc.center_y);
@@ -1485,7 +1504,7 @@ vector<Point> Silkscreen::intersection_between_arc_and_arc(const Segment Arc1, c
 }
 */
 
-/* removed functions 
+/* removed functions
 
 
 vector<vector<Point>> Silkscreen::Arc_Optimization(Graph Assembly)

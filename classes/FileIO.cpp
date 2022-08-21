@@ -77,7 +77,7 @@ float FileIO::File_to_Parameter()
     InFile >> parameter_str;
     string str_truncate;
     str_truncate = parameter_str.substr(parameter_str.find(',') + 1);
-    return stof(str_truncate);
+    return stof(str_truncate) * mutiplier_to_fit_host_need;
 }
 
 Graph FileIO::Read_Assembly() // 讀取assembly，轉換為vector

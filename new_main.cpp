@@ -14,9 +14,9 @@ int main(int argc, char **argv)
     float silkscreenlen = 0.0;
     FileIO File;
     File.Read_File(argv[1]);
-    assemblygap = File.File_to_Parameter() * 1;
-    coppergap = File.File_to_Parameter() * 1;
-    silkscreenlen = File.File_to_Parameter() * 1;
+    assemblygap = File.File_to_Parameter();
+    coppergap = File.File_to_Parameter();
+    silkscreenlen = File.File_to_Parameter();
     Graph assembly = File.Read_Assembly();
     vector<Graph> copper = File.Read_Copper();
 
