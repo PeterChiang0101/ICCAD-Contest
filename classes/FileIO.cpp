@@ -348,9 +348,9 @@ vector<string> FileIO::split(const string &str, const char &delimiter) // 拆分
     return result;
 }
 
-vector<int> FileIO::getcontinue_num () const
+size_t FileIO::getcontinue_num_size () const
 {
-    return this->continue_num;
+    return this->continue_num.size();
 }
 
 int FileIO::getcontinue_num_item (size_t order) const

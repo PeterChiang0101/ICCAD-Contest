@@ -501,7 +501,7 @@ double Scorer::third_quarter() // const vector<vector<Segment>> copper, const ve
             min_copper_used = true;
         }
     }
-    T_copper = min_distance_sum / (double)file.getcontinue_num().size();
+    T_copper = min_distance_sum / (double)file.getcontinue_num_size();
     Third_Score = (1 - (T_copper - L_copper) * 10 / L_copper) * 0.25;
     // print the score of the third_quarter
     if (ShowDetail)
@@ -718,7 +718,7 @@ double Scorer::fourth_quarter()
             brk = false;
         }
     }
-    T_outline = min_distance_sum / file.getcontinue_num().size();
+    T_outline = min_distance_sum / file.getcontinue_num_size();
     Fourth_Score = (1 - (T_outline - L_outline) * 10 / L_outline) * 0.25;
 
     if (Fourth_Score < 0)

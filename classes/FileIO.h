@@ -23,7 +23,7 @@ public:
     void Write_File(const Graph);                               // 印出未切割的絲
     void Write_File(const vector<Graph>, const char *filename); // 可印出切割後的絲印和原始和外擴的copper
     void Write_File(const vector<Graph>, const string);
-    vector<int> getcontinue_num() const;
+    size_t getcontinue_num_size() const;
     int getcontinue_num_item (size_t order) const;
 
 private:
