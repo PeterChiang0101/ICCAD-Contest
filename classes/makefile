@@ -11,7 +11,7 @@ endif
 separated: new_main.cpp VectorOp.o FileIO.o Buffer.o Silkscreen.o Graph.o Point.o
 	g++ -std=c++0x -Wall -o $(output_name) new_main.cpp VectorOp.o FileIO.o Buffer.o Silkscreen.o Graph.o Point.o
 
-scorer.exe: scorer.o ../test.cpp FileIO.o Buffer.o Graph.o VectorOp.o Point.o scorer.h
+scorer.exe: scorer.o ./test.cpp FileIO.o Buffer.o Graph.o VectorOp.o Point.o scorer.h
 	g++ -std=c++0x  -o ./test.exe ./test.cpp  scorer.o FileIO.o Buffer.o Graph.o VectorOp.o Point.o
 
 Buffer.o: Buffer.cpp Buffer.h
