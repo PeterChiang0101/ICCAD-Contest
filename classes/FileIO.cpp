@@ -348,6 +348,25 @@ vector<string> FileIO::split(const string &str, const char &delimiter) // 拆分
     return result;
 }
 
+vector<int> FileIO::getcontinue_num () const
+{
+    return this->continue_num;
+}
+
+int FileIO::getcontinue_num_item (size_t order) const
+{
+    if(order < continue_num.size())
+    {
+        return this->continue_num[order];
+    }
+    else
+    {   
+        cerr << "ERROR: Invalid order number of '/continue_num'/ " <<endl;
+        return (-5); 
+    }
+
+}
+
 /*
 Segment FileIO::Arc_Boundary_Meas_for_Assembly(Segment Arc)// moved to GRAPH
 {

@@ -32,7 +32,7 @@ Scorer::Scorer()
 
     // this->Q_file.open(INPUT_PATH, ios::in);
     // this->A_file.open(OUTPUT_PATH, ios::in);
-    // this->open_file();
+    read_file();
 }
 
 Scorer::Scorer(const char *Ques_File, const char *Ans_File)
@@ -41,7 +41,7 @@ Scorer::Scorer(const char *Ques_File, const char *Ans_File)
 
     // this->Q_file.open(Ques_File, ios::in);
     // this->A_file.open(Ans_File, ios::in);
-    // this->open_file();
+    read_file();
 }
 
 void Scorer::read_file()
@@ -318,7 +318,7 @@ double Scorer::third_quarter() // const vector<vector<Segment>> copper, const ve
     for (size_t i = 0; i < silkscreen.segment.size(); i++)
     {
         // count the continue_silkscreen
-        if (++continue_seg_count >= continue_num[continue_seg])
+        if (++continue_seg_count >= file.getcontinue_num_item(continue_seg))
         {
             continue_seg++;
             continue_seg_count = 0;
@@ -501,7 +501,7 @@ double Scorer::third_quarter() // const vector<vector<Segment>> copper, const ve
             min_copper_used = true;
         }
     }
-    T_copper = min_distance_sum / (double)this->continue_num.size();
+    T_copper = min_distance_sum / (double)file.getcontinue_num().size();
     Third_Score = (1 - (T_copper - L_copper) * 10 / L_copper) * 0.25;
     // print the score of the third_quarter
     if (ShowDetail)
@@ -547,7 +547,7 @@ double Scorer::fourth_quarter()
 
     for (size_t i = 0; i < silkscreen.segment.size(); i++)
     {
-        if (++count_number == continue_num[group])
+        if (++count_number == file.getcontinue_num_item(group))
         {
             group++;
             brk = true;
@@ -718,7 +718,7 @@ double Scorer::fourth_quarter()
             brk = false;
         }
     }
-    T_outline = min_distance_sum / this->continue_num.size();
+    T_outline = min_distance_sum / file.getcontinue_num().size();
     Fourth_Score = (1 - (T_outline - L_outline) * 10 / L_outline) * 0.25;
 
     if (Fourth_Score < 0)
