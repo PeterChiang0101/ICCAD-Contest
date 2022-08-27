@@ -12,6 +12,7 @@ struct Intersection
     int copper_ID{0};      // record which copper is intersected.
     int copper_segment{0}; // the segment of intersected copper
     size_t cont_silkscreen{0};
+    bool is_head_point;
     Point intersection_point;
 };
 

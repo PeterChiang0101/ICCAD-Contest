@@ -610,12 +610,14 @@ void Silkscreen::Find_Intersection_Copper_Silkscreen()
             part.cont_silkscreen = i;
             part.intersection_point.x = silkscreen.at(i).segment.at(0).x1;
             part.intersection_point.y = silkscreen.at(i).segment.at(0).y1;
+            part.is_head_point = true;
             intersect_points.push_back(part);
             // tail segment
             part.copper_segment = (int)silkscreen.at(i).segment.at(0).detail.SegmentID2;
             part.copper_ID = (int)silkscreen.at(i).segment.at(0).detail.CopperID2;
             part.intersection_point.x = silkscreen.at(i).segment.at(continue_silkscreen_graph_size - 1).x2;
             part.intersection_point.y = silkscreen.at(i).segment.at(continue_silkscreen_graph_size - 1).y2;
+            part.is_head_point = false;
             intersect_points.push_back(part);
         }
     }
@@ -756,6 +758,8 @@ vector<Graph> Silkscreen::Add_Excess_Silkscreen_For_Boarder_Condition(vector<Gra
     {
         if (Copper_Expanded.at(i).x_min <= extremum.x && Copper_Expanded.at(i).x_max >= extremum.x && Copper_Expanded.at(i).y_min <= extremum.y && Copper_Expanded.at(i).y_max >= extremum.y) // 在 copper 裡面
         {
+            int Singal_Copper_Expanded_size = Copper_Expanded.at(i).segment.size();
+            size_t intersect_points_size = intersect_points.size();
             switch (side) // 沿著須處理的邊做一直線，而後與copper圖型取交點
             {
             case 1: // left
@@ -796,6 +800,7 @@ vector<Graph> Silkscreen::Add_Excess_Silkscreen_For_Boarder_Condition(vector<Gra
                 Extend_Line_End_Points.push_back(temp);
             }
             */
+
             vector<vector<Point>> Arc_Dots;
             vector<Point> Copper_Dots;
             Arc_Dots = graph_op.Arc_Optimization(Copper_Expanded.at(i));
@@ -806,6 +811,205 @@ vector<Graph> Silkscreen::Add_Excess_Silkscreen_For_Boarder_Condition(vector<Gra
             vector<int> Boarder_Dots_index_in_Assembly; // 在此銅箔上的點在assembly的index
             int Silkscreen_size = Silkscreen.size();
 
+            bool Qualified_Dots_Front = false; // 在線段上的點是否符合要求
+            bool Qualified_Dots_Back = false;  // 在線段上的點是否符合要求
+
+            vector<Graph> Extended_Silkscreen_Candidate; // 延伸的silkscreen
+            Graph Extended_Silkscreen_Front;             // 延伸的silkscreen
+            Graph Extended_Silkscreen_Back;              // 延伸的silkscreen
+            vector<int> intersect;                       // 延伸的silkscreen原生的點
+
+            for (size_t j = 0; j < intersect_points_size; j++)
+            {
+                if (intersect_points.at(j).copper_ID == i)
+                {
+                    bool first_line = true;
+                    for (int k = intersect_points.at(j).copper_segment;; (k) ? k-- : k = Singal_Copper_Expanded_size - 1) //往前找
+                    {
+                        Point First;
+                        Point Second;
+                        First.x = Copper_Expanded.at(i).segment.at(k).x1;
+                        First.y = Copper_Expanded.at(i).segment.at(k).y1;
+                        Second.x = Copper_Expanded.at(i).segment.at(k).x2;
+                        Second.y = Copper_Expanded.at(i).segment.at(k).y2;
+
+                        Point Boarder_first, Boarder_second;
+                        Boarder_first.x = Boarder.x1;
+                        Boarder_first.y = Boarder.y1;
+                        Boarder_second.x = Boarder.x2;
+                        Boarder_second.y = Boarder.y2;
+
+                        Point Extend_End_Point;
+                        vector<Point> Extend_End_Point_for_Copper_Arc;
+
+                        if (first_line == true)
+                        {
+                            Second.x = intersect_points.at(j).intersection_point.x;
+                            Second.y = intersect_points.at(j).intersection_point.y;
+                        }
+                        else if (first_line == false && k == intersect_points.at(j).copper_segment)
+                        {
+                            First.x = intersect_points.at(j).intersection_point.x;
+                            First.y = intersect_points.at(j).intersection_point.y;
+                        }
+
+                        if (Copper_Expanded.at(i).segment.at(k).is_line)
+                        {
+                            Extend_End_Point = graph_op.intersection(First, Second, Boarder_first, Boarder_second);
+                        }
+                        else
+                        {
+                            Extend_End_Point_for_Copper_Arc = graph_op.intersection_between_line_and_arc(Copper_Expanded.at(i).segment.at(k), Boarder_first, Boarder_second);
+                            if (Extend_End_Point_for_Copper_Arc.size() > 1)
+                            {
+                                Extend_End_Point = (hypot(Extend_End_Point_for_Copper_Arc.at(0).x - Second.x, Extend_End_Point_for_Copper_Arc.at(0).y - Second.y) < hypot(Extend_End_Point_for_Copper_Arc.at(1).x - Second.x, Extend_End_Point_for_Copper_Arc.at(1).y - Second.y)) ? Extend_End_Point_for_Copper_Arc.at(0) : Extend_End_Point_for_Copper_Arc.at(1);
+                            }
+                            else if (Extend_End_Point_for_Copper_Arc.size() == 1)
+                                Extend_End_Point = Extend_End_Point_for_Copper_Arc.at(0);
+                        }
+
+                        Segment temp;
+                        temp = Copper_Expanded.at(i).segment.at(k);
+                        if (!temp.is_line)
+                        {
+                            if (temp.x1 != Second.x || temp.y1 != Second.y)
+                            {
+                                temp.detail.theta_1 = atan2(Second.y - temp.center_y, Second.x - temp.center_x);
+                            }
+                            if (temp.x2 != First.x || temp.y2 != First.y)
+                            {
+                                temp.detail.theta_2 = atan2(First.y - temp.center_y, First.x - temp.center_x);
+                            }
+                        }
+                        temp.x1 = Second.x;
+                        temp.y1 = Second.y;
+                        temp.x2 = First.x;
+                        temp.y2 = First.y;
+
+                        if (Extend_End_Point.x != INFINITY && Extend_End_Point.y != INFINITY) // 找到延伸至極值的線段
+                        {
+                            Qualified_Dots_Front = true;
+                            temp.x2 = Extend_End_Point.x;
+                            temp.y2 = Extend_End_Point.y;
+                            Extended_Silkscreen_Front.segment.push_back(temp);
+                            break;
+                        }
+
+                        if (!silkscreen_cut_single_copper(temp, Assembly, 0).segment.empty()) // 線段經過assembly的內部
+                        {
+                            Qualified_Dots_Front = false;
+                            break;
+                        }
+                        Extended_Silkscreen_Front.segment.push_back(temp);
+                        first_line = false;
+                    }
+
+                    first_line = true;
+
+                    for (int k = intersect_points.at(j).copper_segment;; (k == Singal_Copper_Expanded_size) ? k = 0 : k++) // 往後找
+                    {
+                        Point First;
+                        Point Second;
+                        First.x = Copper_Expanded.at(i).segment.at(k).x1;
+                        First.y = Copper_Expanded.at(i).segment.at(k).y1;
+                        Second.x = Copper_Expanded.at(i).segment.at(k).x2;
+                        Second.y = Copper_Expanded.at(i).segment.at(k).y2;
+
+                        Point Boarder_first, Boarder_second;
+                        Boarder_first.x = Boarder.x1;
+                        Boarder_first.y = Boarder.y1;
+                        Boarder_second.x = Boarder.x2;
+                        Boarder_second.y = Boarder.y2;
+
+                        Point Extend_End_Point;
+                        vector<Point> Extend_End_Point_for_Copper_Arc;
+
+                        if (first_line == true)
+                        {
+                            First.x = intersect_points.at(j).intersection_point.x;
+                            First.y = intersect_points.at(j).intersection_point.y;
+                        }
+                        else if (first_line == false && k == intersect_points.at(j).copper_segment)
+                        {
+                            Second.x = intersect_points.at(j).intersection_point.x;
+                            Second.y = intersect_points.at(j).intersection_point.y;
+                        }
+
+                        if (Copper_Expanded.at(i).segment.at(k).is_line)
+                        {
+                            Extend_End_Point = graph_op.intersection(First, Second, Boarder_first, Boarder_second);
+                        }
+                        else
+                        {
+                            Extend_End_Point_for_Copper_Arc = graph_op.intersection_between_line_and_arc(Copper_Expanded.at(i).segment.at(k), Boarder_first, Boarder_second);
+                            if (Extend_End_Point_for_Copper_Arc.size() > 1)
+                            {
+                                Extend_End_Point = (hypot(Extend_End_Point_for_Copper_Arc.at(0).x - First.x, Extend_End_Point_for_Copper_Arc.at(0).y - First.y) < hypot(Extend_End_Point_for_Copper_Arc.at(1).x - First.x, Extend_End_Point_for_Copper_Arc.at(1).y - First.y)) ? Extend_End_Point_for_Copper_Arc.at(0) : Extend_End_Point_for_Copper_Arc.at(1);
+                            }
+                            else if (Extend_End_Point_for_Copper_Arc.size() == 1)
+                                Extend_End_Point = Extend_End_Point_for_Copper_Arc.at(0);
+                        }
+
+                        Segment temp;
+                        temp = Copper_Expanded.at(i).segment.at(k);
+
+                        if (!temp.is_line)
+                        {
+                            if (temp.x1 != First.x || temp.y1 != First.y)
+                            {
+                                temp.detail.theta_1 = atan2(First.y - temp.center_y, First.x - temp.center_x);
+                            }
+                            if (temp.x2 != Second.x || temp.y2 != Second.y)
+                            {
+                                temp.detail.theta_2 = atan2(Second.y - temp.center_y, Second.x - temp.center_x);
+                            }
+                        }
+                        temp.x1 = First.x;
+                        temp.y1 = First.y;
+                        temp.x2 = Second.x;
+                        temp.y2 = Second.y;
+
+                        if (Extend_End_Point.x != INFINITY && Extend_End_Point.y != INFINITY) // 找到延伸至極值的線段
+                        {
+                            Qualified_Dots_Back = true;
+                            temp.x2 = Extend_End_Point.x;
+                            temp.y2 = Extend_End_Point.y;
+                            Extended_Silkscreen_Back.segment.push_back(temp);
+                            break;
+                        }
+
+                        if (!silkscreen_cut_single_copper(temp, Assembly, 0).segment.empty()) // 線段經過assembly的內部
+                        {
+                            Qualified_Dots_Back = false;
+                            break;
+                        }
+                        Extended_Silkscreen_Back.segment.push_back(temp);
+                        first_line = false;
+                    }
+
+                    if (Qualified_Dots_Front == true && Qualified_Dots_Back == true)
+                    {
+                        // 比較長度，選擇較短者
+                        Extended_Silkscreen_Candidate.push_back(Calculate_Silkscreen_length(Extended_Silkscreen_Front) < Calculate_Silkscreen_length(Extended_Silkscreen_Back) ? Extended_Silkscreen_Front : Extended_Silkscreen_Back);
+                        intersect.push_back(j);
+                    }
+                    else if (Qualified_Dots_Front == true)
+                    {
+                        Extended_Silkscreen_Candidate.push_back(Extended_Silkscreen_Front);
+                        intersect.push_back(j);
+                    }
+                    else if (Qualified_Dots_Back == true)
+                    {
+                        Extended_Silkscreen_Candidate.push_back(Extended_Silkscreen_Back);
+                        intersect.push_back(j);
+                    }
+                    else
+                    {
+                        Extended_Silkscreen_Candidate.push_back(Graph());
+                    }
+                }
+            }
+            /*
             for (int j = 0; j < Silkscreen_size; j++)
             {
                 Point temp;
@@ -835,13 +1039,6 @@ vector<Graph> Silkscreen::Add_Excess_Silkscreen_For_Boarder_Condition(vector<Gra
 
             Graph Fake_Copper_for_Assembly; // 假的銅箔，用來比較點是否在線段上
             Fake_Copper_for_Assembly = Assembly;
-            bool Qualified_Dots_Front = false; // 在線段上的點是否符合要求
-            bool Qualified_Dots_Back = false;  // 在線段上的點是否符合要求
-
-            vector<Graph> Extended_Silkscreen_Candidate; // 延伸的silkscreen
-            Graph Extended_Silkscreen_Front;             // 延伸的silkscreen
-            Graph Extended_Silkscreen_Back;              // 延伸的silkscreen
-            int Singal_Copper_Expanded_size = Copper_Expanded.at(i).segment.size();
 
             for (int j = 0; j < Boarder_Dots_size; j++) // 找到點位於copper的哪一個線段上
             {
@@ -1052,12 +1249,13 @@ vector<Graph> Silkscreen::Add_Excess_Silkscreen_For_Boarder_Condition(vector<Gra
                     Extended_Silkscreen_Candidate.push_back(Graph());
                 }
             }
+            */
             float min_length = INFINITY;
             float temp_length;
             vector<Segment> Extended_Silkscreen;
             int Extended_Silkscreen_index = 0;                    // 第幾個延伸線段
             int Extended_Silkscreen_index_in_Original_Silkscreen; // 延伸線段需接在第幾個原始線段中
-            for (int j = 0; j < Boarder_Dots_size; j++)
+            for (int j = 0; j < Extended_Silkscreen_Candidate.size(); j++)
             {
                 // 比較各合法線段長度，選擇較短者
                 temp_length = Calculate_Silkscreen_length(Extended_Silkscreen_Candidate.at(j));
@@ -1065,12 +1263,12 @@ vector<Graph> Silkscreen::Add_Excess_Silkscreen_For_Boarder_Condition(vector<Gra
                 {
                     min_length = temp_length;
                     Extended_Silkscreen = Extended_Silkscreen_Candidate.at(j).segment;
-                    Extended_Silkscreen_index = j;
-                    Extended_Silkscreen_index_in_Original_Silkscreen = Boarder_Dots_index_in_Assembly.at(j);
+                    Extended_Silkscreen_index = intersect.at(j);
+                    Extended_Silkscreen_index_in_Original_Silkscreen = intersect_points.at(Extended_Silkscreen_index).cont_silkscreen;
                 }
             }
             vector<Segment> Inverted_Extended_Silkscreen;
-            if (Boarder_Dots_is_First_Point.at(Extended_Silkscreen_index)) // 斷點是第一點
+            if (intersect_points.at(Extended_Silkscreen_index).is_head_point) // 斷點是第一點
             {
                 for (int j = Extended_Silkscreen.size() - 1; j >= 0; j--)
                 {
