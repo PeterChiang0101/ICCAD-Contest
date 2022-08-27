@@ -59,7 +59,7 @@ private:
     POINT point_op;
     double Arc_Degree(const Segment &S1);
     
-    float assemblygap, coppergap, silkscreenlen;
+    double assemblygap, coppergap, silkscreenlen;
     //vector<int> continue_num; // 每個連續線段的線段數量
     Graph assembly;
     vector<Graph> copper;

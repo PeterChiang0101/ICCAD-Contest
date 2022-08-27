@@ -13,9 +13,9 @@ int main()
     for(int i = 0; i < 179; i++)
     {
         if(i == 80) continue;
-        float assemblygap = 0.0;
-        float coppergap = 0.0;
-        float silkscreenlen = 0.0;
+        double assemblygap = 0.0;
+        double coppergap = 0.0;
+        double silkscreenlen = 0.0;
         FileIO File;
         string filename;
         string filename_2;

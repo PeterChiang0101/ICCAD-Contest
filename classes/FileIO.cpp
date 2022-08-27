@@ -18,7 +18,7 @@ void FileIO::Read_File(const char *filename)
         InFile.open(INPUT_PATH, ios::in); // 預設讀取測試檔案
     }
 }
-//for testing case
+// for testing case
 void FileIO::Read_File(const string filename)
 {
     InFile.open(filename, ios::in);
@@ -29,7 +29,7 @@ void FileIO::Read_File(const string filename)
     }
 }
 
-void FileIO::Read_File(const char *filename,const char *filename_ans)
+void FileIO::Read_File(const char *filename, const char *filename_ans)
 {
     InFile.open(filename, ios::in);
     if (!InFile.is_open())
@@ -70,14 +70,22 @@ Graph FileIO::Read_Silkscreen() // 讀取絲印
     return Silkscreen;
 }
 
-
-float FileIO::File_to_Parameter()
+double FileIO::File_to_Parameter()
 {
     string parameter_str;
     InFile >> parameter_str;
     string str_truncate;
     str_truncate = parameter_str.substr(parameter_str.find(',') + 1);
-    return stof(str_truncate) * mutiplier_to_fit_host_need;
+    return stod(str_truncate) * mutiplier_to_fit_host_need;
+}
+
+double FileIO::File_to_Parameter_1x_multiplier()
+{
+    string parameter_str;
+    InFile >> parameter_str;
+    string str_truncate;
+    str_truncate = parameter_str.substr(parameter_str.find(',') + 1);
+    return stod(str_truncate);
 }
 
 Graph FileIO::Read_Assembly() // 讀取assembly，轉換為vector
@@ -348,23 +356,22 @@ vector<string> FileIO::split(const string &str, const char &delimiter) // 拆分
     return result;
 }
 
-size_t FileIO::getcontinue_num_size () const
+size_t FileIO::getcontinue_num_size() const
 {
     return this->continue_num.size();
 }
 
-int FileIO::getcontinue_num_item (size_t order) const
+int FileIO::getcontinue_num_item(size_t order) const
 {
-    if(order < continue_num.size())
+    if (order < continue_num.size())
     {
         return this->continue_num[order];
     }
     else
-    {   
-        cerr << "ERROR: Invalid order number of '/continue_num'/ " <<endl;
-        return (-5); 
+    {
+        cerr << "ERROR: Invalid order number of '/continue_num'/ " << endl;
+        return (-5);
     }
-
 }
 
 /*

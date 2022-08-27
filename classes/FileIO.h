@@ -16,7 +16,8 @@ public:
     void Read_File(const char *filename);
     void Read_File(const string filename);
     void Read_File(const char *filename, const char *filename_ans);
-    float File_to_Parameter(); // 讀入參數
+    double File_to_Parameter(); // 讀入參數
+    double File_to_Parameter_1x_multiplier(); // 讀入參數，正常倍率，給評分器使用
     Graph Read_Assembly();
     vector<Graph> Read_Copper();
     Graph Read_Silkscreen();

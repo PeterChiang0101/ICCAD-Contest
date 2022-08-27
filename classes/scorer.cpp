@@ -51,9 +51,10 @@ void Scorer::read_file()
     // A_file.open(OUTPUT_PATH, ios::in);
     // string assemblygap_str, coppergap_str, silkscreenlen_str;
     // Q_file >> assemblygap_str >> coppergap_str >> silkscreenlen_str;
-    assemblygap = file.File_to_Parameter();
-    coppergap = file.File_to_Parameter();
-    silkscreenlen = file.File_to_Parameter();
+    assemblygap = coppergap = silkscreenlen = 0.0;
+    assemblygap = file.File_to_Parameter_1x_multiplier();
+    coppergap = file.File_to_Parameter_1x_multiplier();
+    silkscreenlen = file.File_to_Parameter_1x_multiplier();
 
     assembly = file.Read_Assembly();
     copper = file.Read_Copper();
@@ -449,7 +450,7 @@ double Scorer::third_quarter() // const vector<vector<Segment>> copper, const ve
                 else if (min_distance < L_copper - Subtraction_Tolerance)
                 {
                     pass_monitor = false;
-                    cout << "Error: i(silkscreen) = " << i << ", j(copper) = " << j << ", k = " << k << " coppergap: " << L_copper << " min_distance: " << min_distance << endl;
+                    cout << "Error: i(silkscreen) = " << i << ", j(copper) = " << j << ", k = " << k << " coppergap: " << setprecision(10) << L_copper << " min_distance: " << min_distance << setprecision(4) << endl;
                     cout << "Silksreen: (" << silkscreen.segment.at(i).x1 << "," << silkscreen.segment.at(i).y1 << ") -> (" << silkscreen.segment.at(i).x2 << "," << silkscreen.segment.at(i).y2 << ") is_line = " << silkscreen.segment.at(i).is_line;
                     if (silkscreen.segment.at(i).is_line == 0)
                         cout << " center: (" << silkscreen.segment.at(i).center_x << "," << silkscreen.segment.at(i).center_y << ")";
@@ -691,7 +692,7 @@ double Scorer::fourth_quarter()
             else if (min_distance < L_outline - Subtraction_Tolerance)
             {
                 pass_monitor = false;
-                cout << "Error: i(silkscreen) = " << i << ", j(assembly) = " << j << " assemblygap: " << L_outline << " min_distance: " << min_distance << endl;
+                cout << "Error: i(silkscreen) = " << i << ", j(assembly) = " << j << " assemblygap: " << setprecision(10) << L_outline << " min_distance: " << min_distance << setprecision(4) << endl;
                 cout << "Silksreen: (" << silkscreen.segment.at(i).x1 << "," << silkscreen.segment.at(i).y1 << ") -> (" << silkscreen.segment.at(i).x2 << "," << silkscreen.segment.at(i).y2 << ") is_line = " << silkscreen.segment.at(i).is_line;
                 if (silkscreen.segment.at(i).is_line == 0)
                     cout << " center: (" << silkscreen.segment.at(i).center_x << "," << silkscreen.segment.at(i).center_y << ")";

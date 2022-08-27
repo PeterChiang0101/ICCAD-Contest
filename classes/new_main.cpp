@@ -9,9 +9,9 @@ using namespace std;
 
 int main(int argc, char **argv)
 {
-    float assemblygap = 0.0;
-    float coppergap = 0.0;
-    float silkscreenlen = 0.0;
+    double assemblygap = 0.0;
+    double coppergap = 0.0;
+    double silkscreenlen = 0.0;
     FileIO File;
     File.Read_File(argv[1]);
     assemblygap = File.File_to_Parameter() * 1.0001;
