@@ -27,22 +27,24 @@ bool operator!=(Point, Point);
 // bool Concentric_Circle_On_Arc(Segment, Segment);
 
 Scorer::Scorer()
-{ // the default constructor, use the defined Q_FILE and A_FILE path
+{ 
+    first_not_valid = false;
+    third_not_valid = false;
+    fourth_not_valid = false;
+    // the default constructor, use the defined Q_FILE and A_FILE path
     file.Read_File(INPUT_PATH, OUTPUT_PATH);
-
-    not_vaild_solution = false;
-
     // this->Q_file.open(INPUT_PATH, ios::in);
     // this->A_file.open(OUTPUT_PATH, ios::in);
     read_file();
 }
 
 Scorer::Scorer(const char *Ques_File, const char *Ans_File)
-{ // modify the Q_FILE and A_FILE path
+{ 
+    first_not_valid = false;
+    third_not_valid = false;
+    fourth_not_valid = false;
+    // modify the Q_FILE and A_FILE path
     file.Read_File(Ques_File, Ans_File);
-
-    not_vaild_solution = false;
-
     // this->Q_file.open(Ques_File, ios::in);
     // this->A_file.open(Ans_File, ios::in);
     read_file();
@@ -195,7 +197,7 @@ double Scorer::first_quarter() // const vector<Segment> Assembly, const vector<S
     }
     if (total_area >= Rectangular_area)
     {
-        not_vaild_solution = true;
+        first_not_valid = true;
     }
 
     return (Answer_1 > 0.25) ? 0.25 : ((total_area >= Rectangular_area) ? 0.0 : Answer_1); //大於0.25只算0.25
@@ -529,7 +531,7 @@ double Scorer::third_quarter() // const vector<vector<Segment>> copper, const ve
              << endl;
     }
     if (!pass_monitor)
-        not_vaild_solution = true;
+        third_not_valid = true;
     return (Third_Score > 0.25) ? 0.0 : Third_Score;
 }
 
@@ -751,7 +753,7 @@ double Scorer::fourth_quarter()
              << endl;
     }
     if (!pass_monitor)
-        not_vaild_solution = true;
+        fourth_not_valid = true;
     return (pass_monitor ? Fourth_Score : 0.0);
 }
 
