@@ -12,15 +12,15 @@ using namespace std;
 class Buffer
 {
 public:
-    Buffer(float, float); // 填入 gap 參數
+    Buffer(double, double); // 填入 gap 參數
     Graph Assembly_Buffer(const Graph);
     vector<Graph> Copper_Buffer(const vector<Graph>);
 
 private:
-    float coppergap;
-    float assemblygap;
-    GRAPH graph_op; // graph operator
-    POINT point_op; // point operator
+    double coppergap;
+    double assemblygap;
+    GRAPH graph_op;                                                         // graph operator
+    POINT point_op;                                                         // point operator
     vector<Point> Point_Extension(const Graph, const bool);                 // 圖形外擴
     vector<Point> Arc_Point_Tuning(const Graph, const bool, vector<Point>); // 圓與直線外擴距離不對，需用此函數修正
     Graph Point_to_Line(vector<Point>, Graph);

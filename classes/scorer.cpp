@@ -30,6 +30,8 @@ Scorer::Scorer()
 { // the default constructor, use the defined Q_FILE and A_FILE path
     file.Read_File(INPUT_PATH, OUTPUT_PATH);
 
+    not_vaild_solution = false;
+
     // this->Q_file.open(INPUT_PATH, ios::in);
     // this->A_file.open(OUTPUT_PATH, ios::in);
     read_file();
@@ -38,6 +40,8 @@ Scorer::Scorer()
 Scorer::Scorer(const char *Ques_File, const char *Ans_File)
 { // modify the Q_FILE and A_FILE path
     file.Read_File(Ques_File, Ans_File);
+
+    not_vaild_solution = false;
 
     // this->Q_file.open(Ques_File, ios::in);
     // this->A_file.open(Ans_File, ios::in);
@@ -70,7 +74,7 @@ double Scorer::first_quarter() // const vector<Segment> Assembly, const vector<S
     float Rectangular_area = 0;       // 絲印標示之座標極限值所構成之矩形面積
     float X_max, Y_max, X_min, Y_min; //絲印座標極限值
 
-    float Y_area = 0; // 零件外觀向外等比拓展Y之面積範圍
+    // float Y_area = 0; // 零件外觀向外等比拓展Y之面積範圍
     // vector<Segment> Assembly_push_out; 7/10, move to class private area.
 
     float Answer_1;
@@ -110,7 +114,7 @@ double Scorer::first_quarter() // const vector<Segment> Assembly, const vector<S
 
     float total_area = 0;
     size_t i;
-    size_t j = i - 1;
+    size_t j;
     for (i = 0; i < Assembly_push_out.segment.size(); i++)
     {
         if (i == 0)
@@ -189,8 +193,12 @@ double Scorer::first_quarter() // const vector<Segment> Assembly, const vector<S
              << endl
              << endl;
     }
+    if (total_area >= Rectangular_area)
+    {
+        not_vaild_solution = true;
+    }
 
-    return (Answer_1 > 0.25) ? 0.25 : Answer_1; //大於0.25只算0.25
+    return (Answer_1 > 0.25) ? 0.25 : ((total_area >= Rectangular_area) ? 0.0 : Answer_1); //大於0.25只算0.25
 }
 
 // finish verification, done on 2022/7/9
@@ -296,7 +304,6 @@ double Scorer::Arc_Degree(const Segment &S1)
 
 double Scorer::third_quarter() // const vector<vector<Segment>> copper, const vector<Segment> silkscreen)
 {
-    float L_copper = coppergap;
     double min_distance{0}, min_dist_result{0}, min_copper_distance{0}, min_copper_temp{0};
     double min_tmp;
     double min_distance_sum;
@@ -445,12 +452,12 @@ double Scorer::third_quarter() // const vector<vector<Segment>> copper, const ve
                         min_distance = min(min(Point_to_Arc_MinDist(A1, copper.at(j).segment.at(k)), Point_to_Arc_MinDist(A2, copper.at(j).segment.at(k))), min_distance);
                 }
 
-                if ((min_distance < L_copper && min_distance > L_copper - Subtraction_Tolerance)) // || (min_distance > L_copper && min_distance < L_copper + tolerance))
-                    min_distance = L_copper;
-                else if (min_distance < L_copper - Subtraction_Tolerance)
+                if ((min_distance < coppergap && min_distance > coppergap - Subtraction_Tolerance)) // || (min_distance > coppergap && min_distance < coppergap + tolerance))
+                    min_distance = coppergap;
+                else if (min_distance < coppergap - Subtraction_Tolerance)
                 {
                     pass_monitor = false;
-                    cout << "Error: i(silkscreen) = " << i << ", j(copper) = " << j << ", k = " << k << " coppergap: " << setprecision(10) << L_copper << " min_distance: " << min_distance << setprecision(4) << endl;
+                    cout << "Error: i(silkscreen) = " << i << ", j(copper) = " << j << ", k = " << k << " coppergap: " << setprecision(20) << coppergap << " min_distance: " << min_distance << setprecision(4) << endl;
                     cout << "Silksreen: (" << silkscreen.segment.at(i).x1 << "," << silkscreen.segment.at(i).y1 << ") -> (" << silkscreen.segment.at(i).x2 << "," << silkscreen.segment.at(i).y2 << ") is_line = " << silkscreen.segment.at(i).is_line;
                     if (silkscreen.segment.at(i).is_line == 0)
                         cout << " center: (" << silkscreen.segment.at(i).center_x << "," << silkscreen.segment.at(i).center_y << ")";
@@ -503,7 +510,7 @@ double Scorer::third_quarter() // const vector<vector<Segment>> copper, const ve
         }
     }
     T_copper = min_distance_sum / (double)file.getcontinue_num_size();
-    Third_Score = (1 - (T_copper - L_copper) * 10 / L_copper) * 0.25;
+    Third_Score = (1 - (T_copper - coppergap) * 10 / coppergap) * 0.25;
     // print the score of the third_quarter
     if (ShowDetail)
     {
@@ -511,21 +518,24 @@ double Scorer::third_quarter() // const vector<vector<Segment>> copper, const ve
         if (pass_monitor)
             cout << "PASS" << endl;
         else
+        {
             cout << "FAIL" << endl;
+        }
         cout << endl;
-        cout << "Score: " << Third_Score << endl
+        cout << "Score: " << (pass_monitor ? Third_Score : 0.0) << endl
              << endl;
         cout << "T_copper: " << T_copper << endl
              << endl
              << endl;
     }
-    return (Third_Score > 0.25) ? 0.25 : Third_Score;
+    if (!pass_monitor)
+        not_vaild_solution = true;
+    return (Third_Score > 0.25) ? 0.0 : Third_Score;
 }
 
 // 7/10 done untest
 double Scorer::fourth_quarter()
 {
-    float L_outline = assemblygap;
     double min_distance;
     double min_tmp;
     double shortest_min; // one silkscreen
@@ -687,12 +697,12 @@ double Scorer::fourth_quarter()
                 // min_distance = min_tmp;
             }
 
-            if ((min_distance < L_outline && min_distance > L_outline - Subtraction_Tolerance)) // || (min_distance > L_outline && min_distance < L_outline + Subtraction_Tolerance))
-                min_distance = L_outline;
-            else if (min_distance < L_outline - Subtraction_Tolerance)
+            if ((min_distance < assemblygap && min_distance > assemblygap - Subtraction_Tolerance)) // || (min_distance > assemblygap && min_distance < assemblygap + Subtraction_Tolerance))
+                min_distance = assemblygap;
+            else if (min_distance < assemblygap - Subtraction_Tolerance)
             {
                 pass_monitor = false;
-                cout << "Error: i(silkscreen) = " << i << ", j(assembly) = " << j << " assemblygap: " << setprecision(10) << L_outline << " min_distance: " << min_distance << setprecision(4) << endl;
+                cout << "Error: i(silkscreen) = " << i << ", j(assembly) = " << j << " assemblygap: " << setprecision(20) << assemblygap << " min_distance: " << min_distance << setprecision(4) << endl;
                 cout << "Silksreen: (" << silkscreen.segment.at(i).x1 << "," << silkscreen.segment.at(i).y1 << ") -> (" << silkscreen.segment.at(i).x2 << "," << silkscreen.segment.at(i).y2 << ") is_line = " << silkscreen.segment.at(i).is_line;
                 if (silkscreen.segment.at(i).is_line == 0)
                     cout << " center: (" << silkscreen.segment.at(i).center_x << "," << silkscreen.segment.at(i).center_y << ")";
@@ -720,7 +730,7 @@ double Scorer::fourth_quarter()
         }
     }
     T_outline = min_distance_sum / file.getcontinue_num_size();
-    Fourth_Score = (1 - (T_outline - L_outline) * 10 / L_outline) * 0.25;
+    Fourth_Score = (1 - (T_outline - assemblygap) * 10 / assemblygap) * 0.25;
 
     if (Fourth_Score < 0)
         Fourth_Score = 0;
@@ -730,15 +740,19 @@ double Scorer::fourth_quarter()
         if (pass_monitor)
             cout << "PASS" << endl;
         else
+        {
             cout << "FAIL" << endl;
+        }
         cout << endl;
-        cout << "Score: " << Fourth_Score << endl
+        cout << "Score: " << (pass_monitor ? Fourth_Score : 0.0) << endl
              << endl;
         cout << "T_outline: " << T_outline << endl
              << endl
              << endl;
     }
-    return Fourth_Score;
+    if (!pass_monitor)
+        not_vaild_solution = true;
+    return (pass_monitor ? Fourth_Score : 0.0);
 }
 
 double Scorer::Total_score(bool Print_Detail)

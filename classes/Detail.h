@@ -1,4 +1,4 @@
-// Detail.h
+// Detail.h{
 // segment's detail after calculation
 
 #ifndef DETAIL_H
@@ -6,9 +6,9 @@
 
 struct Detail
 {
-    float x_min{-5}, x_max{-5}, y_min{-5}, y_max{-5}; // the bounding box of the segment
-    size_t SegmentID1{0},SegmentID2{0}; //index of the intersection segment.
-    size_t CopperID1{0},CopperID2{0}; // index of the intersection copper.
+    float x_min , x_max , y_min , y_max ; // the bounding box of the segment
+    size_t SegmentID1, SegmentID2;                // index of the intersection segment.
+    size_t CopperID1, CopperID2;                  // index of the intersection copper.
 
     // below are only used when is_line = 1
     double theta; // the angle reference to positive x axis

@@ -19,7 +19,7 @@ testcase4_out_dir = ./TestingCase/test_1_Ans.txt
 testcase5_dir = ./TestingCase/test_2.txt
 testcase5_out_dir = ./TestingCase/test_2_Ans.txt
 
-testcase_all: testcase1 testcase2 testcase3 testcase4 testcase5
+testcase_all: testcase1 testcase2 testcase3 #testcase4 testcase5
 
 testcase1: separated
 	$(output_name) $(testcase1_dir) $(testcase1_out_dir)
@@ -32,11 +32,14 @@ testcase4: separated
 testcase5: separated
 	$(output_name) $(testcase5_dir) $(testcase5_out_dir)
 
-separated: new_main.o VectorOp.o FileIO.o Buffer.o Silkscreen.o Point.o Graph.o
-	g++ -std=c++0x -Wall -o $(output_name) new_main.o ./classes/VectorOp.o ./classes/FileIO.o ./classes/Buffer.o ./classes/Silkscreen.o ./classes/Point.o ./classes/Graph.o
+separated: new_main.o VectorOp.o FileIO.o Buffer.o Silkscreen.o Point.o Graph.o scorer.o
+	g++ -std=c++0x -Wall -o $(output_name) new_main.o ./classes/scorer.o ./classes/VectorOp.o ./classes/FileIO.o ./classes/Buffer.o ./classes/Silkscreen.o ./classes/Point.o ./classes/Graph.o
 
 new_main.o: new_main.cpp
 	g++ -std=c++0x -Wall -c -o new_main.o new_main.cpp
+
+scorer.o: scorer.cpp
+	g++ -std=c++0x -Wall -c -o ./classes/scorer.o ./classes/scorer.cpp
 
 VectorOp.o: ./classes/VectorOp.cpp ./classes/VectorOp.h
 	g++ -std=c++0x -Wall -c -o ./classes/VectorOp.o ./classes/VectorOp.cpp
@@ -52,9 +55,6 @@ Silkscreen.o: ./classes/Silkscreen.cpp ./classes/Silkscreen.h
 
 testing.exe:main.cpp
 	g++ -std=c++0x -Wall -o $(output_name) main.cpp 
-
-scorer.o:scorer.cpp scorer.h 
-	g++ -c -Wall -o scorer.o scorer.cpp 
 
 inputoutput.o:inputoutput.cpp inputoutput.h
 	g++ -c -Wall -o inputoutput.o inputoutput.cpp

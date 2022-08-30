@@ -9,9 +9,9 @@
 
 struct Intersection
 {
-    int copper_ID{0};      // record which copper is intersected.
-    int copper_segment{0}; // the segment of intersected copper
-    size_t cont_silkscreen{0};
+    int copper_ID;      // record which copper is intersected.
+    int copper_segment; // the segment of intersected copper
+    size_t cont_silkscreen;
     bool is_head_point;
     Point intersection_point;
 };
@@ -54,7 +54,7 @@ private:
     //----------Fit boarder condition functions----------
     void fit_boarder_condition(Graph, Graph, vector<Graph>);
     vector<Graph> Add_Excess_Silkscreen_For_Boarder_Condition(vector<Graph>, Point, vector<Graph>, int, Graph);
-    
+
     float Calculate_Silkscreen_length(const Graph &); // calculate the length of the Silkscreen
 
     int Uppest_Assembly_index;
@@ -87,7 +87,6 @@ private:
     bool In_Between_Lines(Point, Point, Point);//move to POINT
     vector<Point> intersection_between_line_and_arc(Segment, Point, Point);//moved to GRAPH
     */
-
 };
 
 #endif // SILKSCREEN_H

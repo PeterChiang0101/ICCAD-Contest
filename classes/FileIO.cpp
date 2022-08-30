@@ -76,7 +76,7 @@ double FileIO::File_to_Parameter()
     InFile >> parameter_str;
     string str_truncate;
     str_truncate = parameter_str.substr(parameter_str.find(',') + 1);
-    return stod(str_truncate) * mutiplier_to_fit_host_need;
+    return stod(str_truncate);
 }
 
 double FileIO::File_to_Parameter_1x_multiplier()

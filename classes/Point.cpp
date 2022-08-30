@@ -4,7 +4,6 @@
 
 using namespace std;
 
-
 double POINT::dis2(const Point A, const Point B) //點A、B距離的平方
 {
     return (double)(A.x - B.x) * (A.x - B.x) + (A.y - B.y) * (A.y - B.y);
@@ -12,7 +11,7 @@ double POINT::dis2(const Point A, const Point B) //點A、B距離的平方
 
 double POINT::dist(const Point A, const Point B) //點A、B距離,with hypot
 {
-    return (double)hypot((A.x - B.x),(A.y - B.y));
+    return (double)hypot((A.x - B.x), (A.y - B.y));
 }
 
 double POINT::interpolate_x(const float y, const Point p1, const Point p2) // 待測點與圖形邊界交會的x值
@@ -27,7 +26,7 @@ bool POINT::point_in_polygon(const Point t, const vector<Point> Assembly_Point, 
     size_t Assembly_size = Assembly_Point.size();
     size_t Arc_count = 0;
     bool c = false;
-    for (int i = Assembly_size - 1, j = 0; j < Assembly_size; i = j++)
+    for (size_t i = Assembly_size - 1, j = 0; j < Assembly_size; i = j++)
     {
         if (Assembly_Point.at(i).Next_Arc)
         {
@@ -47,7 +46,7 @@ bool POINT::point_in_polygon(const Point t, const vector<Point> Assembly_Point, 
     return c;
 }
 
-bool POINT::Point_Inside_Arc(const float Point_Theta,float Arc_Theta1, float Arc_Theta2, const bool is_CounterClockwise) // 確認點是否在圓弧內，已確認在該圓弧所屬的園內 (counterclockwise)
+bool POINT::Point_Inside_Arc(const float Point_Theta, float Arc_Theta1, float Arc_Theta2, const bool is_CounterClockwise) // 確認點是否在圓弧內，已確認在該圓弧所屬的園內 (counterclockwise)
 {
     if (!is_CounterClockwise)
     {
@@ -57,16 +56,16 @@ bool POINT::Point_Inside_Arc(const float Point_Theta,float Arc_Theta1, float Arc
         return true;
     if (Arc_Theta1 > Arc_Theta2)
     {
-        return((Point_Theta >= Arc_Theta1 || Point_Theta <= Arc_Theta2)?true:false);
+        return ((Point_Theta >= Arc_Theta1 || Point_Theta <= Arc_Theta2) ? true : false);
     }
     else
     {
-        return((Point_Theta >= Arc_Theta1 && Point_Theta <= Arc_Theta2)?true:false);
+        return ((Point_Theta >= Arc_Theta1 && Point_Theta <= Arc_Theta2) ? true : false);
     }
 }
 
-bool POINT::In_Between_Lines(const Point test, const Point first, const Point last) // safe 
-{    
+bool POINT::In_Between_Lines(const Point test, const Point first, const Point last) // safe
+{
     float min_x = min(first.x, last.x);
     float max_x = max(first.x, last.x);
     float min_y = min(first.y, last.y);
@@ -76,4 +75,3 @@ bool POINT::In_Between_Lines(const Point test, const Point first, const Point la
     else
         return false;
 }
-

@@ -10,7 +10,7 @@
 
 using namespace std;
 
-Buffer::Buffer(float assembly, float copper)
+Buffer::Buffer(double assembly, double copper)
 {
     assemblygap = assembly;
     coppergap = copper;
@@ -49,10 +49,10 @@ vector<Point> Buffer::Point_Extension(const Graph Assembly, const bool is_assemb
     Point Failed_Point;
     Failed_Point.x = INFINITY;
     Failed_Point.y = INFINITY;
-    
+
     Assembly_Points = graph_op.Line_to_Point(Assembly); //線切割為點
     Arc_Dots = graph_op.Arc_Optimization(Assembly);     // 將圓弧切割成多個點，以利辨識點在圖形內外
-    if (size == 1)                             // i think only happened in copper, eg: a full circle
+    if (size == 1)                                      // i think only happened in copper, eg: a full circle
     {
         Point Extended_Point;
         Extended_Point.x = Assembly.segment.at(0).x1 + coppergap * cos(Assembly.segment.at(0).detail.theta_1);
@@ -121,7 +121,6 @@ vector<Point> Buffer::Point_Extension(const Graph Assembly, const bool is_assemb
     return Extended_Points;
 }
 
-
 vector<Point> Buffer::Arc_Point_Tuning(const Graph Assembly, const bool is_assembly, vector<Point> Extended_Points) // 圓與直線外擴距離不對，需用此函數修正
 {
     const size_t size = Extended_Points.size();
@@ -136,7 +135,7 @@ vector<Point> Buffer::Arc_Point_Tuning(const Graph Assembly, const bool is_assem
     Segment Pushout_Circle_1, Pushout_Circle_2;
     Point first_point, second_point;
     Point Intersection_Points;
-    float gap;
+    double gap;
 
     if (is_assembly)
         gap = assemblygap;
@@ -150,7 +149,7 @@ vector<Point> Buffer::Arc_Point_Tuning(const Graph Assembly, const bool is_assem
         else
             first_line = Assembly.segment.at(i - 1);
         second_line = Assembly.segment.at(i);
-        if(Extended_Points.at(i).x == INFINITY && Extended_Points.at(i).y == INFINITY)
+        if (Extended_Points.at(i).x == INFINITY && Extended_Points.at(i).y == INFINITY)
             continue;
         if (!first_line.is_line && second_line.is_line) // 第一個是圓弧 第二個是線段
         {
@@ -292,8 +291,6 @@ vector<Point> Buffer::Arc_Point_Tuning(const Graph Assembly, const bool is_assem
     }
     return Extended_Points;
 }
-
-
 
 Graph Buffer::Point_to_Line(vector<Point> Extended_Points, Graph Polygon)
 {

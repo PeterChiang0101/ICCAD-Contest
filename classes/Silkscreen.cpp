@@ -809,7 +809,7 @@ vector<Graph> Silkscreen::Add_Excess_Silkscreen_For_Boarder_Condition(vector<Gra
             vector<Point> Boarder_Dots;                 // 在此銅箔上的點
             vector<bool> Boarder_Dots_is_First_Point;   // 在此銅箔上的點是否為第一點
             vector<int> Boarder_Dots_index_in_Assembly; // 在此銅箔上的點在assembly的index
-            int Silkscreen_size = Silkscreen.size();
+            // int Silkscreen_size = Silkscreen.size();
 
             bool Qualified_Dots_Front = false; // 在線段上的點是否符合要求
             bool Qualified_Dots_Back = false;  // 在線段上的點是否符合要求
@@ -1255,7 +1255,7 @@ vector<Graph> Silkscreen::Add_Excess_Silkscreen_For_Boarder_Condition(vector<Gra
             vector<Segment> Extended_Silkscreen;
             int Extended_Silkscreen_index = 0;                    // 第幾個延伸線段
             int Extended_Silkscreen_index_in_Original_Silkscreen; // 延伸線段需接在第幾個原始線段中
-            for (int j = 0; j < Extended_Silkscreen_Candidate.size(); j++)
+            for (size_t j = 0; j < Extended_Silkscreen_Candidate.size(); j++)
             {
                 // 比較各合法線段長度，選擇較短者
                 temp_length = Calculate_Silkscreen_length(Extended_Silkscreen_Candidate.at(j));
@@ -1342,8 +1342,8 @@ void Silkscreen::fit_lines_simularity()
     }
     int arc_diff = assembly_arc_num - silkscreen_arc_num;
     int line_diff = assembly_line_num - silkscreen_line_num;
-    int arc_running_index = 0;
-    int line_running_index = 0;
+    // int arc_running_index = 0;
+    // int line_running_index = 0;
     Graph cut_result;
     array<int, 2> line_index;
     /*
