@@ -44,7 +44,7 @@ public:
     Scorer();
     Scorer(const char *, const char *);
 
-    bool first_not_valid, third_not_valid, fourth_not_valid;
+    bool coppergap_not_valid, assemblygap_not_valid;
 
     void read_file();
     double first_quarter();

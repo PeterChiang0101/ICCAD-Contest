@@ -15,7 +15,7 @@ int main(int argc, char **argv)
     double silkscreenlen = 0.0;
 
     double gap_mutiplier = 1.0002;
-    bool third_not_valid = true, fourth_not_valid = true;
+    bool coppergap_not_valid = true, assemblygap_not_valid = true;
 
     FileIO File;
     File.Read_File(argv[1]);
@@ -28,7 +28,7 @@ int main(int argc, char **argv)
     const double coppergap_original = coppergap;
 
     // while not satisfied with the result, increase the mutiplier
-    while (third_not_valid || fourth_not_valid)
+    while (coppergap_not_valid || assemblygap_not_valid)
     {
         if (gap_mutiplier < 1.001)
         {
@@ -47,12 +47,12 @@ int main(int argc, char **argv)
             gap_mutiplier += 0.05;
         }
 
-        if(third_not_valid)
+        if(coppergap_not_valid)
         {
             coppergap = gap_mutiplier * coppergap_original;
         }
 
-        if(fourth_not_valid)
+        if(assemblygap_not_valid)
         {
             assemblygap = gap_mutiplier * assemblygap_original;
         }
@@ -68,8 +68,8 @@ int main(int argc, char **argv)
 
         Scorer s(argv[1], argv[2]);
         cout << setprecision(4) << fixed << s.Total_score(0) << endl;
-        third_not_valid = s.third_not_valid;
-        fourth_not_valid = s.fourth_not_valid;
+        coppergap_not_valid = s.coppergap_not_valid;
+        assemblygap_not_valid = s.assemblygap_not_valid;
     }
     return 0;
 }

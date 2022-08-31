@@ -28,9 +28,8 @@ bool operator!=(Point, Point);
 
 Scorer::Scorer()
 { 
-    first_not_valid = false;
-    third_not_valid = false;
-    fourth_not_valid = false;
+    coppergap_not_valid = false;
+    assemblygap_not_valid = false;
     // the default constructor, use the defined Q_FILE and A_FILE path
     file.Read_File(INPUT_PATH, OUTPUT_PATH);
     // this->Q_file.open(INPUT_PATH, ios::in);
@@ -40,9 +39,8 @@ Scorer::Scorer()
 
 Scorer::Scorer(const char *Ques_File, const char *Ans_File)
 { 
-    first_not_valid = false;
-    third_not_valid = false;
-    fourth_not_valid = false;
+    coppergap_not_valid = false;
+    assemblygap_not_valid = false;
     // modify the Q_FILE and A_FILE path
     file.Read_File(Ques_File, Ans_File);
     // this->Q_file.open(Ques_File, ios::in);
@@ -197,7 +195,7 @@ double Scorer::first_quarter() // const vector<Segment> Assembly, const vector<S
     }
     if (total_area >= Rectangular_area)
     {
-        first_not_valid = true;
+        assemblygap_not_valid = true;
     }
 
     return (Answer_1 > 0.25) ? 0.25 : ((total_area >= Rectangular_area) ? 0.0 : Answer_1); //大於0.25只算0.25
@@ -531,7 +529,7 @@ double Scorer::third_quarter() // const vector<vector<Segment>> copper, const ve
              << endl;
     }
     if (!pass_monitor)
-        third_not_valid = true;
+        coppergap_not_valid = true;
     return (Third_Score > 0.25) ? 0.0 : Third_Score;
 }
 
@@ -753,7 +751,7 @@ double Scorer::fourth_quarter()
              << endl;
     }
     if (!pass_monitor)
-        fourth_not_valid = true;
+        assemblygap_not_valid = true;
     return (pass_monitor ? Fourth_Score : 0.0);
 }
 
