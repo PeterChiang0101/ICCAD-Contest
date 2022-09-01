@@ -5,7 +5,7 @@ ifeq ($(OS),Windows_NT)     # is Windows_NT on XP, 2000, 7, Vista, 10...
 else
     detected_OS := $(shell uname)  # same as "uname -s"
 	remove_command := rm
-	output_name := ./cade0025_beta
+	output_name := ./cade0025_final
 endif
 
 testcase1_dir = ./TestingCase/test_A.txt

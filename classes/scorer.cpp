@@ -452,9 +452,9 @@ double Scorer::third_quarter() // const vector<vector<Segment>> copper, const ve
                         min_distance = min(min(Point_to_Arc_MinDist(A1, copper.at(j).segment.at(k)), Point_to_Arc_MinDist(A2, copper.at(j).segment.at(k))), min_distance);
                 }
 
-                if ((min_distance < coppergap && min_distance > coppergap - Subtraction_Tolerance)) // || (min_distance > coppergap && min_distance < coppergap + tolerance))
-                    min_distance = coppergap;
-                else if (min_distance < coppergap - Subtraction_Tolerance)
+                //if ((min_distance < coppergap && min_distance > coppergap - Subtraction_Tolerance)) // || (min_distance > coppergap && min_distance < coppergap + tolerance))
+                //    min_distance = coppergap;
+                if (min_distance < coppergap) //- Subtraction_Tolerance)
                 {
                     pass_monitor = false;
                     cout << "Error: i(silkscreen) = " << i << ", j(copper) = " << j << ", k = " << k << " coppergap: " << setprecision(20) << coppergap << " min_distance: " << min_distance << setprecision(4) << endl;
@@ -697,9 +697,9 @@ double Scorer::fourth_quarter()
                 // min_distance = min_tmp;
             }
 
-            if ((min_distance < assemblygap && min_distance > assemblygap - Subtraction_Tolerance)) // || (min_distance > assemblygap && min_distance < assemblygap + Subtraction_Tolerance))
-                min_distance = assemblygap;
-            else if (min_distance < assemblygap - Subtraction_Tolerance)
+            //if ((min_distance < assemblygap && min_distance > assemblygap - Subtraction_Tolerance)) // || (min_distance > assemblygap && min_distance < assemblygap + Subtraction_Tolerance))
+            //    min_distance = assemblygap;
+            if (min_distance < assemblygap )//- Subtraction_Tolerance)
             {
                 pass_monitor = false;
                 cout << "Error: i(silkscreen) = " << i << ", j(assembly) = " << j << " assemblygap: " << setprecision(20) << assemblygap << " min_distance: " << min_distance << setprecision(4) << endl;
@@ -777,13 +777,21 @@ double Scorer::Total_score(bool Print_Detail)
              << "   End of Score Detail   " << endl
              << "=========================" << endl
              << endl;
-    cout << setw(14) << left << "First Score: " << setprecision(4) << fixed << First_Score << endl;
-    cout << setw(14) << left << "Second Score: " << setprecision(4) << fixed << Second_Score << endl;
-    cout << setw(14) << left << "Third Score: " << setprecision(4) << fixed << Third_Score << endl;
-    cout << setw(14) << left << "Fourth Score: " << setprecision(4) << fixed << Fourth_Score << endl;
-    cout << endl
-         << "Total Score: ";
-    total_score = First_Score + Second_Score + Third_Score + Fourth_Score;
+    if(!assemblygap_not_valid && !coppergap_not_valid)
+    {
+        cout << setw(14) << left << "First Score: " << setprecision(4) << fixed << First_Score << endl;
+        cout << setw(14) << left << "Second Score: " << setprecision(4) << fixed << Second_Score << endl;
+        cout << setw(14) << left << "Third Score: " << setprecision(4) << fixed << Third_Score << endl;
+        cout << setw(14) << left << "Fourth Score: " << setprecision(4) << fixed << Fourth_Score << endl;
+        cout << endl
+             << "Total Score: ";
+        total_score = First_Score + Second_Score + Third_Score + Fourth_Score;
+    }
+    else
+    {
+        cout << "Failed: " ;
+    }
+    
     return total_score;
 }
 /*
