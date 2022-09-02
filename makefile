@@ -38,7 +38,7 @@ separated: new_main.o VectorOp.o FileIO.o Buffer.o Silkscreen.o Point.o Graph.o 
 new_main.o: new_main.cpp
 	g++ -std=c++0x -Wall -c -o new_main.o new_main.cpp
 
-scorer.o: scorer.cpp
+scorer.o: ./classes/scorer.cpp
 	g++ -std=c++0x -Wall -c -o ./classes/scorer.o ./classes/scorer.cpp
 
 VectorOp.o: ./classes/VectorOp.cpp ./classes/VectorOp.h
