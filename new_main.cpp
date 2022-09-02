@@ -14,7 +14,7 @@ int main(int argc, char **argv)
     double coppergap = 0.0;
     double silkscreenlen = 0.0;
 
-    double gap_mutiplier = 1.0002;
+    double gap_mutiplier = 1.0001;
     bool coppergap_not_valid = true, assemblygap_not_valid = true;
 
     FileIO File;
@@ -47,12 +47,12 @@ int main(int argc, char **argv)
             gap_mutiplier += 0.05;
         }
 
-        if(coppergap_not_valid)
+        if (coppergap_not_valid)
         {
             coppergap = gap_mutiplier * coppergap_original;
         }
 
-        if(assemblygap_not_valid)
+        if (assemblygap_not_valid)
         {
             assemblygap = gap_mutiplier * assemblygap_original;
         }
