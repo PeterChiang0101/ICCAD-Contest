@@ -27,7 +27,7 @@ bool operator!=(Point, Point);
 // bool Concentric_Circle_On_Arc(Segment, Segment);
 
 Scorer::Scorer()
-{ 
+{
     coppergap_not_valid = false;
     assemblygap_not_valid = false;
     // the default constructor, use the defined Q_FILE and A_FILE path
@@ -38,7 +38,7 @@ Scorer::Scorer()
 }
 
 Scorer::Scorer(const char *Ques_File, const char *Ans_File)
-{ 
+{
     coppergap_not_valid = false;
     assemblygap_not_valid = false;
     // modify the Q_FILE and A_FILE path
@@ -452,13 +452,14 @@ double Scorer::third_quarter() // const vector<vector<Segment>> copper, const ve
                         min_distance = min(min(Point_to_Arc_MinDist(A1, copper.at(j).segment.at(k)), Point_to_Arc_MinDist(A2, copper.at(j).segment.at(k))), min_distance);
                 }
 
-                //if ((min_distance < coppergap && min_distance > coppergap - Subtraction_Tolerance)) // || (min_distance > coppergap && min_distance < coppergap + tolerance))
-                //    min_distance = coppergap;
+                // if ((min_distance < coppergap && min_distance > coppergap - Subtraction_Tolerance)) // || (min_distance > coppergap && min_distance < coppergap + tolerance))
+                //     min_distance = coppergap;
                 if (min_distance < coppergap) //- Subtraction_Tolerance)
                 {
                     pass_monitor = false;
-                    if (ShowDetail){
-                        cout << "Error: i(silkscreen) = " << i << setw(15) << ", j(copper) = " << j << ", k = " << k << setw(25) << " coppergap: " << setprecision(20) << coppergap << setw(18)  << " min_distance: " << min_distance << setprecision(4) << endl;
+                    if (ShowDetail)
+                    {
+                        cout << "Error: i(silkscreen) = " << i << setw(15) << ", j(copper) = " << j << ", k = " << k << setw(25) << " coppergap: " << setprecision(20) << coppergap << setw(18) << " min_distance: " << min_distance << setprecision(4) << endl;
                         cout << "Silksreen: (" << silkscreen.segment.at(i).x1 << "," << silkscreen.segment.at(i).y1 << ") -> (" << silkscreen.segment.at(i).x2 << "," << silkscreen.segment.at(i).y2 << ") is_line = " << silkscreen.segment.at(i).is_line;
                         if (silkscreen.segment.at(i).is_line == 0)
                             cout << setw(12) << " center: (" << silkscreen.segment.at(i).center_x << "," << silkscreen.segment.at(i).center_y << ")";
@@ -530,7 +531,6 @@ double Scorer::third_quarter() // const vector<vector<Segment>> copper, const ve
         cout << "T_copper: " << T_copper << endl
              << endl
              << endl;
-        
     }
     if (!pass_monitor)
         coppergap_not_valid = true;
@@ -701,12 +701,13 @@ double Scorer::fourth_quarter()
                 // min_distance = min_tmp;
             }
 
-            //if ((min_distance < assemblygap && min_distance > assemblygap - Subtraction_Tolerance)) // || (min_distance > assemblygap && min_distance < assemblygap + Subtraction_Tolerance))
-            //    min_distance = assemblygap;
-            if (min_distance < assemblygap )//- Subtraction_Tolerance)
+            // if ((min_distance < assemblygap && min_distance > assemblygap - Subtraction_Tolerance)) // || (min_distance > assemblygap && min_distance < assemblygap + Subtraction_Tolerance))
+            //     min_distance = assemblygap;
+            if (min_distance < assemblygap) //- Subtraction_Tolerance)
             {
                 pass_monitor = false;
-                if (ShowDetail){
+                if (ShowDetail)
+                {
                     cout << "Error: i(silkscreen) = " << i << setw(15) << ", j(assembly) = " << j << setw(34) << " assemblygap: " << setprecision(20) << assemblygap << setw(18) << " min_distance: " << min_distance << setprecision(4) << endl;
                     cout << "Silksreen: (" << silkscreen.segment.at(i).x1 << "," << silkscreen.segment.at(i).y1 << ") -> (" << silkscreen.segment.at(i).x2 << "," << silkscreen.segment.at(i).y2 << ") is_line = " << silkscreen.segment.at(i).is_line;
                     if (silkscreen.segment.at(i).is_line == 0)
@@ -780,25 +781,26 @@ double Scorer::Total_score(bool Print_Detail)
     double Fourth_Score = round(fourth_quarter() * 10000) / 10000;
     Fourth_Score = (Fourth_Score > 0) ? Fourth_Score : 0;
     if (ShowDetail)
+    {
         cout << "=========================" << endl
              << "   End of Score Detail   " << endl
              << "=========================" << endl
              << endl;
-    if(!assemblygap_not_valid && !coppergap_not_valid)
-    {
-        cout << setw(14) << left << "First Score: " << setprecision(4) << fixed << First_Score << endl;
-        cout << setw(14) << left << "Second Score: " << setprecision(4) << fixed << Second_Score << endl;
-        cout << setw(14) << left << "Third Score: " << setprecision(4) << fixed << Third_Score << endl;
-        cout << setw(14) << left << "Fourth Score: " << setprecision(4) << fixed << Fourth_Score << endl;
-        cout << endl
-             << "Total Score: ";
-        total_score = First_Score + Second_Score + Third_Score + Fourth_Score;
+        if (!assemblygap_not_valid && !coppergap_not_valid)
+        {
+            cout << setw(14) << left << "First Score: " << setprecision(4) << fixed << First_Score << endl;
+            cout << setw(14) << left << "Second Score: " << setprecision(4) << fixed << Second_Score << endl;
+            cout << setw(14) << left << "Third Score: " << setprecision(4) << fixed << Third_Score << endl;
+            cout << setw(14) << left << "Fourth Score: " << setprecision(4) << fixed << Fourth_Score << endl;
+            cout << endl
+                 << "Total Score: ";
+            total_score = First_Score + Second_Score + Third_Score + Fourth_Score;
+        }
+        else
+        {
+            cout << "Failed: ";
+        }
     }
-    else
-    {
-        cout << "Failed: " ;
-    }
-    
     return total_score;
 }
 /*

@@ -67,7 +67,8 @@ int main(int argc, char **argv)
         File.Write_File(silkscreen_buffer, argv[2]);
 
         Scorer s(argv[1], argv[2]);
-        cout << setprecision(4) << fixed << s.Total_score(0) << endl;
+        // cout << setprecision(4) << fixed << s.Total_score(0) << endl;
+        s.Total_score(0);
         coppergap_not_valid = s.coppergap_not_valid;
         assemblygap_not_valid = s.assemblygap_not_valid;
     }
