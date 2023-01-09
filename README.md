@@ -24,6 +24,9 @@ BUGsss
 - [ ] 製作Segment版本intersection()
 - [x] Arc 修正, Copper需正確運作
 - [x] 判斷assembly極值是否被silkscreen覆蓋，並滿足題目要求
+- [ ] point_in_polygon() 先判斷點是否在arc極值內，再使用arc_points for迴圈，減少run time
+- [ ] Delete_Short_Silkscreen() fit_boarder_condition() 執行順序不明
+- [ ] 可偷線段 減少長度 減少數量差異 第二部分拿高分
 
 low priority:
 
@@ -100,12 +103,7 @@ flowchart LR
 
     a0([open file])
     a1([File_to_Parameter])
-    a2([Read_Assembly])
-    a3([Read_Copper])
-    a4([Assembly_Buffer])
-    a5([Copper_Buffer])
     a6([Write_File])
-    a7([Fit_Boarder_Condition])
 
         subgraph parameter
         b1([assemblygap])
@@ -114,20 +112,25 @@ flowchart LR
         end 
 
         subgraph assembly
+        a2([Read_Assembly])
         c1([Point_Extension])
         c2([Point_to_Line])
+        a4([Assembly_Buffer])
         end
 
         subgraph copper
+        a3([Read_Copper])
         d1([Point_Extension])
         d2([Copper_Point_to_Line])
+        a5([Copper_Buffer])
         end
 
-        subgraph cut_assembly
+        subgraph cut_silkscreen
         e1([Segment_Intersection_Points])
         e2([Point_to_Segment])
         e3([Segment_Overlapping])
         e4([Delete_Short_Silkscreen])
+        a7([Fit_Boarder_Condition])
         end
     end
     
@@ -214,6 +217,25 @@ Copper Arc_Boundary_Meas(Segment);
 
 int main(); // 主程式
 ```
+
+## OOD (Object-Oriented Design)
+
+2022/7/31
+
+finish class Buffer
+
+Peter
+
+---
+
+2022/7/27
+
+finish class FileIO
+
+Peter
+
+---
+---
 
 ## Algorithms
 
@@ -694,7 +716,59 @@ assembly : vector<segment>, store the assembly details
 
 Peter
 
+---
+---
+
 ## Optimization
+
+2022/8/14
+
+success generate case 1 solution, arc tuning has problems for point failed
+
+極值一定要連接到Copper_Buffer，極直線段前後，只能選一段刪
+
+剛開始遇到極值跳下一段繼續檢查
+
+遇到不同類型線段，檢查可不可以刪，不行就當作極值處理
+
+```c++
+for i
+    for j
+        if 遇到極值 
+            if 此連續線段還沒刪東西
+                continue;
+            else
+                break;
+        else if 遇到與第一條線段不同類型的線段
+            檢查可不可以刪;
+            if 不可以 
+                if 此連續線段還沒刪東西
+                    continue;
+                else
+                    break;
+            else
+                刪掉
+                此連續線段還沒刪東西 = false;
+        else
+            刪掉
+            此連續線段還沒刪東西 = false;
+```
+
+Peter
+
+---
+
+2022/7/24
+
+create struct and parameter file
+
+split functions into four classes
+
+discuss some issues to avoid errors and improve runtime
+
+Peter Macoto Gray
+
+---
 
 2022/7/24
 

@@ -7,7 +7,7 @@
 using namespace std;
 
 #define PI 3.14159265358979323846
-#define tolerance 0.001
+#define tolerance 0.00005
 #define INPUT_PATH "./TestingCase/test_B.txt"
 #define OUTPUT_PATH "./TestingCase/test_B_Ans.txt"
 
@@ -160,7 +160,7 @@ double Scorer::first_quarter() // const vector<Segment> Assembly, const vector<S
                 total_area += cut_area;
         }
     }
-    total_area /= 2; //修正項
+    Rectangular_area *= 2; //修正項
     Answer_1 = (2 - Rectangular_area / (total_area)) * 0.25;
 
     if (ShowDetail)
@@ -447,25 +447,26 @@ double Scorer::third_quarter() // const vector<vector<Segment>> copper, const ve
                         min_distance = min(min(Point_to_Arc_MinDist(A1, copper.at(j).at(k)), Point_to_Arc_MinDist(A2, copper.at(j).at(k))), min_distance);
                 }
 
-                if ((min_distance < L_copper && min_distance > L_copper - tolerance)) // || (min_distance > L_copper && min_distance < L_copper + tolerance))
+                if ((min_distance < L_copper && min_distance > L_copper)) // || (min_distance > L_copper && min_distance < L_copper + tolerance))
                     min_distance = L_copper;
-                else if (min_distance < L_copper - tolerance)
+                else if (min_distance < L_copper)
                 {
                     pass_monitor = false;
-                    cout << "Error: i(silkscreen) = " << i << ", j(copper) = " << j << ", k = " << k << " coppergap: " << L_copper << " min_distance: " << min_distance << endl;
+                    cout << "Error: i(silkscreen) = " << i << setw(15) << ", j(copper) = " << j << " , k = " << k << setw(25) << " coppergap: " << setprecision(10) << L_copper << setw(18) << " min_distance: " << min_distance << setprecision(4) << endl;
                     cout << "Silksreen: (" << silkscreen[i].x1 << "," << silkscreen[i].y1 << ") -> (" << silkscreen[i].x2 << "," << silkscreen[i].y2 << ") is_line = " << silkscreen[i].is_line;
                     if (silkscreen[i].is_line == 0)
-                        cout << " center: (" << silkscreen[i].center_x << "," << silkscreen[i].center_y << ")";
+                        cout << setw(12) << " center: (" << silkscreen[i].center_x << "," << silkscreen[i].center_y << ")";
                     cout << "     Copper: (" << copper[j][k].x1 << "," << copper[j][k].y1 << ") -> (" << copper[j][k].x2 << "," << copper[j][k].y2 << ") is_line = " << copper[j][k].is_line;
                     if (copper[j][k].is_line == 0)
-                        cout << " center: (" << copper[j][k].center_x << "," << copper[j][k].center_y << ")" << endl;
+                        cout << setw(12) << " center: (" << copper[j][k].center_x << "," << copper[j][k].center_y << ")" << endl;
                     else
                         cout << endl;
+                    cout << endl;
                 }
 
-                if (k == 0 || min_dist_result > min_distance) // find the smallest "min_distance"
-                {
-                    min_dist_result = min_distance;
+                    if (k == 0 || min_dist_result > min_distance) // find the smallest "min_distance"
+                    {
+                        min_dist_result = min_distance;
                 }
                 else
                 {
@@ -689,20 +690,21 @@ double Scorer::fourth_quarter() // const vector<Segment> assembly, const vector<
                 // min_distance = min_tmp;
             }
 
-            if ((min_distance < L_outline && min_distance > L_outline - tolerance)) // || (min_distance > L_outline && min_distance < L_outline + tolerance))
+            if ((min_distance < L_outline && min_distance > L_outline)) // || (min_distance > L_outline && min_distance < L_outline + tolerance))
                 min_distance = L_outline;
-            else if (min_distance < L_outline - tolerance)
+            else if (min_distance < L_outline)
             {
                 pass_monitor = false;
-                cout << "Error: i(silkscreen) = " << i << ", j(assembly) = " << j << " assemblygap: " << L_outline << " min_distance: " << min_distance << endl;
+                cout << "Error: i(silkscreen) = " << i << setw(15) << ", j(assembly) = " << j << setw(34) << " assemblygap: " << setprecision(10) << L_outline << setw(18) << " min_distance: " << min_distance << setprecision(4) << endl;
                 cout << "Silksreen: (" << silkscreen[i].x1 << "," << silkscreen[i].y1 << ") -> (" << silkscreen[i].x2 << "," << silkscreen[i].y2 << ") is_line = " << silkscreen[i].is_line;
                 if (silkscreen[i].is_line == 0)
-                    cout << " center: (" << silkscreen[i].center_x << "," << silkscreen[i].center_y << ")";
+                    cout << setw(12) << " center: (" << silkscreen[i].center_x << "," << silkscreen[i].center_y << ")";
                 cout << "     Assembly: (" << assembly[j].x1 << "," << assembly[j].y1 << ") -> (" << assembly[j].x2 << "," << assembly[j].y2 << ") is_line = " << assembly[j].is_line;
                 if (assembly[j].is_line == 0)
-                    cout << " center: (" << assembly[j].center_x << "," << assembly[j].center_y << ")" << endl;
+                    cout << setw(12) << " center: (" << assembly[j].center_x << "," << assembly[j].center_y << ")" << endl;
                 else
                     cout << endl;
+                cout << endl;
             }
 
             if (j == 0 || shortest_min > min_distance)
